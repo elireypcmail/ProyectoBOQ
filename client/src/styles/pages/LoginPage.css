@@ -1,0 +1,235 @@
+/* =========================
+   RESET BÁSICO (Por seguridad)
+========================= */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* =========================
+   ADMIN LOGIN CONTAINER
+========================= */
+.admin-login-container {
+  height: 100vh; /* Altura exacta de la pantalla */
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Fondo degradado azul claro y minimalista */
+  background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
+  position: relative;
+  /* CRUCIAL: Esto elimina el scroll ocultando lo que sobra */
+  overflow: hidden; 
+}
+
+/* Decoración fondo: Círculo Superior Derecha */
+.admin-login-container::before {
+  content: '';
+  position: absolute;
+  top: -100px;
+  right: -100px;
+  width: 500px;
+  height: 500px;
+  background: rgba(37, 99, 235, 0.08); /* Azul muy sutil */
+  border-radius: 50%;
+  filter: blur(60px);
+  z-index: 0;
+  pointer-events: none; /* Evita que interfiera con clicks */
+}
+
+/* Decoración fondo: Círculo Inferior Izquierda */
+.admin-login-container::after {
+  content: '';
+  position: absolute;
+  bottom: -100px;
+  left: -100px;
+  width: 400px;
+  height: 400px;
+  background: rgba(59, 130, 246, 0.08);
+  border-radius: 50%;
+  filter: blur(60px);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* =========================
+   LOGIN WRAPPER
+========================= */
+.admin-login-wrapper {
+  width: 100%;
+  max-width: 450px; /* Un poco más compacto */
+  z-index: 2;
+  position: relative;
+  padding: 0 20px; /* Margen de seguridad lateral para móviles */
+}
+
+/* =========================
+   LOGIN CARD
+========================= */
+.admin-login-card {
+  /* Efecto vidrio limpio y claro */
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-radius: 24px;
+  padding: 40px 30px;
+  /* Sombra muy suave */
+  box-shadow: 0 15px 35px rgba(30, 58, 138, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  transition: transform 0.3s ease;
+}
+
+/* =========================
+   HEADER
+========================= */
+.admin-login-header {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.admin-login-header h2 {
+  font-size: 2.2rem;
+  color: #1e3a8a; /* Azul corporativo oscuro */
+  margin-bottom: 5px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.admin-login-header p {
+  font-size: 0.9rem;
+  color: #64748b; /* Gris azulado */
+}
+
+/* =========================
+   FORM
+========================= */
+.admin-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.form-groupLogin {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-groupLogin label {
+  font-weight: 600;
+  color: #334155;
+  font-size: 0.85rem;
+  margin-left: 2px;
+}
+
+.form-groupLogin input {
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.8);
+  color: #1e293b;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.form-groupLogin input::placeholder {
+  color: #94a3b8;
+}
+
+.form-groupLogin input:focus {
+  border-color: #3b82f6;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* =========================
+   PASSWORD TOGGLE
+========================= */
+.password-wrapper {
+  position: relative;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  font-size: 18px;
+  transition: color 0.2s;
+}
+
+.toggle-password:hover {
+  color: #3b82f6;
+}
+
+/* =========================
+   LOGIN BUTTON
+========================= */
+.login-button {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #fff;
+  border: none;
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin-top: 10px;
+}
+
+.login-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+}
+
+.login-button:active {
+  transform: translateY(0);
+}
+
+/* =========================
+   ERROR & INFO
+========================= */
+.error-message {
+  background: #fef2f2;
+  color: #dc2626;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  text-align: center;
+  border: 1px solid #fecaca;
+}
+
+.login-info {
+  margin-top: 20px;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 480px) {
+  .admin-login-header h2 {
+    font-size: 1.8rem;
+  }
+  
+  .admin-login-card {
+    padding: 30px 20px;
+  }
+  
+  /* En móviles muy pequeños, reducimos un poco los espacios 
+     para asegurar que quepa sin scroll */
+  .admin-login-form {
+    gap: 15px;
+  }
+}
