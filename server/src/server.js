@@ -14,6 +14,12 @@ import typesDocRouter from "./routes/typesDoc.routes.js"
 import insurancesRouter from "./routes/insurances.routes.js"
 import storiesRouter from "./routes/stories.routes.js"
 
+import productsRouter from "./routes/products.routes.js"
+import categoriesRouter from "./routes/categories.routes.js"
+import brandsRouter from "./routes/brands.routes.js"
+import lotsRouter from "./routes/lots.routes.js"
+
+
 const app = express()
 const server = http.createServer(app)
 
@@ -34,10 +40,14 @@ server.listen(_var.PORT, "0.0.0.0", () => {
 })
 
 // Use routes
+app.use("/auth",authRouter)
 app.use("/medicos",doctorsRouter)
 app.use("/pacientes",patientsRouter)
 app.use("/tipos/medicos",typesDocRouter)
 app.use("/seguros",insurancesRouter)
 app.use("/historias",storiesRouter)
 
-app.use(authRouter)
+app.use("/categorias",categoriesRouter)
+app.use("/productos",productsRouter)
+app.use("/marcas",brandsRouter)
+app.use("/lotes",lotsRouter)

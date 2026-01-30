@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   Plus
 } from "lucide-react";
+import { SlOptionsVertical } from "react-icons/sl"
 import "../../styles/components/ListZone.css";
 
 const ListOffices = () => {
@@ -171,11 +172,14 @@ const ListOffices = () => {
                 <td className="hide-mobile"><span className="badge active">Activo</span></td>
                 <td className="center">
                   <div className="actions-desktop">
-                    <button className="icon-btn edit" onClick={() => openEditModal(office)}>
+                    {/* <button className="icon-btn edit" onClick={() => openEditModal(office)}>
                       <Pencil size={16} />
                     </button>
                     <button className="icon-btn delete" onClick={() => openDeleteModal(office)}>
                       <Trash2 size={16} />
+                    </button> */}
+                    <button className="icon-btn edit" onClick={() => { setSelectedOffice(office); setIsDetailsModalOpen(true); }}>
+                      <SlOptionsVertical size={16}/>
                     </button>
                   </div>
                   <div className="actions-mobile">

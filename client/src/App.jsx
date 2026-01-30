@@ -7,19 +7,22 @@ import HomePage                           from './pages/HomePage'
 import { AuthProvider }                   from './context/AuthContext'
 import { EntityProvider }                   from './context/EntityContext'
 import { HealthProvider }                   from './context/HealtContext'
+import { ProductsProvider }                   from './context/ProductsContext'
 function App() {
   return (
     <div>
       <AuthProvider>
         <EntityProvider>
           <HealthProvider>
-            <BrowserRouter>
-              <Routes>
-                <Route path='/' element={<LoginPage/>}></Route>
-                <Route path='/inicio' element={<HomePage/>}></Route>
-                {/* <Route path='/login' element={<LoginPage/>}></Route> */}
-              </Routes>      
-            </BrowserRouter>
+            <ProductsProvider>
+              <BrowserRouter>
+                <Routes>
+                  <Route path='/' element={<LoginPage/>}></Route>
+                  <Route path='/inicio' element={<HomePage/>}></Route>
+                  {/* <Route path='/login' element={<LoginPage/>}></Route> */}
+                </Routes>      
+              </BrowserRouter>
+            </ProductsProvider>
           </HealthProvider>
         </EntityProvider>
       </AuthProvider>

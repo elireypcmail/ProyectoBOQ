@@ -10,7 +10,9 @@ import {
   AlertTriangle,
   Plus
 } from "lucide-react";
-import "../../styles/components/ListZone.css";
+import { SlOptionsVertical } from "react-icons/sl"
+import "../../styles/components/ListZone.css"
+
 
 const ListZones = () => {
   const { entities, getAllEntities, editedEntity, deleteEntityById, createNewEntity } = useEntity();
@@ -148,11 +150,14 @@ const ListZones = () => {
                   <td className="hide-mobile"><span className="badge active">Activo</span></td>
                   <td className="center">
                     <div className="actions-desktop">
-                      <button className="icon-btn edit" onClick={() => openEditModal(zone)}>
+                      {/* <button className="icon-btn edit" onClick={() => openEditModal(zone)}>
                         <Pencil size={16} />
                       </button>
                       <button className="icon-btn delete" onClick={() => openDeleteModal(zone)}>
                         <Trash2 size={16} />
+                      </button> */}
+                      <button className="icon-btn edit" onClick={() => { setSelectedZone(zone); setIsDetailsModalOpen(true); }}>
+                        <SlOptionsVertical size={16}/>
                       </button>
                     </div>
                     <div className="actions-mobile">

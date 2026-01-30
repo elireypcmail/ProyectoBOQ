@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   Plus
 } from "lucide-react";
+import { SlOptionsVertical } from "react-icons/sl"
 import "../../styles/components/ListZone.css";
 
 const ListDoctors = () => {
@@ -50,7 +51,9 @@ const ListDoctors = () => {
 
   // -------------------- Funciones de formateo de inputs --------------------
   const handleNameInput = (value, setter) => {
-    const formatted = value.replace(/[^a-zA-ZÁÉÍÓÚÜÑáéíóúüñ\s]/g, "").toUpperCase();
+const formatted = value
+  .replace(/[^a-zA-Z0-9ÁÉÍÓÚÜÑáéíóúüñ\s]/g, "")
+  .toUpperCase();
     setter(formatted);
   };
 
@@ -165,8 +168,8 @@ const ListDoctors = () => {
       {/* HEADER */}
       <div className="orders-header">
         <div>
-          <h2>Gestión de Médicos</h2>
-          <p>{filteredMedicos.length} médicos registrados</p>
+          <h2>Gestión de Personal Médico</h2>
+          <p>Personal médico registrado: {filteredMedicos.length}</p>
         </div>
         <button className="btn-primary" onClick={() => { 
           setEditName(""); 
@@ -184,7 +187,7 @@ const ListDoctors = () => {
           <Search size={16} />
           <input
             type="text"
-            placeholder="Buscar médico..."
+            placeholder="Buscar personal médico..."
             value={searchTerm}
             onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
           />
@@ -199,7 +202,7 @@ const ListDoctors = () => {
               <th className="hide-mobile">ID</th>
               <th>Nombre</th>
               <th className="hide-mobile">Teléfono</th>
-              <th className="hide-mobile">Estatus</th>
+              <th className="hide-mobile">Tipo</th>
               <th className="center">Acciones</th>
             </tr>
           </thead>
@@ -209,12 +212,18 @@ const ListDoctors = () => {
                 <td className="id hide-mobile">#{medico.id}</td>
                 <td>{medico.nombre}</td>
                 <td className="hide-mobile">{medico.telefono || "-"}</td>
-                <td className="hide-mobile"><span className="badge active">Activo</span></td>
+                <td className="hide-mobile">{medico.tipo}</td>
                 <td className="center">
                   {/* Desktop */}
                   <div className="actions-desktop">
-                    <button className="icon-btn edit" onClick={() => openEditModal(medico)}><Pencil size={16} /></button>
-                    <button className="icon-btn delete" onClick={() => openDeleteModal(medico)}><Trash2 size={16} /></button>
+                    {/* <button className="icon-btn edit" onClick={() => openEditModal(medico)}><Pencil size={16} /></button> */}
+                    {/* <button className="icon-btn delete" onClick={() => openDeleteModal(medico)}><Trash2 size={16} /></button> */}
+                    <button className="icon-btn edit" onClick={() => { 
+                      setSelectedMedico(medico); 
+                      setIsDetailsModalOpen(true); 
+                    }}>
+                      <SlOptionsVertical size={16}/>
+                    </button>
                   </div>
                   {/* Mobile */}
                   <div className="actions-mobile">

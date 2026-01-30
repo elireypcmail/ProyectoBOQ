@@ -21,7 +21,7 @@
 }
 
 .orders-container {
-  margin-left: 5%;
+  margin-left: 7%;
   width: 90%;
   background: var(--bg);
   padding: 1.75rem;
@@ -126,6 +126,10 @@
 
 .orders-table tr:hover td {
   background-color: #f0f7ff;
+}
+
+.actions-mobile{
+  display: none;
 }
 
 .id {

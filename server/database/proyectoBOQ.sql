@@ -50,8 +50,8 @@ CREATE TABLE parametros (
 CREATE TABLE productos (
   id SERIAL PRIMARY KEY,
   descripcion VARCHAR(200) NOT NULL,
-  id_categoria INT,
-  id_marca INT,
+  id_categoria INT REFERENCES categorias(id) ON DELETE CASCADE,
+  id_marca INT REFERENCES marcas(id) ON DELETE CASCADE,
   files JSON,
   estatus BOOLEAN NOT NULL DEFAULT TRUE,
   fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()

@@ -227,6 +227,8 @@ export const HealthProvider = ({ children }) => {
 
   const createNewHistoria = async (newHistoria) => {
     try {
+      console.log("newHistoria")
+      console.log(newHistoria)
       const res = await HealthAPI.createHistoria(newHistoria);
       setHistorias(prev => [...prev, res.data.data]);
       return { status: true, data: res.data.data };

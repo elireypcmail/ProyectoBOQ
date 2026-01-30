@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { useEntity } from "../../context/EntityContext";
+import { useProducts } from "../../context/ProductsContext";
 import {
   Search,
   ChevronLeft,
@@ -10,34 +10,32 @@ import {
   AlertTriangle,
   Plus
 } from "lucide-react";
-import { SlOptionsVertical } from "react-icons/sl"
+import { SlOptionsVertical } from "react-icons/sl";
 import "../../styles/components/ListZone.css";
 
-const ListDeposits = () => {
+const ListCategories = () => {
   const { 
-    entities, 
-    getAllEntities, 
-    createNewEntity, 
-    editedEntity, 
-    deleteEntityById 
-  } = useEntity();
+    categories,
+    getAllCategories,
+    createNewCategory,
+    editCategory,
+    deleteCategoryById
+  } = useProducts();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
   // Modales
-  const [selectedDeposit, setSelectedDeposit] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [editName, setEditName] = useState("");
 
-  const deposits = entities.depositos || [];
-
   useEffect(() => {
-    getAllEntities("depositos");
+    getAllCategories();
   }, []);
 
   // -------------------- Función de formateo --------------------
@@ -46,78 +44,80 @@ const ListDeposits = () => {
     setter(formatted);
   };
 
-  const filteredDeposits = useMemo(() => {
-    return deposits.filter(d =>
-      d.nombre.toUpperCase().includes(searchTerm.toUpperCase())
+  // -------------------- Filtrado y paginación --------------------
+  const filteredCategories = useMemo(() => {
+    return categories.filter(c =>
+      c.nombre.toUpperCase().includes(searchTerm.toUpperCase())
     );
-  }, [deposits, searchTerm]);
+  }, [categories, searchTerm]);
 
-  const totalPages = Math.ceil(filteredDeposits.length / itemsPerPage);
-  const currentDeposits = filteredDeposits.slice(
+  const totalPages = Math.ceil(filteredCategories.length / itemsPerPage);
+  const currentCategories = filteredCategories.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
   // -------------------- Acciones --------------------
-  const openEditModal = (deposit) => {
-    setSelectedDeposit(deposit);
-    setEditName(deposit.nombre);
+  const openEditModal = (category) => {
+    setSelectedCategory(category);
+    setEditName(category.nombre);
     setIsEditModalOpen(true);
   };
 
-  const openDeleteModal = (deposit) => {
-    setSelectedDeposit(deposit);
+  const openDeleteModal = (category) => {
+    setSelectedCategory(category);
     setIsDeleteModalOpen(true);
   };
 
   const handleCreate = async () => {
     if (!editName.trim()) return;
     try {
-      await createNewEntity("depositos", { nombre: editName.trim() });
+      await createNewCategory({ nombre: editName.trim() });
       setIsCreateModalOpen(false);
       setEditName("");
-      getAllEntities("depositos");
+      getAllCategories();
     } catch (error) {
-      console.error("Error al crear depósito:", error);
+      console.error("Error al crear categoría:", error);
     }
   };
 
   const handleUpdate = async () => {
-    if (!editName.trim() || !selectedDeposit) return;
+    if (!editName.trim() || !selectedCategory) return;
     try {
-      await editedEntity("depositos", selectedDeposit.id, { nombre: editName.trim() });
+      await editCategory(selectedCategory.id, { nombre: editName.trim() });
       setIsEditModalOpen(false);
-      setSelectedDeposit(null);
+      setSelectedCategory(null);
       setEditName("");
-      getAllEntities("depositos");
+      getAllCategories();
     } catch (error) {
-      console.error("Error al editar depósito:", error);
+      console.error("Error al editar categoría:", error);
     }
   };
 
   const handleDelete = async () => {
-    if (!selectedDeposit) return;
+    if (!selectedCategory) return;
     try {
-      await deleteEntityById("depositos", selectedDeposit.id);
+      await deleteCategoryById(selectedCategory.id);
       setIsDeleteModalOpen(false);
-      setSelectedDeposit(null);
-      getAllEntities("depositos");
+      setSelectedCategory(null);
+      getAllCategories();
     } catch (error) {
-      console.error("Error al eliminar depósito:", error);
+      console.error("Error al eliminar categoría:", error);
     }
   };
 
+  // -------------------- Render --------------------
   return (
     <div className="orders-container">
 
       {/* HEADER */}
       <div className="orders-header">
         <div>
-          <h2>Gestión de Depósitos</h2>
-          <p>{filteredDeposits.length} depósitos registrados</p>
+          <h2>Gestión de Categorías</h2>
+          <p>{filteredCategories.length} categorías registradas</p>
         </div>
         <button className="btn-primary" onClick={() => { setEditName(""); setIsCreateModalOpen(true); }}>
-          <Plus size={16} /> Nuevo Depósito
+          <Plus size={16} /> Nueva Categoría
         </button>
       </div>
 
@@ -127,7 +127,7 @@ const ListDeposits = () => {
           <Search size={16} />
           <input
             type="text"
-            placeholder="Buscar depósito..."
+            placeholder="Buscar categoría..."
             value={searchTerm}
             onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
           />
@@ -146,28 +146,22 @@ const ListDeposits = () => {
             </tr>
           </thead>
           <tbody>
-            {currentDeposits.length > 0 ? (
-              currentDeposits.map(deposit => (
-                <tr key={deposit.id}>
-                  <td className="id hide-mobile">#{deposit.id}</td>
-                  <td>{deposit.nombre}</td>
+            {currentCategories.length > 0 ? (
+              currentCategories.map(category => (
+                <tr key={category.id}>
+                  <td className="id hide-mobile">#{category.id}</td>
+                  <td>{category.nombre}</td>
                   <td className="hide-mobile">
                     <span className="badge active">Activo</span>
                   </td>
                   <td className="center">
                     <div className="actions-desktop">
-                      {/* <button className="icon-btn edit" onClick={() => openEditModal(deposit)}>
-                        <Pencil size={16} />
-                      </button>
-                      <button className="icon-btn delete" onClick={() => openDeleteModal(deposit)}>
-                        <Trash2 size={16} />
-                      </button> */}
-                      <button className="icon-btn edit" onClick={() => { setSelectedDeposit(deposit); setIsDetailsModalOpen(true); }}>
+                      <button className="icon-btn edit" onClick={() => { setSelectedCategory(category); setIsDetailsModalOpen(true); }}>
                         <SlOptionsVertical size={16}/>
                       </button>
                     </div>
                     <div className="actions-mobile">
-                      <button className="icon-btn" onClick={() => { setSelectedDeposit(deposit); setIsDetailsModalOpen(true); }}>
+                      <button className="icon-btn" onClick={() => { setSelectedCategory(category); setIsDetailsModalOpen(true); }}>
                         &#8942;
                       </button>
                     </div>
@@ -176,7 +170,7 @@ const ListDeposits = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="4" className="no-results">No se encontraron depósitos</td>
+                <td colSpan="4" className="no-results">No se encontraron categorías</td>
               </tr>
             )}
           </tbody>
@@ -200,7 +194,7 @@ const ListDeposits = () => {
       {isCreateModalOpen && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Crear Depósito</h3>
+            <h3>Crear Categoría</h3>
             <input 
               className="modal-input" 
               value={editName} 
@@ -215,10 +209,10 @@ const ListDeposits = () => {
       )}
 
       {/* MODAL EDITAR */}
-      {isEditModalOpen && selectedDeposit && (
+      {isEditModalOpen && selectedCategory && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Editar Depósito</h3>
+            <h3>Editar Categoría</h3>
             <input 
               className="modal-input" 
               value={editName} 
@@ -233,14 +227,14 @@ const ListDeposits = () => {
       )}
 
       {/* MODAL ELIMINAR */}
-      {isDeleteModalOpen && selectedDeposit && (
+      {isDeleteModalOpen && selectedCategory && (
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header-danger">
               <AlertTriangle size={28} />
-              <h3>¿Eliminar depósito?</h3>
+              <h3>¿Eliminar categoría?</h3>
             </div>
-            <p>Confirma que deseas eliminar <strong>{selectedDeposit.nombre}</strong></p>
+            <p>Confirma que deseas eliminar <strong>{selectedCategory.nombre}</strong></p>
             <div className="modal-footer">
               <button className="btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
               <button className="btn-danger" onClick={handleDelete}><Trash2 size={16} /> Eliminar</button>
@@ -249,20 +243,19 @@ const ListDeposits = () => {
         </div>
       )}
 
-      {/* MODAL DETALLES MÓVIL */}
-      {isDetailsModalOpen && selectedDeposit && (
+      {/* MODAL DETALLES */}
+      {isDetailsModalOpen && selectedCategory && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Detalles de {selectedDeposit.nombre}</h3>
+            <h3>Detalles de {selectedCategory.nombre}</h3>
             <div className="modal-info-body">
-              <div className="detail-card"><strong>ID:</strong> <span>#{selectedDeposit.id}</span></div>
-              <div className="detail-card"><strong>Nombre:</strong> <span>{selectedDeposit.nombre}</span></div>
+              <div className="detail-card"><strong>ID:</strong> <span>#{selectedCategory.id}</span></div>
+              <div className="detail-card"><strong>Nombre:</strong> <span>{selectedCategory.nombre}</span></div>
               <div className="detail-card"><strong>Estado:</strong> <span>Activo</span></div>
             </div>
-
             <div className="modal-footer" style={{ flexDirection: "column", gap: "0.75rem" }}>
-              <button className="btn-primary" onClick={() => { setIsDetailsModalOpen(false); openEditModal(selectedDeposit); }}><Pencil size={16} /> Editar</button>
-              <button className="btn-danger" onClick={() => { setIsDetailsModalOpen(false); openDeleteModal(selectedDeposit); }}><Trash2 size={16} /> Eliminar</button>
+              <button className="btn-primary" onClick={() => { setIsDetailsModalOpen(false); openEditModal(selectedCategory); }}><Pencil size={16} /> Editar</button>
+              <button className="btn-danger" onClick={() => { setIsDetailsModalOpen(false); openDeleteModal(selectedCategory); }}><Trash2 size={16} /> Eliminar</button>
               <button className="btn-secondary" onClick={() => setIsDetailsModalOpen(false)}>Cerrar</button>
             </div>
           </div>
@@ -273,4 +266,4 @@ const ListDeposits = () => {
   );
 };
 
-export default ListDeposits;
+export default ListCategories;

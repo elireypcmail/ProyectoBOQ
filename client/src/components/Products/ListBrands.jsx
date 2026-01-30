@@ -10,10 +10,10 @@ import {
   AlertTriangle,
   Plus
 } from "lucide-react";
-import { SlOptionsVertical } from "react-icons/sl"
+import { SlOptionsVertical } from "react-icons/sl";
 import "../../styles/components/ListZone.css";
 
-const ListDeposits = () => {
+const ListBrands = () => {
   const { 
     entities, 
     getAllEntities, 
@@ -27,17 +27,17 @@ const ListDeposits = () => {
   const itemsPerPage = 6;
 
   // Modales
-  const [selectedDeposit, setSelectedDeposit] = useState(null);
+  const [selectedBrand, setSelectedBrand] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [editName, setEditName] = useState("");
 
-  const deposits = entities.depositos || [];
+  const brands = entities.marcas || [];
 
   useEffect(() => {
-    getAllEntities("depositos");
+    getAllEntities("marcas");
   }, []);
 
   // -------------------- Función de formateo --------------------
@@ -46,64 +46,64 @@ const ListDeposits = () => {
     setter(formatted);
   };
 
-  const filteredDeposits = useMemo(() => {
-    return deposits.filter(d =>
-      d.nombre.toUpperCase().includes(searchTerm.toUpperCase())
+  const filteredBrands = useMemo(() => {
+    return brands.filter(b =>
+      b.nombre.toUpperCase().includes(searchTerm.toUpperCase())
     );
-  }, [deposits, searchTerm]);
+  }, [brands, searchTerm]);
 
-  const totalPages = Math.ceil(filteredDeposits.length / itemsPerPage);
-  const currentDeposits = filteredDeposits.slice(
+  const totalPages = Math.ceil(filteredBrands.length / itemsPerPage);
+  const currentBrands = filteredBrands.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
   // -------------------- Acciones --------------------
-  const openEditModal = (deposit) => {
-    setSelectedDeposit(deposit);
-    setEditName(deposit.nombre);
+  const openEditModal = (brand) => {
+    setSelectedBrand(brand);
+    setEditName(brand.nombre);
     setIsEditModalOpen(true);
   };
 
-  const openDeleteModal = (deposit) => {
-    setSelectedDeposit(deposit);
+  const openDeleteModal = (brand) => {
+    setSelectedBrand(brand);
     setIsDeleteModalOpen(true);
   };
 
   const handleCreate = async () => {
     if (!editName.trim()) return;
     try {
-      await createNewEntity("depositos", { nombre: editName.trim() });
+      await createNewEntity("marcas", { nombre: editName.trim() });
       setIsCreateModalOpen(false);
       setEditName("");
-      getAllEntities("depositos");
+      getAllEntities("marcas");
     } catch (error) {
-      console.error("Error al crear depósito:", error);
+      console.error("Error al crear marca:", error);
     }
   };
 
   const handleUpdate = async () => {
-    if (!editName.trim() || !selectedDeposit) return;
+    if (!editName.trim() || !selectedBrand) return;
     try {
-      await editedEntity("depositos", selectedDeposit.id, { nombre: editName.trim() });
+      await editedEntity("marcas", selectedBrand.id, { nombre: editName.trim() });
       setIsEditModalOpen(false);
-      setSelectedDeposit(null);
+      setSelectedBrand(null);
       setEditName("");
-      getAllEntities("depositos");
+      getAllEntities("marcas");
     } catch (error) {
-      console.error("Error al editar depósito:", error);
+      console.error("Error al editar marca:", error);
     }
   };
 
   const handleDelete = async () => {
-    if (!selectedDeposit) return;
+    if (!selectedBrand) return;
     try {
-      await deleteEntityById("depositos", selectedDeposit.id);
+      await deleteEntityById("marcas", selectedBrand.id);
       setIsDeleteModalOpen(false);
-      setSelectedDeposit(null);
-      getAllEntities("depositos");
+      setSelectedBrand(null);
+      getAllEntities("marcas");
     } catch (error) {
-      console.error("Error al eliminar depósito:", error);
+      console.error("Error al eliminar marca:", error);
     }
   };
 
@@ -113,11 +113,11 @@ const ListDeposits = () => {
       {/* HEADER */}
       <div className="orders-header">
         <div>
-          <h2>Gestión de Depósitos</h2>
-          <p>{filteredDeposits.length} depósitos registrados</p>
+          <h2>Gestión de Marcas</h2>
+          <p>{filteredBrands.length} marcas registradas</p>
         </div>
         <button className="btn-primary" onClick={() => { setEditName(""); setIsCreateModalOpen(true); }}>
-          <Plus size={16} /> Nuevo Depósito
+          <Plus size={16} /> Nueva Marca
         </button>
       </div>
 
@@ -127,7 +127,7 @@ const ListDeposits = () => {
           <Search size={16} />
           <input
             type="text"
-            placeholder="Buscar depósito..."
+            placeholder="Buscar marca..."
             value={searchTerm}
             onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
           />
@@ -146,28 +146,22 @@ const ListDeposits = () => {
             </tr>
           </thead>
           <tbody>
-            {currentDeposits.length > 0 ? (
-              currentDeposits.map(deposit => (
-                <tr key={deposit.id}>
-                  <td className="id hide-mobile">#{deposit.id}</td>
-                  <td>{deposit.nombre}</td>
+            {currentBrands.length > 0 ? (
+              currentBrands.map(brand => (
+                <tr key={brand.id}>
+                  <td className="id hide-mobile">#{brand.id}</td>
+                  <td>{brand.nombre}</td>
                   <td className="hide-mobile">
                     <span className="badge active">Activo</span>
                   </td>
                   <td className="center">
                     <div className="actions-desktop">
-                      {/* <button className="icon-btn edit" onClick={() => openEditModal(deposit)}>
-                        <Pencil size={16} />
-                      </button>
-                      <button className="icon-btn delete" onClick={() => openDeleteModal(deposit)}>
-                        <Trash2 size={16} />
-                      </button> */}
-                      <button className="icon-btn edit" onClick={() => { setSelectedDeposit(deposit); setIsDetailsModalOpen(true); }}>
+                      <button className="icon-btn edit" onClick={() => { setSelectedBrand(brand); setIsDetailsModalOpen(true); }}>
                         <SlOptionsVertical size={16}/>
                       </button>
                     </div>
                     <div className="actions-mobile">
-                      <button className="icon-btn" onClick={() => { setSelectedDeposit(deposit); setIsDetailsModalOpen(true); }}>
+                      <button className="icon-btn" onClick={() => { setSelectedBrand(brand); setIsDetailsModalOpen(true); }}>
                         &#8942;
                       </button>
                     </div>
@@ -176,7 +170,7 @@ const ListDeposits = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="4" className="no-results">No se encontraron depósitos</td>
+                <td colSpan="4" className="no-results">No se encontraron marcas</td>
               </tr>
             )}
           </tbody>
@@ -200,7 +194,7 @@ const ListDeposits = () => {
       {isCreateModalOpen && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Crear Depósito</h3>
+            <h3>Crear Marca</h3>
             <input 
               className="modal-input" 
               value={editName} 
@@ -215,10 +209,10 @@ const ListDeposits = () => {
       )}
 
       {/* MODAL EDITAR */}
-      {isEditModalOpen && selectedDeposit && (
+      {isEditModalOpen && selectedBrand && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Editar Depósito</h3>
+            <h3>Editar Marca</h3>
             <input 
               className="modal-input" 
               value={editName} 
@@ -233,14 +227,14 @@ const ListDeposits = () => {
       )}
 
       {/* MODAL ELIMINAR */}
-      {isDeleteModalOpen && selectedDeposit && (
+      {isDeleteModalOpen && selectedBrand && (
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header-danger">
               <AlertTriangle size={28} />
-              <h3>¿Eliminar depósito?</h3>
+              <h3>¿Eliminar marca?</h3>
             </div>
-            <p>Confirma que deseas eliminar <strong>{selectedDeposit.nombre}</strong></p>
+            <p>Confirma que deseas eliminar <strong>{selectedBrand.nombre}</strong></p>
             <div className="modal-footer">
               <button className="btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
               <button className="btn-danger" onClick={handleDelete}><Trash2 size={16} /> Eliminar</button>
@@ -250,19 +244,18 @@ const ListDeposits = () => {
       )}
 
       {/* MODAL DETALLES MÓVIL */}
-      {isDetailsModalOpen && selectedDeposit && (
+      {isDetailsModalOpen && selectedBrand && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Detalles de {selectedDeposit.nombre}</h3>
+            <h3>Detalles de {selectedBrand.nombre}</h3>
             <div className="modal-info-body">
-              <div className="detail-card"><strong>ID:</strong> <span>#{selectedDeposit.id}</span></div>
-              <div className="detail-card"><strong>Nombre:</strong> <span>{selectedDeposit.nombre}</span></div>
+              <div className="detail-card"><strong>ID:</strong> <span>#{selectedBrand.id}</span></div>
+              <div className="detail-card"><strong>Nombre:</strong> <span>{selectedBrand.nombre}</span></div>
               <div className="detail-card"><strong>Estado:</strong> <span>Activo</span></div>
             </div>
-
             <div className="modal-footer" style={{ flexDirection: "column", gap: "0.75rem" }}>
-              <button className="btn-primary" onClick={() => { setIsDetailsModalOpen(false); openEditModal(selectedDeposit); }}><Pencil size={16} /> Editar</button>
-              <button className="btn-danger" onClick={() => { setIsDetailsModalOpen(false); openDeleteModal(selectedDeposit); }}><Trash2 size={16} /> Eliminar</button>
+              <button className="btn-primary" onClick={() => { setIsDetailsModalOpen(false); openEditModal(selectedBrand); }}><Pencil size={16} /> Editar</button>
+              <button className="btn-danger" onClick={() => { setIsDetailsModalOpen(false); openDeleteModal(selectedBrand); }}><Trash2 size={16} /> Eliminar</button>
               <button className="btn-secondary" onClick={() => setIsDetailsModalOpen(false)}>Cerrar</button>
             </div>
           </div>
@@ -273,4 +266,4 @@ const ListDeposits = () => {
   );
 };
 
-export default ListDeposits;
+export default ListBrands;

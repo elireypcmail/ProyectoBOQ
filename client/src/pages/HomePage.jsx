@@ -1,9 +1,18 @@
 import React, { useState } from "react"
 import Sidebar from "../components/Layout/Sidebar"
+import ListPatients from "../components/Patients/ListPatients"
+import ListInsurances from "../components/Patients/ListInsurances"
+import ListStories from "../components/Patients/ListStories"
+
+import ListProducts from "../components/Products/ListProducts"
+import ListCategories from "../components/Products/ListCategories"
+import ListBrands from "../components/Products/ListBrands"
+
 import ListZones from "../components/Entities/ListZones"
 import ListDeposits from "../components/Entities/ListDeposits"
 import ListOffices from "../components/Entities/ListOffices"
 import ListDoctors from "../components/Patients/ListDoctors"
+import ListTypesDoctor from "../components/Patients/ListTypesDoctor"
 import { EntityProvider } from "../context/EntityContext"
 import { Menu, X } from "lucide-react" // Iconos para el toggle
 import "../styles/pages/HomePage.css"
@@ -48,10 +57,17 @@ export default function HomePage() {
 
           <section className="content-area">
             <div className="content-container">
+              {activeComponent === "patients" && <ListPatients />}
+              {activeComponent === "insurances" && <ListInsurances />}
+              {activeComponent === "stories" && <ListStories />}
+              {activeComponent === "products" && <ListProducts />}
+              {activeComponent === "categories" && <ListCategories />}
+              {activeComponent === "brands" && <ListBrands />}
               {activeComponent === "zones" && <ListZones />}
               {activeComponent === "deposits" && <ListDeposits />}
               {activeComponent === "offices" && <ListOffices />}
               {activeComponent === "doctors" && <ListDoctors />}
+              {activeComponent === "types-doctors" && <ListTypesDoctor />}
               {/* Aquí irían los demás componentes */}
             </div>
           </section>

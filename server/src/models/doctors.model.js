@@ -1,14 +1,14 @@
 import pool from "../connection/db.connect.js"
 
 export class DoctorsModel {
-   /* =====================================================
-     ===================== MEDICOS =======================
-  ===================================================== */
+
+  // Personal Médico
 
   static async getAllsDoctors() {
     let connection
     try {
       connection = await pool.connect()
+
       const result = await connection.query(`
         SELECT 
           m.id,
@@ -22,23 +22,45 @@ export class DoctorsModel {
         ORDER BY m.id DESC
       `)
 
-        console.log(result.rows)
+      if (!result.rows.length) {
+        return {
+          status: false,
+          code: 404,
+          msg: "No se encontraron médicos"
+        }
+      }
 
-      return result.rows.length
-        ? { status: true, code: 200, data: result.rows }
-        : { status: false, code: 404, msg: "Doctors not found" }
+      return {
+        status: true,
+        code: 200,
+        data: result.rows
+      }
+
     } catch (error) {
-      return { status: false, code: 500, msg: "Error fetching doctors", error: error.message }
+      return {
+        status: false,
+        code: 500,
+        msg: "Error al obtener los médicos",
+        error: error.message
+      }
     } finally {
       if (connection) connection.release()
     }
   }
 
   static async getDoctorById(id) {
-    if (!id) return { status: false, code: 400, msg: "Doctor ID required" }
+    if (!id) {
+      return {
+        status: false,
+        code: 400,
+        msg: "El ID del médico es obligatorio"
+      }
+    }
+
     let connection
     try {
       connection = await pool.connect()
+
       const result = await connection.query(`
         SELECT 
           m.id,
@@ -51,11 +73,28 @@ export class DoctorsModel {
         LEFT JOIN tipomedicos tm ON tm.id = m.id_tipoMedico
         WHERE m.id = $1
       `, [id])
-      return result.rows.length
-        ? { status: true, code: 200, data: result.rows[0] }
-        : { status: false, code: 404, msg: "Doctor not found" }
+
+      if (!result.rows.length) {
+        return {
+          status: false,
+          code: 404,
+          msg: "Médico no encontrado"
+        }
+      }
+
+      return {
+        status: true,
+        code: 200,
+        data: result.rows[0]
+      }
+
     } catch (error) {
-      return { status: false, code: 500, msg: "Error fetching doctor", error: error.message }
+      return {
+        status: false,
+        code: 500,
+        msg: "Error al obtener el médico",
+        error: error.message
+      }
     } finally {
       if (connection) connection.release()
     }
@@ -65,15 +104,49 @@ export class DoctorsModel {
     let connection
     try {
       connection = await pool.connect()
+
+      // 🔎 Validar duplicado (nombre + tipo de médico)
+      const duplicate = await connection.query(
+        `SELECT id FROM medicos
+        WHERE LOWER(nombre) = LOWER($1)
+          AND id_tipoMedico = $2`,
+        [data.nombre, data.id_tipoMedico]
+      )
+
+      if (duplicate.rows.length) {
+        return {
+          status: false,
+          code: 409,
+          msg: "El médico ya existe"
+        }
+      }
+
       const insert = await connection.query(
         `INSERT INTO medicos (id_tipoMedico, nombre, telefono, estatus)
-         VALUES ($1,$2,$3,$4)
-         RETURNING *`,
-        [data.id_tipoMedico, data.nombre, data.telefono || null, data.estatus ?? true]
+        VALUES ($1,$2,$3,$4)
+        RETURNING *`,
+        [
+          data.id_tipoMedico,
+          data.nombre,
+          data.telefono || null,
+          data.estatus ?? true
+        ]
       )
-      return { status: true, code: 201, msg: "Doctor created", data: insert.rows[0] }
+
+      return {
+        status: true,
+        code: 201,
+        msg: "Médico creado correctamente",
+        data: insert.rows[0]
+      }
+
     } catch (error) {
-      return { status: false, code: 500, msg: "Error creating doctor", error: error.message }
+      return {
+        status: false,
+        code: 500,
+        msg: "Error al crear el médico",
+        error: error.message
+      }
     } finally {
       if (connection) connection.release()
     }
@@ -83,16 +156,49 @@ export class DoctorsModel {
     let connection
     try {
       connection = await pool.connect()
+
       const fields = Object.keys(data)
+      if (!fields.length) {
+        return {
+          status: false,
+          code: 400,
+          msg: "No se enviaron datos para actualizar"
+        }
+      }
+
       const values = Object.values(data)
       const setClause = fields.map((f, i) => `${f}=$${i + 1}`).join(", ")
+
       const result = await connection.query(
-        `UPDATE medicos SET ${setClause} WHERE id = $${fields.length + 1} RETURNING *`,
+        `UPDATE medicos
+        SET ${setClause}
+        WHERE id = $${fields.length + 1}
+        RETURNING *`,
         [...values, id]
       )
-      return { status: true, code: 200, msg: "Doctor updated", data: result.rows[0] }
+
+      if (!result.rows.length) {
+        return {
+          status: false,
+          code: 404,
+          msg: "Médico no encontrado"
+        }
+      }
+
+      return {
+        status: true,
+        code: 200,
+        msg: "Médico actualizado correctamente",
+        data: result.rows[0]
+      }
+
     } catch (error) {
-      return { status: false, code: 500, msg: "Error updating doctor", error: error.message }
+      return {
+        status: false,
+        code: 500,
+        msg: "Error al actualizar el médico",
+        error: error.message
+      }
     } finally {
       if (connection) connection.release()
     }
@@ -102,44 +208,115 @@ export class DoctorsModel {
     let connection
     try {
       connection = await pool.connect()
-      await connection.query(`DELETE FROM medicos WHERE id = $1`, [id])
-      return { status: true, code: 200, msg: "Doctor deleted" }
+
+      const result = await connection.query(
+        `DELETE FROM medicos WHERE id = $1 RETURNING id`,
+        [id]
+      )
+
+      if (!result.rowCount) {
+        return {
+          status: false,
+          code: 404,
+          msg: "Médico no encontrado"
+        }
+      }
+
+      return {
+        status: true,
+        code: 200,
+        msg: "Médico eliminado correctamente"
+      }
+
     } catch (error) {
-      return { status: false, code: 500, msg: "Error deleting doctor", error: error.message }
+      return {
+        status: false,
+        code: 500,
+        msg: "Error al eliminar el médico",
+        error: error.message
+      }
     } finally {
       if (connection) connection.release()
     }
   }
 
-  /* =====================================================
-     ================= TIPOS DE MEDICOS ==================
-  ===================================================== */
+
+  // Tipo de Personal Médico
 
   static async getAllDoctorsTypes() {
     let connection
     try {
       connection = await pool.connect()
-      const result = await connection.query(`SELECT * FROM tipomedicos`)
-      return result.rows.length
-        ? { status: true, code: 200, data: result.rows }  // ✅ todos los registros
-        : { status: false, code: 404, msg: "Doctor types not found" }
+
+      const result = await connection.query(
+        `SELECT * FROM tipomedicos ORDER BY id DESC`
+      )
+
+      if (!result.rows.length) {
+        return {
+          status: false,
+          code: 404,
+          msg: "No se encontraron tipos de médicos"
+        }
+      }
+
+      return {
+        status: true,
+        code: 200,
+        data: result.rows
+      }
+
     } catch (error) {
-      return { status: false, code: 500, msg: "Error fetching doctor types", error: error.message }
+      return {
+        status: false,
+        code: 500,
+        msg: "Error al obtener los tipos de médicos",
+        error: error.message
+      }
     } finally {
       if (connection) connection.release()
     }
   }
 
   static async getDoctorTypeById(id) {
+    if (!id) {
+      return {
+        status: false,
+        code: 400,
+        msg: "El ID del tipo de médico es obligatorio"
+      }
+    }
+
     let connection
     try {
       connection = await pool.connect()
-      const result = await connection.query(`SELECT * FROM tipomedicos`)
-      return result.rows.length
-        ? { status: true, code: 200, data: result.rows[0] }
-        : { status: false, code: 404, msg: "Doctor type not found" }
+
+      const result = await connection.query(
+        `SELECT * FROM tipomedicos WHERE id = $1`,
+        [id]
+      )
+
+      if (!result.rows.length) {
+        return {
+          status: false,
+          code: 404,
+          msg: "Tipo de médico no encontrado"
+        }
+      }
+
+      return {
+        status: true,
+        code: 200,
+        data: result.rows[0]
+      }
+
     } catch (error) {
-      return { status: false, code: 500, msg: "Error fetching doctor type", error: error.message }
+      return {
+        status: false,
+        code: 500,
+        msg: "Error al obtener el tipo de médico",
+        error: error.message
+      }
     } finally {
       if (connection) connection.release()
     }
@@ -149,15 +326,45 @@ export class DoctorsModel {
     let connection
     try {
       connection = await pool.connect()
+
+      // 🔎 Validar duplicado por nombre
+      const duplicate = await connection.query(
+        `SELECT id FROM tipomedicos WHERE LOWER(nombre) = LOWER($1)`,
+        [data.nombre]
+      )
+
+      if (duplicate.rows.length) {
+        return {
+          status: false,
+          code: 409,
+          msg: "El tipo de médico ya existe"
+        }
+      }
+
       const insert = await connection.query(
         `INSERT INTO tipomedicos (nombre, estatus)
-         VALUES ($1,$2)
-         RETURNING *`,
-        [data.nombre, data.estatus ?? true]
+        VALUES ($1,$2)
+        RETURNING *`,
+        [
+          data.nombre,
+          data.estatus ?? true
+        ]
       )
-      return { status: true, code: 201, msg: "Doctor type created", data: insert.rows[0] }
+
+      return {
+        status: true,
+        code: 201,
+        msg: "Tipo de médico creado correctamente",
+        data: insert.rows[0]
+      }
+
     } catch (error) {
-      return { status: false, code: 500, msg: "Error creating doctor type", error: error.message }
+      return {
+        status: false,
+        code: 500,
+        msg: "Error al crear el tipo de médico",
+        error: error.message
+      }
     } finally {
       if (connection) connection.release()
     }
@@ -167,16 +374,49 @@ export class DoctorsModel {
     let connection
     try {
       connection = await pool.connect()
+
       const fields = Object.keys(data)
+      if (!fields.length) {
+        return {
+          status: false,
+          code: 400,
+          msg: "No se enviaron datos para actualizar"
+        }
+      }
+
       const values = Object.values(data)
       const setClause = fields.map((f, i) => `${f}=$${i + 1}`).join(", ")
+
       const result = await connection.query(
-        `UPDATE tipomedicos SET ${setClause} WHERE id = $${fields.length + 1} RETURNING *`,
+        `UPDATE tipomedicos
+        SET ${setClause}
+        WHERE id = $${fields.length + 1}
+        RETURNING *`,
         [...values, id]
       )
-      return { status: true, code: 200, msg: "Doctor type updated", data: result.rows[0] }
+
+      if (!result.rows.length) {
+        return {
+          status: false,
+          code: 404,
+          msg: "Tipo de médico no encontrado"
+        }
+      }
+
+      return {
+        status: true,
+        code: 200,
+        msg: "Tipo de médico actualizado correctamente",
+        data: result.rows[0]
+      }
+
     } catch (error) {
-      return { status: false, code: 500, msg: "Error updating doctor type", error: error.message }
+      return {
+        status: false,
+        code: 500,
+        msg: "Error al actualizar el tipo de médico",
+        error: error.message
+      }
     } finally {
       if (connection) connection.release()
     }
@@ -186,12 +426,36 @@ export class DoctorsModel {
     let connection
     try {
       connection = await pool.connect()
-      await connection.query(`DELETE FROM tipomedicos WHERE id = $1`, [id])
-      return { status: true, code: 200, msg: "Doctor type deleted" }
+
+      const result = await connection.query(
+        `DELETE FROM tipomedicos WHERE id = $1 RETURNING id`,
+        [id]
+      )
+
+      if (!result.rowCount) {
+        return {
+          status: false,
+          code: 404,
+          msg: "Tipo de médico no encontrado"
+        }
+      }
+
+      return {
+        status: true,
+        code: 200,
+        msg: "Tipo de médico eliminado correctamente"
+      }
+
     } catch (error) {
-      return { status: false, code: 500, msg: "Error deleting doctor type", error: error.message }
+      return {
+        status: false,
+        code: 500,
+        msg: "Error al eliminar el tipo de médico",
+        error: error.message
+      }
     } finally {
       if (connection) connection.release()
     }
   }
+
 }
