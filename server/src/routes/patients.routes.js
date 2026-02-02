@@ -5,6 +5,8 @@ const router = Router()
 import _var from "../global/_var.js"
 // Controllers
 import { controller } from "../controllers/patients.controller.js"
+// Middleware
+import { upload } from "../middlewares/upload.js"
 
 /* ================= Routes ================= */
 router.get("/", controller.getAllPatients)

@@ -57,6 +57,8 @@ controller.createPatients = async (req, res) => {
       estatus
     })
 
+    console.log(result)
+
     return res.status(result.code).json(result)
   } catch (error) {
     return res.status(500).json({ error: error.message })
@@ -193,18 +195,27 @@ controller.getByIdStories = async (req, res) => {
   }
 }
 
+controller.getPatientByIdStories = async (req, res) => {
+  try {
+    const { id } = req.params
+    const result = await PatientsModel.getStoriesByPatientId(id)
+    return res.status(result.code).json(result)
+  } catch (error) {
+    return res.status(500).json({ error: error.message })
+  }
+}
+
 controller.createStories = async (req, res) => {
   try {
     const {
       id_paciente,
       id_medico,
-      fecha,
       detalle,
       files,
       estatus
     } = req.body
 
-    if (!id_paciente || !id_medico || !fecha || !detalle) {
+    if (!id_paciente || !id_medico || !detalle) {
       return res.status(400).json({
         error: "id_paciente, id_medico, fecha y detalle son obligatorios"
       })
@@ -213,11 +224,12 @@ controller.createStories = async (req, res) => {
     const result = await PatientsModel.createStory({
       id_paciente,
       id_medico,
-      fecha,
       detalle,
       files,
       estatus
     })
+
+    console.log(result)
 
     return res.status(result.code).json(result)
   } catch (error) {

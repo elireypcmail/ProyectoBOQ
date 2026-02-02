@@ -10,6 +10,7 @@ import { controller } from "../controllers/patients.controller.js"
 router.get("/", controller.getAllStories)
 router.post("/", controller.createStories)
 router.get("/:id", controller.getByIdStories)
+router.get("/paciente/:id", controller.getPatientByIdStories)
 router.put("/:id", controller.updateStories)
 router.delete("/:id", controller.deleteStories)
 

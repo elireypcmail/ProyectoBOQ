@@ -56,6 +56,17 @@ const ListInsurances = () => {
     currentPage * itemsPerPage
   );
 
+  // -------------------- FORMATOS ----------------
+  const handleNameInput = (value, setter) => {
+    setter(value.replace(/[^a-zA-ZÁÉÍÓÚÜÑáéíóúüñ\s]/g, "").toUpperCase());
+  };
+
+  const handlePhoneInput = (value, setter) => {
+    const digits = value.replace(/\D/g, "").slice(0, 11);
+    setter(digits.length > 4 ? `${digits.slice(0, 4)}-${digits.slice(4)}` : digits);
+  };
+
+
   // -------------------- Acciones --------------------
   const openEditModal = (seguro) => {
     setSelectedSeguro(seguro);
@@ -191,29 +202,39 @@ const ListInsurances = () => {
         <div className="modal-overlay">
           <div className="modal-content">
             <h3>{isCreateModalOpen ? "Crear Seguro" : "Editar Seguro"}</h3>
+            
             <input
               className="modal-input"
               placeholder="Nombre"
               value={editName}
-              onChange={e => setEditName(e.target.value)}
+              onChange={e => handleNameInput(e.target.value, setEditName)}
             />
+            
             <input
               className="modal-input"
               placeholder="Contacto"
               value={editContacto}
-              onChange={e => setEditContacto(e.target.value)}
+              onChange={e => handleNameInput(e.target.value, setEditContacto)}
             />
+            
             <input
               className="modal-input"
               placeholder="Teléfono"
               value={editTelefono}
-              onChange={e => setEditTelefono(e.target.value)}
+              onChange={e => handlePhoneInput(e.target.value, setEditTelefono)}
             />
+            
             <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => {
-                setIsCreateModalOpen(false); setIsEditModalOpen(false);
-                resetForm();
-              }}>Cancelar</button>
+              <button
+                className="btn-secondary"
+                onClick={() => {
+                  setIsCreateModalOpen(false);
+                  setIsEditModalOpen(false);
+                  resetForm();
+                }}
+              >
+                Cancelar
+              </button>
               <button className="btn-primary" onClick={isCreateModalOpen ? handleCreate : handleUpdate}>
                 <Save size={16} /> {isCreateModalOpen ? "Crear" : "Guardar"}
               </button>
@@ -221,6 +242,7 @@ const ListInsurances = () => {
           </div>
         </div>
       )}
+
 
       {/* MODAL DETALLES */}
       {isDetailsModalOpen && selectedSeguro && (

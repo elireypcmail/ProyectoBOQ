@@ -27,11 +27,10 @@ const Sidebar = ({ setActiveComponent, activeComponent }) => {
         { name: "Productos", key: "products", icon: <Package size={18} /> },
         { name: "Categorías", key: "categories", icon: <Tags size={18} /> },
         { name: "Marcas", key: "brands", icon: <BadgeCheck size={18} /> },
-        { name: "Lotes", key: "batches", icon: <Box size={18} /> },
+        // { name: "Lotes", key: "lots", icon: <Box size={18} /> },
       ]
     },
 
-    // --- GRUPO MÉDICOS ---
     { 
       name: "Gestión Médica", 
       key: "medicos-group", 
@@ -42,22 +41,29 @@ const Sidebar = ({ setActiveComponent, activeComponent }) => {
       ]
     },
 
-    // --- GRUPO PACIENTES ---
     { 
-      name: "Gestión Pacientes", 
+      name: "Gestión Clientes", 
       key: "pacientes-group", 
       icon: <HeartPulse size={22} />,
       children: [
         { name: "Pacientes", key: "patients", icon: <Users size={18} /> },
-        { name: "Seguros", key: "insurances", icon: <Shield size={18} /> },
-        { name: "Historias", key: "stories", icon: <FileText size={18} /> }
+        { name: "Seguros", key: "insurances", icon: <Shield size={18} /> }
+        // { name: "Historias", key: "stories", icon: <FileText size={18} /> }
       ]
     },
 
-    { name: "Zonas", key: "zones", icon: <Map size={22} /> },
-    { name: "Oficinas", key: "offices", icon: <Building2 size={22} /> },
-    { name: "Depósitos", key: "deposits", icon: <Warehouse size={22} /> },
-    { name: "Usuarios", key: "users", icon: <Users size={22} /> },
+    // 🔹 NUEVO GRUPO
+    { 
+      name: "Gestión Operativa", 
+      key: "operativa-group", 
+      icon: <Map size={22} />,
+      children: [
+        { name: "Zonas", key: "zones", icon: <Map size={18} /> },
+        { name: "Oficinas", key: "offices", icon: <Building2 size={18} /> },
+        { name: "Depósitos", key: "deposits", icon: <Warehouse size={18} /> },
+        { name: "Usuarios", key: "users", icon: <Users size={18} /> },
+      ]
+    },
   ];
 
   // -------------------- NAVIGATION --------------------
@@ -102,7 +108,7 @@ const Sidebar = ({ setActiveComponent, activeComponent }) => {
         <div className="sidebar-header">
           {showText && (
             <div className="logo-container">
-              <span style={{fontWeight: 'bold', color: '#2563eb'}}>Panel Médico</span>
+              <span style={{fontWeight: 'bold', color: '#2563eb'}}>Panel de Operaciones</span>
             </div>
           )}
 

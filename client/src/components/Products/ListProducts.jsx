@@ -7,14 +7,20 @@ import {
   Pencil,
   Trash2,
   Save,
+  FileText,
   AlertTriangle,
-  Plus
+  Plus,
+  X,
 } from "lucide-react";
+import ListLots from "./ListLots";
+import ListEdeposits from "./ListEdeposits";
+import ListInventory from "./ListInventory";
 import { SlOptionsVertical } from "react-icons/sl";
 import "../../styles/components/ListZone.css";
+import "../../styles/components/ModalProductDetail.css";
 
 const ListProducts = () => {
-  const { 
+  const {
     products = [],
     categories = [],
     brands = [],
@@ -22,23 +28,29 @@ const ListProducts = () => {
     getAllCategories,
     getAllBrands,
     createNewProduct,
-    editedProduct,
+    editProduct,
     deleteProductById,
     createNewCategory,
-    createNewBrand
+    createNewBrand,
   } = useProducts();
 
+  // Estados de paginación y búsqueda
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  // Modales
+  // Estados de Modales
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isLotsModalOpen, setIsLotsModalOpen] = useState(false);
+  
+  // Estado de Tabs
+  const [activeTab, setActiveTab] = useState("lotes");
 
+  // Estados de Formulario
   const [editName, setEditName] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [selectedBrandId, setSelectedBrandId] = useState("");
@@ -49,7 +61,7 @@ const ListProducts = () => {
   const [isCreatingBrand, setIsCreatingBrand] = useState(false);
   const [newBrandName, setNewBrandName] = useState("");
 
-  // Arrays seguros
+  // Arrays seguros para evitar errores de map en undefined
   const safeProducts = Array.isArray(products) ? products : [];
   const safeCategories = Array.isArray(categories) ? categories : [];
   const safeBrands = Array.isArray(brands) ? brands : [];
@@ -58,17 +70,43 @@ const ListProducts = () => {
     getAllProducts();
     getAllCategories();
     getAllBrands();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // -------------------- Función de formateo --------------------
   const handleNameInput = (value, setter) => {
-    const formatted = value.replace(/[^a-zA-Z0-9ÁÉÍÓÚÜÑáéíóúüñ\s]/g, "").toUpperCase();
+    const formatted = value
+      .replace(/[^a-zA-Z0-9ÁÉÍÓÚÜÑáéíóúüñ\s]/g, "")
+      .toUpperCase();
     setter(formatted);
   };
 
+  const closeAllModals = () => {
+  // Cerrar todos los modales
+  setIsCreateModalOpen(false);
+  setIsEditModalOpen(false);
+  setIsDeleteModalOpen(false);
+  setIsDetailsModalOpen(false);
+  setIsLotsModalOpen(false);
+
+  // Limpiar producto seleccionado
+  setSelectedProduct(null);
+
+  // Limpiar formularios
+  resetForm();
+
+  // Reiniciar creación al vuelo
+  setIsCreatingCategory(false);
+  setIsCreatingBrand(false);
+
+  // Resetear tabs
+  setActiveTab("lotes");
+};
+
+
   // -------------------- Filtrado y paginación --------------------
   const filteredProducts = useMemo(() => {
-    return safeProducts.filter(p =>
+    return safeProducts.filter((p) =>
       (p.descripcion || "").toUpperCase().includes(searchTerm.toUpperCase())
     );
   }, [safeProducts, searchTerm]);
@@ -86,6 +124,7 @@ const ListProducts = () => {
     setSelectedCategoryId(product.id_categoria || "");
     setSelectedBrandId(product.id_marca || "");
     setIsEditModalOpen(true);
+    // Resetear estados de creación al vuelo
     setIsCreatingCategory(false);
     setIsCreatingBrand(false);
     setNewCategoryName("");
@@ -104,12 +143,10 @@ const ListProducts = () => {
         descripcion: editName.trim(),
         id_categoria: Number(selectedCategoryId),
         id_marca: Number(selectedBrandId),
-        estatus: true
+        estatus: true,
       });
       setIsCreateModalOpen(false);
-      setEditName("");
-      setSelectedCategoryId("");
-      setSelectedBrandId("");
+      resetForm();
       getAllProducts();
     } catch (error) {
       console.error("Error creando producto:", error);
@@ -119,17 +156,15 @@ const ListProducts = () => {
   const handleUpdate = async () => {
     if (!editName.trim() || !selectedCategoryId || !selectedBrandId || !selectedProduct) return;
     try {
-      await editedProduct(selectedProduct.id, {
+      await editProduct(selectedProduct.id, {
         descripcion: editName.trim(),
         id_categoria: Number(selectedCategoryId),
         id_marca: Number(selectedBrandId),
-        estatus: true
+        estatus: true,
       });
       setIsEditModalOpen(false);
       setSelectedProduct(null);
-      setEditName("");
-      setSelectedCategoryId("");
-      setSelectedBrandId("");
+      resetForm();
       getAllProducts();
     } catch (error) {
       console.error("Error editando producto:", error);
@@ -174,6 +209,14 @@ const ListProducts = () => {
     }
   };
 
+  const resetForm = () => {
+    setEditName("");
+    setSelectedCategoryId("");
+    setSelectedBrandId("");
+    setNewCategoryName("");
+    setNewBrandName("");
+  };
+
   // -------------------- Render --------------------
   return (
     <div className="orders-container">
@@ -183,12 +226,13 @@ const ListProducts = () => {
           <h2>Gestión de Productos</h2>
           <p>Productos registrados: {filteredProducts.length}</p>
         </div>
-        <button className="btn-primary" onClick={() => {
-          setEditName(""); 
-          setSelectedCategoryId(""); 
-          setSelectedBrandId(""); 
-          setIsCreateModalOpen(true);
-        }}>
+        <button
+          className="btn-primary"
+          onClick={() => {
+            resetForm();
+            setIsCreateModalOpen(true);
+          }}
+        >
           <Plus size={16} /> Nuevo Producto
         </button>
       </div>
@@ -201,7 +245,10 @@ const ListProducts = () => {
             type="text"
             placeholder="Buscar producto..."
             value={searchTerm}
-            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
           />
         </div>
       </div>
@@ -219,28 +266,47 @@ const ListProducts = () => {
             </tr>
           </thead>
           <tbody>
-            {currentProducts.length > 0 ? currentProducts.map(product => (
-              <tr key={product.id}>
-                <td className="id hide-mobile">#{product.id}</td>
-                <td>{product.descripcion}</td>
-                <td className="hide-mobile">{product.categoria || "-"}</td>
-                <td className="hide-mobile">{product.marca || "-"}</td>
-                <td className="center">
-                  <div className="actions-desktop">
-                    <button className="icon-btn edit" onClick={() => { setSelectedProduct(product); setIsDetailsModalOpen(true); }}>
-                      <SlOptionsVertical size={16}/>
-                    </button>
-                  </div>
-                  <div className="actions-mobile">
-                    <button className="icon-btn" onClick={() => { setSelectedProduct(product); setIsDetailsModalOpen(true); }}>
-                      &#8942;
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            )) : (
+            {currentProducts.length > 0 ? (
+              currentProducts.map((product) => (
+                <tr key={product.id}>
+                  <td className="id hide-mobile">#{product.id}</td>
+                  <td>{product.descripcion}</td>
+                  <td className="hide-mobile">{product.categoria || "-"}</td>
+                  <td className="hide-mobile">{product.marca || "-"}</td>
+                  <td className="center">
+                    <div className="actions-desktop">
+                      <button
+                        className="icon-btn edit"
+                        onClick={() => {
+                          setSelectedProduct(product);
+                          setActiveTab("lotes"); // Resetear tab por defecto
+                          setIsDetailsModalOpen(true);
+                        }}
+                      >
+                        <SlOptionsVertical size={16} />
+                      </button>
+                    </div>
+                    {/* Versión móvil simplificada */}
+                    <div className="actions-mobile">
+                      <button
+                        className="icon-btn"
+                        onClick={() => {
+                          setSelectedProduct(product);
+                          setActiveTab("lotes");
+                          setIsDetailsModalOpen(true);
+                        }}
+                      >
+                        &#8942;
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
               <tr>
-                <td colSpan="5" className="no-results">No se encontraron productos</td>
+                <td colSpan="5" className="no-results">
+                  No se encontraron productos
+                </td>
               </tr>
             )}
           </tbody>
@@ -250,9 +316,21 @@ const ListProducts = () => {
       {/* PAGINACIÓN */}
       {totalPages > 1 && (
         <div className="orders-pagination">
-          <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}><ChevronLeft size={18} /></button>
-          <span>Página {currentPage} de {totalPages}</span>
-          <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}><ChevronRight size={18} /></button>
+          <button
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((p) => p - 1)}
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <span>
+            Página {currentPage} de {totalPages}
+          </span>
+          <button
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage((p) => p + 1)}
+          >
+            <ChevronRight size={18} />
+          </button>
         </div>
       )}
 
@@ -261,76 +339,317 @@ const ListProducts = () => {
         <div className="modal-overlay">
           <div className="modal-content">
             <h3>{isCreateModalOpen ? "Crear Producto" : "Editar Producto"}</h3>
+            
+            <label className="modal-label">Nombre del Producto</label>
             <input
               className="modal-input"
-              placeholder="Nombre"
+              placeholder="Ej: ASPIRINA 500MG"
               value={editName}
               onChange={(e) => handleNameInput(e.target.value, setEditName)}
             />
 
-            {/* CATEGORÍA */}
+            {/* SELECCIÓN DE CATEGORÍA */}
             {!isCreatingCategory ? (
               <div className="select-zone-container">
-                <select className="modal-input" value={selectedCategoryId} onChange={(e) => setSelectedCategoryId(e.target.value)}>
-                  <option value="">Selecciona una categoría</option>
-                  {safeCategories.map(cat => <option key={cat.id} value={cat.id}>{cat.nombre}</option>)}
-                </select>
-                <button className="btn-add-zone-primary" onClick={() => setIsCreatingCategory(true)}><Plus size={16} /> Categoría</button>
+                <div style={{ flex: 1 }}>
+                  <label className="modal-label">Categoría</label>
+                  <select
+                    className="modal-input"
+                    value={selectedCategoryId}
+                    onChange={(e) => setSelectedCategoryId(e.target.value)}
+                  >
+                    <option value="">Selecciona una categoría</option>
+                    {safeCategories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  className="btn-add-zone-primary"
+                  style={{ marginTop: "24px" }}
+                  onClick={() => setIsCreatingCategory(true)}
+                  title="Nueva Categoría"
+                >
+                  <Plus size={16} />
+                </button>
               </div>
             ) : (
               <div className="new-zone-container">
-                <label>Nueva Categoría</label>
+                <label className="modal-label">Nueva Categoría</label>
                 <div className="new-zone-inputs">
                   <input
                     className="modal-input"
                     placeholder="Nombre de la categoría"
                     value={newCategoryName}
-                    onChange={(e) => handleNameInput(e.target.value, setNewCategoryName)}
+                    onChange={(e) =>
+                      handleNameInput(e.target.value, setNewCategoryName)
+                    }
                   />
-                  <button className="btn-primary" onClick={handleCreateCategory}><Save size={16} /> Guardar</button>
-                  <button className="btn-secondary" onClick={() => { setIsCreatingCategory(false); setNewCategoryName(""); }}>Cancelar</button>
+                  <button className="btn-primary" onClick={handleCreateCategory}>
+                    <Save size={16} />
+                  </button>
+                  <button
+                    className="btn-secondary"
+                    onClick={() => {
+                      setIsCreatingCategory(false);
+                      setNewCategoryName("");
+                    }}
+                  >
+                    <X size={16} />
+                  </button>
                 </div>
               </div>
             )}
 
-            {/* MARCA */}
+            {/* SELECCIÓN DE MARCA */}
             {!isCreatingBrand ? (
               <div className="select-zone-container">
-                <select className="modal-input" value={selectedBrandId} onChange={(e) => setSelectedBrandId(e.target.value)}>
-                  <option value="">Selecciona una marca</option>
-                  {safeBrands.map(brand => <option key={brand.id} value={brand.id}>{brand.nombre}</option>)}
-                </select>
-                <button className="btn-add-zone-primary" onClick={() => setIsCreatingBrand(true)}><Plus size={16} /> Marca</button>
+                <div style={{ flex: 1 }}>
+                   <label className="modal-label">Marca</label>
+                  <select
+                    className="modal-input"
+                    value={selectedBrandId}
+                    onChange={(e) => setSelectedBrandId(e.target.value)}
+                  >
+                    <option value="">Selecciona una marca</option>
+                    {safeBrands.map((brand) => (
+                      <option key={brand.id} value={brand.id}>
+                        {brand.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  className="btn-add-zone-primary"
+                  style={{ marginTop: "24px" }}
+                  onClick={() => setIsCreatingBrand(true)}
+                  title="Nueva Marca"
+                >
+                  <Plus size={16} />
+                </button>
               </div>
             ) : (
               <div className="new-zone-container">
-                <label>Nueva Marca</label>
+                <label className="modal-label">Nueva Marca</label>
                 <div className="new-zone-inputs">
                   <input
                     className="modal-input"
                     placeholder="Nombre de la marca"
                     value={newBrandName}
-                    onChange={(e) => handleNameInput(e.target.value, setNewBrandName)}
+                    onChange={(e) =>
+                      handleNameInput(e.target.value, setNewBrandName)
+                    }
                   />
-                  <button className="btn-primary" onClick={handleCreateBrand}><Save size={16} /> Guardar</button>
-                  <button className="btn-secondary" onClick={() => { setIsCreatingBrand(false); setNewBrandName(""); }}>Cancelar</button>
+                  <button className="btn-primary" onClick={handleCreateBrand}>
+                    <Save size={16} />
+                  </button>
+                  <button
+                    className="btn-secondary"
+                    onClick={() => {
+                      setIsCreatingBrand(false);
+                      setNewBrandName("");
+                    }}
+                  >
+                    <X size={16} />
+                  </button>
                 </div>
               </div>
             )}
 
             <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => {
-                setIsCreateModalOpen(false);
-                setIsEditModalOpen(false);
-                setEditName("");
-                setSelectedCategoryId("");
-                setSelectedBrandId("");
-                setIsCreatingCategory(false);
-                setNewCategoryName("");
-                setIsCreatingBrand(false);
-                setNewBrandName("");
-              }}>Cancelar</button>
-              <button className="btn-primary" onClick={isCreateModalOpen ? handleCreate : handleUpdate}><Save size={16} /> {isCreateModalOpen ? "Crear" : "Guardar"}</button>
+              <button
+                className="btn-secondary"
+                onClick={() => {
+                  setIsCreateModalOpen(false);
+                  setIsEditModalOpen(false);
+                  resetForm();
+                  setIsCreatingCategory(false);
+                  setIsCreatingBrand(false);
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                className="btn-primary"
+                onClick={isCreateModalOpen ? handleCreate : handleUpdate}
+              >
+                <Save size={16} /> {isCreateModalOpen ? "Crear" : "Guardar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DETALLES DEL PRODUCTO */}
+      {isDetailsModalOpen && selectedProduct && (
+        <div className="modal-overlay">
+          <div className="product-modal" style={{ width: '90%', maxWidth: '1500px' }}>
+            <div className="product-modal-header">
+              <h3>Detalles del Producto</h3>
+              <button
+                className="close-btn"
+                onClick={() => setIsDetailsModalOpen(false)}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="product-modal-body">
+              <div className="product-info">
+                {/* Fallback de imagen por si no existe */}
+                <img
+                  src={selectedProduct.image || "/placeholder.png"}
+                  alt={selectedProduct.descripcion}
+                  // onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/150"; }}  
+                />
+                <div className="product-details">
+                  <div>
+                    <strong>ID:</strong> <span>#{selectedProduct.id}</span>
+                  </div>
+                  <div>
+                    <strong>Nombre:</strong> <span>{selectedProduct.descripcion}</span>
+                  </div>
+                  <div>
+                    <strong>Categoría:</strong> <span>{selectedProduct.categoria || "N/A"}</span>
+                  </div>
+                  <div>
+                    <strong>Marca:</strong> <span>{selectedProduct.marca || "N/A"}</span>
+                  </div>
+                  <div>
+                    <strong>Existencia General:</strong> <span className="status-active">{selectedProduct.existencia_general || "N/A"}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* TABS DE NAVEGACIÓN */}
+              <div className="product-modal-tabs">
+                <button
+                  className={activeTab === "lotes" ? "active" : ""}
+                  onClick={() => setActiveTab("lotes")}
+                >
+                  Lotes
+                </button>
+
+                <button
+                  className={activeTab === "depositos" ? "active" : ""}
+                  onClick={() => setActiveTab("depositos")}
+                >
+                  Depósitos
+                </button>
+
+                <button
+                  className={activeTab === "inventario" ? "active" : ""}
+                  onClick={() => setActiveTab("inventario")}
+                >
+                  Inventario
+                </button>
+              </div>
+
+              {/* CONTENIDO DE TABS */}
+              <div className="product-lots-list">
+                {activeTab === "lotes" && (
+                  <ListLots id_producto={selectedProduct.id} />
+                )}
+
+                {activeTab === "depositos" && (
+                  <ListEdeposits id_producto={selectedProduct.id} />
+                )}
+
+                {activeTab === "inventario" && (
+                  <ListInventory id_producto={selectedProduct.id} />
+                )}
+              </div>
+
+            </div>
+
+            <div className="product-modal-footer">
+              <button
+                className="btn-primary"
+                onClick={() => {
+                  setIsDetailsModalOpen(false);
+                  openEditModal(selectedProduct);
+                }}
+              >
+                <Pencil size={16} /> Editar
+              </button>
+              <button
+                className="btn-danger"
+                onClick={() => {
+                  setIsDetailsModalOpen(false);
+                  openDeleteModal(selectedProduct);
+                }}
+              >
+                <Trash2 size={16} /> Eliminar
+              </button>
+              <button
+                className="btn-secondary"
+                onClick={() => setIsDetailsModalOpen(false)}
+                // onClick={closeAllModals}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL LIST LOTES (INDIVIDUAL - OPCIONAL) */}
+      {isLotsModalOpen && selectedProduct && (
+        <div className="modal-overlay">
+          <div
+            className="modal-content"
+            style={{ width: "90%", maxWidth: "1200px" }}
+          >
+            <div className="product-modal-header">
+                <h3>Lotes de {selectedProduct.descripcion}</h3>
+                <button className="close-btn" onClick={() => setIsLotsModalOpen(false)}><X size={20}/></button>
+            </div>
+            
+            <ListLots id_producto={selectedProduct.id} />
+            
+            <div className="modal-footer">
+              <button
+                className="btn-secondary"
+                onClick={() => {
+                  setIsLotsModalOpen(false);
+                  setSelectedProduct(null);
+                }}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL ELIMINAR (AÑADIDO QUE FALTABA) */}
+      {isDeleteModalOpen && selectedProduct && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Confirmar Eliminación</h3>
+            <div className="modal-body-text" style={{ padding: "20px 0", textAlign: "center" }}>
+                <AlertTriangle size={48} color="#e63946" style={{ marginBottom: "10px" }} />
+                <p>¿Estás seguro de que deseas eliminar el producto <strong>{selectedProduct.descripcion}</strong>?</p>
+                <p style={{ fontSize: "0.9em", color: "#666" }}>Esta acción no se puede deshacer.</p>
+            </div>
+            <div className="modal-footer">
+              <button
+                className="btn-secondary"
+                onClick={() => {
+                  setIsDeleteModalOpen(false);
+                  setSelectedProduct(null);
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                className="btn-danger"
+                onClick={handleDelete}
+              >
+                <Trash2 size={16} /> Eliminar
+              </button>
             </div>
           </div>
         </div>

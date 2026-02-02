@@ -16,6 +16,9 @@ controller.getAllProducts = async (req, res) => {
 controller.getProductById = async (req, res) => {
   try {
     const { id } = req.params;
+
+    console.log(id)
+
     if (!id) return res.status(400).json({ error: "Product id required" });
 
     const result = await ProductsModel.getProductById(id);
@@ -87,6 +90,74 @@ controller.deleteProductImage = async (req, res) => {
     return res.status(result.code).json(result);
   } catch (error) {
     return res.status(500).json({ error: error.message });
+  }
+};
+
+/* ================= PRODUCTOS CON EXISTENCIAS EN DEPOSITO ================= */
+controller.getProductEdeposit = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ error: "Product id required" });
+
+    const result = await ProductsModel.getProductWithDeposits(id);
+    return res.status(result.code).json(result);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+controller.createProductEdeposit = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { id_deposito, existencia_deposito, stock_minimo_deposito } = req.body;
+
+    if (!id || !id_deposito || existencia_deposito == null || stock_minimo_deposito == null)
+      return res.status(400).json({ error: "Required fields missing" });
+
+    const result = await ProductsModel.createEdeposit({
+      id_producto: id,
+      id_deposito,
+      existencia_deposito,
+      stock_minimo_deposito
+    });
+
+    return res.status(result.code).json(result);
+  } catch (error) {
+    return res.status(500).json({ status: false, error: error.message });
+  }
+};
+
+controller.editProductEdeposit = async (req, res) => {
+  try {
+    const { id } = req.params; // id del producto
+    const { id_deposito, existencia_deposito, stock_minimo_deposito } = req.body;
+
+    if (!id || !id_deposito) return res.status(400).json({ error: "Product and deposit IDs required" });
+
+    const result = await ProductsModel.editEdeposit({
+      id_producto: id,
+      id_deposito,
+      existencia_deposito,
+      stock_minimo_deposito
+    });
+
+    return res.status(result.code).json(result);
+  } catch (error) {
+    return res.status(500).json({ status: false, error: error.message });
+  }
+};
+
+controller.deleteProductEdeposit = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { id_deposito } = req.body;
+
+    if (!id || !id_deposito) return res.status(400).json({ error: "Product and deposit IDs required" });
+
+    const result = await ProductsModel.deleteEdeposit(id, id_deposito);
+    return res.status(result.code).json(result);
+  } catch (error) {
+    return res.status(500).json({ status: false, error: error.message });
   }
 };
 
@@ -236,9 +307,24 @@ controller.getLoteById = async (req, res) => {
   }
 };
 
+controller.getLoteProductoById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ error: "Lote id required" });
+
+    const result = await ProductsModel.getLotesProductoById(id);
+    return res.status(result.code).json(result);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
 controller.createLote = async (req, res) => {
   try {
-    const { id_producto, nro_lote, fecha_vencimiento, estatus } = req.body;
+    const { id_producto, nro_lote, fecha_vencimiento, estatus = true } = req.body;
+
+    console.log(req.body)
+
     if (!id_producto || !nro_lote) return res.status(400).json({ error: "id_producto y nro_lote son obligatorios" });
 
     const result = await ProductsModel.createLote({ id_producto, nro_lote, fecha_vencimiento, estatus });
@@ -277,7 +363,10 @@ controller.deleteLote = async (req, res) => {
 /* ================= INVENTARIO ================= */
 controller.getAllInventory = async (req, res) => {
   try {
-    const result = await ProductsModel.getAllInventory();
+    const {id} = req.params
+    if (!id) return res.status(400).json({ error: "producto id required" });
+
+    const result = await ProductsModel.getAllInventory(id);
     return res.status(result.code).json(result);
   } catch (error) {
     return res.status(500).json({ error: error.message });
@@ -286,11 +375,14 @@ controller.getAllInventory = async (req, res) => {
 
 controller.createInventory = async (req, res) => {
   try {
+    // const {id} = req.params
     const { id_lote, id_oficina, nro_serie, existencia_general, costo_unitario, precio_venta, margen_ganancia, stock_minimo_general, estatus } = req.body;
+    console.log(req.body)
     if (!id_lote || !id_oficina || existencia_general == null || costo_unitario == null || precio_venta == null || margen_ganancia == null || stock_minimo_general == null)
       return res.status(400).json({ error: "Campos obligatorios incompletos" });
 
     const result = await ProductsModel.createInventory({ id_lote, id_oficina, nro_serie, existencia_general, costo_unitario, precio_venta, margen_ganancia, stock_minimo_general, estatus });
+    console.log(result)
     return res.status(result.code).json(result);
   } catch (error) {
     return res.status(500).json({ error: error.message });

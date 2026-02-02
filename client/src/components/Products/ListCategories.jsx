@@ -46,10 +46,13 @@ const ListCategories = () => {
 
   // -------------------- Filtrado y paginación --------------------
   const filteredCategories = useMemo(() => {
-    return categories.filter(c =>
-      c.nombre.toUpperCase().includes(searchTerm.toUpperCase())
+    return (Array.isArray(categories) ? categories : []).filter(c =>
+      (c.nombre ?? "")
+        .toUpperCase()
+        .includes(searchTerm.toUpperCase())
     );
   }, [categories, searchTerm]);
+
 
   const totalPages = Math.ceil(filteredCategories.length / itemsPerPage);
   const currentCategories = filteredCategories.slice(

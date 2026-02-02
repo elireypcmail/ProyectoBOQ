@@ -4,7 +4,13 @@ import { instanceApp } from "./axios";
 // -------------------- PACIENTES --------------------
 export const getPacientes = () => instanceApp.get("/pacientes");
 export const getPacienteById = (id) => instanceApp.get(`/pacientes/${id}`);
-export const createPaciente = (data) => instanceApp.post("/pacientes", data);
+// export const createPaciente = (data) =>
+//   instanceApp.post("/pacientes", data, {
+//     headers: {
+//       "Content-Type": "multipart/form-data"
+//     }
+  // });
+export const createPaciente = (data) => instanceApp.post(`/pacientes`, data);
 export const editPaciente = (id, data) => instanceApp.put(`/pacientes/${id}`, data);
 export const deletePaciente = (id) => instanceApp.delete(`/pacientes/${id}`);
 export const savePacienteFiles = (id, files, filesJson) => {
@@ -39,6 +45,7 @@ export const deleteSeguro = (id) => instanceApp.delete(`/seguros/${id}`);
 
 // -------------------- HISTORIAS --------------------
 export const getHistorias = () => instanceApp.get("/historias");
+export const getHistoriasByPaciente = (id) => instanceApp.get(`/historias/paciente/${id}`);
 export const getHistoriaById = (id) => instanceApp.get(`/historias/${id}`);
 export const createHistoria = (data) => instanceApp.post("/historias", data);
 export const editHistoria = (id, data) => instanceApp.put(`/historias/${id}`, data);

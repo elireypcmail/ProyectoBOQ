@@ -6,9 +6,12 @@ import {
   AlertTriangle,
   Plus,
   Trash2,
-  Pencil
+  Pencil,
+  FileText
 } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
+import ListStories from "./ListStories";
+import MediaUploader from "../Multimedia/MediaUploader";
 import "../../styles/components/ListZone.css";
 
 const ListPatients = () => {
@@ -20,7 +23,7 @@ const ListPatients = () => {
     getAllMedicos,
     getAllSeguros,
     createNewPaciente,
-    createNewHistoria,
+    editedPaciente,
     createNewSeguro,
     deletePacienteById
   } = useHealth();
@@ -31,10 +34,11 @@ const ListPatients = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isCreateSeguroModalOpen, setIsCreateSeguroModalOpen] = useState(false);
-  const [isCreateHistoriaModalOpen, setIsCreateHistoriaModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
+  const [isStoriesModalOpen, setIsStoriesModalOpen] = useState(false);
   const [selectedPaciente, setSelectedPaciente] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   // ---------------- FORMULARIOS PACIENTE ----------------
   const [nombre, setNombre] = useState("");
@@ -42,13 +46,6 @@ const ListPatients = () => {
   const [telefono, setTelefono] = useState("");
   const [email, setEmail] = useState("");
   const [idSeguro, setIdSeguro] = useState("");
-
-  // ---------------- FORMULARIO HISTORIA ----------------
-  const [idMedico, setIdMedico] = useState("");
-  const [detalleHistoria, setDetalleHistoria] = useState("");
-  const [fechaHistoria, setFechaHistoria] = useState(
-    new Date().toISOString().split("T")[0]
-  );
 
   // ---------------- FORMULARIO SEGURO ----------------
   const [nuevoSeguroNombre, setNuevoSeguroNombre] = useState("");
@@ -67,12 +64,9 @@ const ListPatients = () => {
     );
   }, [pacientes, searchTerm]);
 
-  // ---------------- FORMATOS (ARREGLADOS) ----------------
+  // ---------------- FORMATOS ----------------
   const handleNameInput = (value, setter) => {
-    const formatted = value
-      .replace(/[^a-zA-ZÁÉÍÓÚÜÑáéíóúüñ\s]/g, "")
-      .toUpperCase();
-    setter(formatted);
+    setter(value.replace(/[^a-zA-ZÁÉÍÓÚÜÑáéíóúüñ\s]/g, "").toUpperCase());
   };
 
   const handleDocumentoInput = (value, setter) => {
@@ -82,11 +76,7 @@ const ListPatients = () => {
 
   const handlePhoneInput = (value, setter) => {
     const digits = value.replace(/\D/g, "").slice(0, 11);
-    if (digits.length > 4) {
-      setter(digits.slice(0, 4) + "-" + digits.slice(4));
-    } else {
-      setter(digits);
-    }
+    setter(digits.length > 4 ? `${digits.slice(0, 4)}-${digits.slice(4)}` : digits);
   };
 
   const handleEmailInput = (value, setter) => {
@@ -100,30 +90,36 @@ const ListPatients = () => {
     setEmail("");
     setIdSeguro("");
     setSelectedPaciente(null);
-    setIdMedico("");
-    setDetalleHistoria("");
-    setFechaHistoria(new Date().toISOString().split("T")[0]);
+    setIsEditing(false);
   };
 
-  // ---------------- CREAR PACIENTE ----------------
-  const handleCreatePaciente = async () => {
+  // ---------------- CREAR / EDITAR PACIENTE ----------------
+  const handleSavePaciente = async () => {
     if (!nombre || !documento) return;
 
-    const res = await createNewPaciente({
-      nombre: formatName(nombre),
-      documento: formatDocumento(documento),
-      telefono: formatTelefono(telefono),
-      email: formatEmail(email),
+    const payload = {
+      nombre,
+      documento,
+      telefono,
+      email,
       id_seguro: idSeguro || null,
       estatus: true
-    });
+    };
+
+    if (isEditing && selectedPaciente) {
+      await editedPaciente(selectedPaciente.id, payload);
+    } else {
+      const res = await createNewPaciente(payload);
+      console.log(res.data)
+      if (res?.data) {
+        setSelectedPaciente(res.data);
+        setIsDetailsModalOpen(true);
+      }
+    }
 
     resetForm();
     setIsCreateModalOpen(false);
     getAllPacientes();
-
-    setSelectedPaciente(res.data);
-    setIsDetailsModalOpen(true);
   };
 
   // ---------------- CREAR SEGURO ----------------
@@ -131,9 +127,9 @@ const ListPatients = () => {
     if (!nuevoSeguroNombre || !nuevoSeguroContacto || !nuevoSeguroTelefono) return;
 
     await createNewSeguro({
-      nombre: formatName(nuevoSeguroNombre),
-      contacto: formatName(nuevoSeguroContacto),
-      telefono: formatTelefono(nuevoSeguroTelefono),
+      nombre: nuevoSeguroNombre,
+      contacto: nuevoSeguroContacto,
+      telefono: nuevoSeguroTelefono,
       estatus: true
     });
 
@@ -144,24 +140,7 @@ const ListPatients = () => {
     getAllSeguros();
   };
 
-  // ---------------- CREAR HISTORIA ----------------
-  const handleCreateHistoria = async () => {
-    if (!selectedPaciente || !idMedico || !detalleHistoria || !fechaHistoria) return;
-
-    await createNewHistoria({
-      id_paciente: selectedPaciente.id,
-      id_medico: idMedico,
-      detalle: detalleHistoria.toUpperCase(),
-      fecha: fechaHistoria,
-      estatus: true
-    });
-
-    resetForm();
-    setIsCreateHistoriaModalOpen(false);
-    getAllPacientes();
-  };
-
-  // ---------------- ELIMINAR PACIENTE ----------------
+  // ---------------- ELIMINAR ----------------
   const handleDeletePaciente = async () => {
     if (!selectedPaciente) return;
     await deletePacienteById(selectedPaciente.id);
@@ -169,7 +148,7 @@ const ListPatients = () => {
     setSelectedPaciente(null);
     getAllPacientes();
   };
-  
+
   return (
     <div className="orders-container">
       {/* HEADER */}
@@ -178,7 +157,13 @@ const ListPatients = () => {
           <h2>Pacientes</h2>
           <p>Total: {filteredPacientes.length}</p>
         </div>
-        <button className="btn-primary" onClick={() => setIsCreateModalOpen(true)}>
+        <button
+          className="btn-primary"
+          onClick={() => {
+            resetForm();
+            setIsCreateModalOpen(true);
+          }}
+        >
           <Plus size={16} /> Nuevo Paciente
         </button>
       </div>
@@ -227,32 +212,29 @@ const ListPatients = () => {
         </tbody>
       </table>
 
-      {/* MODAL CREAR PACIENTE */}
+      {/* MODAL CREAR / EDITAR PACIENTE */}
       {isCreateModalOpen && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Nuevo Paciente</h3>
+            <h3>{isEditing ? "Editar Paciente" : "Nuevo Paciente"}</h3>
             <input
               className="modal-input"
               placeholder="Nombre"
               value={nombre}
               onChange={e => handleNameInput(e.target.value, setNombre)}
             />
-
             <input
               className="modal-input"
               placeholder="Documento (V-12345678)"
               value={documento}
               onChange={e => handleDocumentoInput(e.target.value, setDocumento)}
             />
-
             <input
               className="modal-input"
               placeholder="Teléfono (1234-1234567)"
               value={telefono}
               onChange={e => handlePhoneInput(e.target.value, setTelefono)}
             />
-
             <input
               className="modal-input"
               placeholder="Email"
@@ -260,19 +242,28 @@ const ListPatients = () => {
               onChange={e => handleEmailInput(e.target.value, setEmail)}
             />
             <div className="select-zone-container">
-              <select className="modal-input" value={idSeguro} onChange={e => setIdSeguro(e.target.value)}>
+              <select
+                className="modal-input"
+                value={idSeguro}
+                onChange={e => setIdSeguro(e.target.value)}
+              >
                 <option value="">Seleccionar seguro</option>
                 {seguros.map(s => (
                   <option key={s.id} value={s.id}>{s.nombre}</option>
                 ))}
               </select>
-              <button className="btn-add-zone-primary" onClick={() => setIsCreateSeguroModalOpen(true)}>
+              <button
+                className="btn-add-zone-primary"
+                onClick={() => setIsCreateSeguroModalOpen(true)}
+              >
                 <Plus size={16} /> Nuevo Seguro
               </button>
             </div>
             <div className="modal-footer">
               <button className="btn-secondary" onClick={() => setIsCreateModalOpen(false)}>Cancelar</button>
-              <button className="btn-primary" onClick={handleCreatePaciente}><Save size={16} /> Crear Paciente</button>
+              <button className="btn-primary" onClick={handleSavePaciente}>
+                <Save size={16} /> {isEditing ? "Actualizar" : "Crear"}
+              </button>
             </div>
           </div>
         </div>
@@ -290,73 +281,60 @@ const ListPatients = () => {
               <div className="detail-card"><strong>Seguro:</strong> {seguros.find(s => s.id === selectedPaciente.id_seguro)?.nombre || "-"}</div>
             </div>
             <div className="modal-footer" style={{ flexDirection: "column", gap: "0.75rem" }}>
-              <button className="btn-primary" onClick={() => {
-                setIsDetailsModalOpen(false);
-                setIsCreateHistoriaModalOpen(true);
-                setFechaHistoria(new Date().toISOString().split("T")[0]); // fecha actual al abrir historia
-              }}><Plus size={16} /> Crear Historia</button>
-              <button className="btn-primary" onClick={() => {
-                setIsDetailsModalOpen(false);
-                setIsCreateModalOpen(true);
-                setNombre(selectedPaciente.nombre);
-                setDocumento(selectedPaciente.documento);
-                setTelefono(selectedPaciente.telefono);
-                setEmail(selectedPaciente.email);
-                setIdSeguro(selectedPaciente.id_seguro);
-              }}><Pencil size={16} /> Editar</button>
-              <button className="btn-danger" onClick={() => {
-                setIsDetailsModalOpen(false);
-                setIsDeleteModalOpen(true);
-              }}><Trash2 size={16} /> Eliminar</button>
+              <button
+                className="btn-primary"
+                onClick={() => {
+                  setIsDetailsModalOpen(false);
+                  setIsStoriesModalOpen(true);
+                }}
+              >
+                <FileText size={16} />Historias
+              </button>
+              <button
+                className="btn-primary"
+                onClick={() => {
+                  setIsDetailsModalOpen(false);
+                  setIsCreateModalOpen(true);
+                  setIsEditing(true);
+                  setNombre(selectedPaciente.nombre);
+                  setDocumento(selectedPaciente.documento);
+                  setTelefono(selectedPaciente.telefono);
+                  setEmail(selectedPaciente.email);
+                  setIdSeguro(selectedPaciente.id_seguro);
+                }}
+              >
+                <Pencil size={16} /> Editar
+              </button>
+              <button
+                className="btn-danger"
+                onClick={() => {
+                  setIsDetailsModalOpen(false);
+                  setIsDeleteModalOpen(true);
+                }}
+              >
+                <Trash2 size={16} /> Eliminar
+              </button>
               <button className="btn-secondary" onClick={() => setIsDetailsModalOpen(false)}>Cerrar</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL CREAR HISTORIA */}
-      {isCreateHistoriaModalOpen && selectedPaciente && (
+      {/* MODAL LIST STORIES */}
+      {isStoriesModalOpen && selectedPaciente && (
         <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Nueva Historia para {selectedPaciente.nombre}</h3>
-
-            <select
-              className="modal-input"
-              value={idMedico}
-              onChange={e => setIdMedico(e.target.value)}
-            >
-              <option value="">Seleccionar médico</option>
-              {medicos.map(m => (
-                <option key={m.id} value={m.id}>{m.nombre}</option>
-              ))}
-            </select>
-
-            <input
-              type="date"
-              className="modal-input"
-              value={fechaHistoria}
-              onChange={e => setFechaHistoria(e.target.value)}
-            />
-
-            <textarea
-              className="modal-input"
-              placeholder="Detalle clínico"
-              value={detalleHistoria}
-              onChange={e => setDetalleHistoria(e.target.value.toUpperCase())}
-            />
-
+          <div className="modal-content" style={{ width: '90%', maxWidth: '1200px' }}>
+            <h3>Historias de {selectedPaciente.nombre}</h3>
+            <ListStories pacienteId={selectedPaciente.id} />
             <div className="modal-footer">
               <button
                 className="btn-secondary"
-                onClick={() => resetForm()}
+                onClick={() => {
+                  setIsStoriesModalOpen(false);
+                  setSelectedPaciente(null);
+                }}
               >
-                Cancelar
-              </button>
-              <button
-                className="btn-primary"
-                onClick={handleCreateHistoria}
-              >
-                <Save size={16} /> Guardar Historia
+                Cerrar
               </button>
             </div>
           </div>
@@ -389,27 +367,41 @@ const ListPatients = () => {
               className="modal-input"
               placeholder="Nombre"
               value={nuevoSeguroNombre}
-              onChange={e => setNuevoSeguroNombre(formatName(e.target.value))}
+              onChange={e => handleNameInput(e.target.value, setNuevoSeguroNombre)}
             />
             <input
               className="modal-input"
               placeholder="Contacto"
               value={nuevoSeguroContacto}
-              onChange={e => setNuevoSeguroContacto(formatName(e.target.value))}
+              onChange={e => handleNameInput(e.target.value, setNuevoSeguroContacto)}
             />
             <input
               className="modal-input"
               placeholder="Teléfono"
               value={nuevoSeguroTelefono}
-              onChange={e => setNuevoSeguroTelefono(formatTelefono(e.target.value))}
+              onChange={e => handlePhoneInput(e.target.value, setNuevoSeguroTelefono)}
             />
             <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setIsCreateSeguroModalOpen(false)}>Cancelar</button>
-              <button className="btn-primary" onClick={handleCreateSeguro}><Save size={16} /> Guardar Seguro</button>
+              <button
+                className="btn-secondary"
+                onClick={() => {
+                  setIsCreateSeguroModalOpen(false);
+                  setNuevoSeguroNombre("");
+                  setNuevoSeguroContacto("");
+                  setNuevoSeguroTelefono("");
+                }}
+              >
+                Cancelar
+              </button>
+              <button className="btn-primary" onClick={handleCreateSeguro}>
+                <Save size={16} /> Guardar Seguro
+              </button>
             </div>
           </div>
         </div>
       )}
+
+
     </div>
   );
 };

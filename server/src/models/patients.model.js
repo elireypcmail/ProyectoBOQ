@@ -530,6 +530,41 @@ export class PatientsModel {
     }
   }
 
+  static async getStoriesByPatientId(id) {
+    let connection
+    try {
+      connection = await pool.connect()
+      const result = await connection.query(
+        `SELECT * FROM historias WHERE id_paciente = $1`,
+        [id]
+      )
+
+      if (!result.rows.length) {
+        return {
+          status: false,
+          code: 404,
+          msg: "Historia no encontrada"
+        }
+      }
+
+      return {
+        status: true,
+        code: 200,
+        data: result.rows
+      }
+
+    } catch (error) {
+      return {
+        status: false,
+        code: 500,
+        msg: "Error al obtener la historia",
+        error: error.message
+      }
+    } finally {
+      if (connection) connection.release()
+    }
+  }
+
   static async createStory(data) {
     let connection
     try {
@@ -540,12 +575,10 @@ export class PatientsModel {
         `SELECT id FROM historias
         WHERE id_paciente = $1
           AND id_medico = $2
-          AND fecha = $3
-          AND detalle = $4`,
+          AND detalle = $3`,
         [
           data.id_paciente,
           data.id_medico,
-          data.fecha,
           data.detalle
         ]
       )
@@ -560,13 +593,12 @@ export class PatientsModel {
 
       const insert = await connection.query(
         `INSERT INTO historias 
-          (id_paciente, id_medico, fecha, detalle, files, estatus)
-        VALUES ($1,$2,$3,$4,$5,$6)
+          (id_paciente, id_medico, detalle, files, estatus)
+        VALUES ($1,$2,$3,$4,$5)
         RETURNING *`,
         [
           data.id_paciente,
           data.id_medico,
-          data.fecha,
           data.detalle,
           data.files || [],
           data.estatus ?? true

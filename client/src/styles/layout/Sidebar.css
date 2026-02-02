@@ -102,10 +102,9 @@
   font-weight: 500;
   white-space: nowrap;
   transition: all var(--transition);
-  justify-content: flex-start; /* Asegura alineación a la izquierda */
+  justify-content: flex-start;
 }
 
-/* Estilo para items padres abiertos */
 .nav-link.group-open {
   background: #f8fafc;
   color: var(--text-main);
@@ -123,7 +122,6 @@
   text-align: left;
 }
 
-/* Icono Chevron (Flecha) */
 .chevron-icon {
   margin-left: auto;
   display: flex;
@@ -138,17 +136,21 @@
 .submenu-container {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.3s ease-in-out;
+  transition: max-height 0.3s ease, padding 0.3s ease;
+  padding-top: 0;
+  padding-bottom: 0;
   background: transparent;
 }
 
 .submenu-container.expanded {
-  max-height: 500px; /* Altura suficiente para mostrar items */
+  max-height: 999px; /* Suficiente para todos los items */
+  padding-top: 4px;
+  padding-bottom: 4px;
 }
 
 .submenu-list {
   list-style: none;
-  padding-left: 1rem; /* Indentación visual */
+  padding-left: 1rem;
   margin-top: 4px;
   display: flex;
   flex-direction: column;
@@ -156,11 +158,10 @@
   position: relative;
 }
 
-/* Línea vertical decorativa para la jerarquía */
 .submenu-list::before {
   content: "";
   position: absolute;
-  left: 24px; 
+  left: 24px;
   top: 0;
   bottom: 0;
   width: 2px;
@@ -170,7 +171,7 @@
 
 .submenu-link {
   width: 100%;
-  padding: 0.6rem 0.75rem 0.6rem 2.5rem; /* Padding izquierdo extra para alinear */
+  padding: 0.6rem 0.75rem 0.6rem 2.5rem;
   border-radius: 10px;
   background: transparent;
   border: none;
@@ -192,7 +193,7 @@
 .submenu-link:hover,
 .submenu-link.active {
   color: var(--blue-primary);
-  background: rgba(37, 99, 235, 0.05); /* Azul muy suave */
+  background: rgba(37, 99, 235, 0.05);
 }
 
 /* --- Footer --- */
@@ -230,9 +231,16 @@
 
   .sidebar.collapsed .nav-text,
   .sidebar.collapsed .logout-btn span,
-  .sidebar.collapsed .chevron-icon, 
+  .sidebar.collapsed .chevron-icon {
+    display: none;
+  }
+
+  /* No ocultamos submenus, solo los colapsamos */
   .sidebar.collapsed .submenu-container {
-    display: none; /* Ocultar textos y submenús al colapsar */
+    max-height: 0;
+    overflow: hidden;
+    padding-top: 0;
+    padding-bottom: 0;
   }
 
   .sidebar.collapsed .nav-link {

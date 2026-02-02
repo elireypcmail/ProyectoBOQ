@@ -33,6 +33,7 @@ export const HealthProvider = ({ children }) => {
 
   const createNewPaciente = async (newPaciente) => {
     try {
+      console.log(newPaciente)
       const res = await HealthAPI.createPaciente(newPaciente);
       setPacientes(prev => [...prev, res.data.data]);
       return { status: true, data: res.data.data };
@@ -41,6 +42,7 @@ export const HealthProvider = ({ children }) => {
       return { status: false, error: error.response?.data || error.message };
     }
   };
+
 
   const editedPaciente = async (id, paciente) => {
     try {
@@ -225,13 +227,25 @@ export const HealthProvider = ({ children }) => {
     }
   };
 
+  const getHistoriasByPacientes = async (pacienteId) => {
+    try {
+      console.log("Fetching historias for pacienteId:", pacienteId);
+      const res = await HealthAPI.getHistoriasByPaciente(pacienteId);
+      console.log(res.data)
+      setHistorias(res.data.data || []);
+    } catch (error) {
+      setErrors(prev => [...prev, error.response?.data || ["Error fetching historias by paciente"]]);
+    }
+  }
+
+
   const createNewHistoria = async (newHistoria) => {
     try {
       console.log("newHistoria")
       console.log(newHistoria)
       const res = await HealthAPI.createHistoria(newHistoria);
-      setHistorias(prev => [...prev, res.data.data]);
-      return { status: true, data: res.data.data };
+      setHistorias(prev => [...prev, res.data]);
+      return { status: true, data: res.data };
     } catch (error) {
       setErrors(prev => [...prev, error.response?.data || ["Error creating historia"]]);
       return { status: false, error: error.response?.data || error.message };
@@ -316,6 +330,7 @@ export const HealthProvider = ({ children }) => {
 
         // Historias
         getAllHistorias,
+        getHistoriasByPacientes,
         createNewHistoria,
         editedHistoria,
         deleteHistoriaById,

@@ -24,24 +24,31 @@ export const deleteBrand = (id) => instanceApp.delete(`/marcas/${id}`);
 
 // -------------------- LOTES --------------------
 export const getAllLotes = () => instanceApp.get("/lotes");
+export const getAllLotesProd = (id) => instanceApp.get(`/lotes/producto/${id}`);
 export const getLoteById = (id) => instanceApp.get(`/lotes/${id}`);
 export const createLote = (data) => instanceApp.post("/lotes", data);
 export const updateLote = (id, data) => instanceApp.put(`/lotes/${id}`, data);
 export const deleteLote = (id) => instanceApp.delete(`/lotes/${id}`);
 
+// -------------------- EXISTENCIAS DE PRODUCTO EN DEPOSITOS --------------------
+export const getProductEdeposit = (id) => instanceApp.get(`/productos/deposito/existencias/${id}`);
+export const createProductEdeposit = (id ,data) => instanceApp.post(`/productos/deposito/existencias/${id}`, data);
+export const updateProductEdeposit = (id, data) => instanceApp.put(`/productos/deposito/existencias/${id}`, data);
+export const deleteProductEdeposit = (id) => instanceApp.delete(`/productos/deposito/existencias/${id}`);
+
 // -------------------- INVENTARIO --------------------
-export const getAllInventory = () => instanceApp.get("/inventory");
-export const getInventoryById = (id) => instanceApp.get(`/inventory/${id}`);
-export const createInventory = (data) => instanceApp.post("/inventory", data);
-export const updateInventory = (id, data) => instanceApp.put(`/inventory/${id}`, data);
-export const deleteInventory = (id) => instanceApp.delete(`/inventory/${id}`);
+export const getAllInventory = (id) => instanceApp.get(`/productos/inventario/${id}`);
+export const getInventoryById = (id) => instanceApp.get(`/productos/inventario/${id}`);
+export const createInventory = (data) => instanceApp.post("/productos/inventario", data);
+export const updateInventory = (id, data) => instanceApp.put(`/productos/inventario/${id}`, data);
+export const deleteInventory = (id) => instanceApp.delete(`/productos/inventario/${id}`);
 
 // -------------------- DEPOSITOS --------------------
-export const getAllDeposits = () => instanceApp.get("/deposits");
-export const getDepositById = (id) => instanceApp.get(`/deposits/${id}`);
-export const createDeposit = (data) => instanceApp.post("/deposits", data);
-export const updateDeposit = (id, data) => instanceApp.put(`/deposits/${id}`, data);
-export const deleteDeposit = (id) => instanceApp.delete(`/deposits/${id}`);
+export const getAllDeposits = () => instanceApp.get("/auth/depositos");
+export const getDepositById = (id) => instanceApp.get(`/auth/depositos/${id}`);
+export const createDeposit = (data) => instanceApp.post("/auth/depositos", data);
+export const updateDeposit = (id, data) => instanceApp.put(`/auth/depositos/${id}`, data);
+export const deleteDeposit = (id) => instanceApp.delete(`/auth/depositos/${id}`);
 
 // -------------------- KARDEX GENERAL --------------------
 export const getAllKardexG = () => instanceApp.get("/kardex/general");
