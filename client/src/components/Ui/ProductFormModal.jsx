@@ -19,11 +19,11 @@ const ProductFormModal = ({
     id_categoria: "",
     id_marca: "",
     nro_serie: "",
-    existencia_general: 0,
+    existencia_general: 0, // Se mantiene internamente
     costo_unitario: 0,
     precio_venta: 0,
     margen_ganancia: 0,
-    stock_minimo_general: 0,
+    stock_minimo_general: 0, // Se mantiene internamente
     estatus: true
   };
 
@@ -74,7 +74,7 @@ const ProductFormModal = ({
   if (!isOpen) return null;
 
   /* =========================
-     Handlers
+      Handlers
   ========================== */
   const handleChange = (e) => {
     const { name, value, type } = e.target;
@@ -83,22 +83,12 @@ const ProductFormModal = ({
     if (type === "text") {
       val = val.toUpperCase();
     } else if (type === "number") {
-      val = Number(val) || 0;
+      // Si el campo está vacío, guardamos 0 internamente pero permitimos el string vacío para el input
+      val = value === "" ? "" : Number(value);
     }
 
-    if (name === "margen_ganancia") val = Math.min(Math.max(val, 0), 100);
-    if (name === "costo_unitario") val = Math.min(val, 1_000_000);
-
-    if (name === "existencia_general") {
-      val = Math.min(val, 100_000);
-      if (form.stock_minimo_general > val) {
-        setForm(prev => ({ ...prev, stock_minimo_general: val }));
-      }
-    }
-
-    if (name === "stock_minimo_general") {
-      val = Math.min(val, form.existencia_general);
-    }
+    if (name === "margen_ganancia" && val !== "") val = Math.min(Math.max(val, 0), 100);
+    if (name === "costo_unitario" && val !== "") val = Math.min(val, 1_000_000);
 
     setForm(prev => ({ ...prev, [name]: val }));
   };
@@ -119,16 +109,35 @@ const ProductFormModal = ({
     setNewBrandName("");
   };
 
-  const handleSubmit = () => {
-    const usuario_id = Number(localStorage.getItem("UserId"));
+const handleSubmit = () => {
+  const usuario_id = Number(localStorage.getItem("UserId"));
 
-    onSubmit({
-      ...form,
-      usuario_id
-    });
+  // Validación de campos obligatorios
+  const requiredFields = ["descripcion", "id_categoria", "id_marca", "costo_unitario", "margen_ganancia"];
+  for (let field of requiredFields) {
+    if (
+      form[field] === "" || 
+      form[field] === null || 
+      form[field] === undefined || 
+      (typeof form[field] === "number" && form[field] <= 0)
+    ) {
+      alert(`Por favor complete el campo obligatorio: ${field.toUpperCase()}`);
+      return; // No continuar con el envío
+    }
+  }
 
-    onClose();
+  // Al enviar, nos aseguramos de convertir los campos numéricos
+  const finalData = {
+    ...form,
+    costo_unitario: Number(form.costo_unitario) || 0,
+    margen_ganancia: Number(form.margen_ganancia) || 0,
+    usuario_id
   };
+
+  onSubmit(finalData);
+  onClose();
+};
+
 
   const handleCancel = () => {
     setForm(emptyForm);
@@ -147,7 +156,7 @@ const ProductFormModal = ({
     }),
     container: base => ({ ...base, flex: 1 })
   };
-  
+
   return (
     <div className="pfm-overlay">
       <div className="pfm-container pfm-container--large">
@@ -171,7 +180,6 @@ const ProductFormModal = ({
                 <input className="pfm-input" type="text" name="nro_serie" value={form.nro_serie} onChange={handleChange} />
               </div>
 
-              {/* CATEGORÍA CON CREACIÓN */}
               <div className="pfm-field">
                 <label className="pfm-label">CATEGORÍA</label>
                 {!isCreatingCat ? (
@@ -199,7 +207,6 @@ const ProductFormModal = ({
                 )}
               </div>
 
-              {/* MARCA CON CREACIÓN */}
               <div className="pfm-field">
                 <label className="pfm-label">MARCA</label>
                 {!isCreatingBrand ? (
@@ -231,27 +238,33 @@ const ProductFormModal = ({
           </div>
 
           <div className="pfm-section">
-            <h4 className="pfm-section-title">Precios y stock</h4>
+            <h4 className="pfm-section-title">Precios</h4>
             <div className="pfm-grid">
               <div className="pfm-field">
-                <label className="pfm-label">EXISTENCIA</label>
-                <input className="pfm-input" type="number" name="existencia_general" value={form.existencia_general} onChange={handleChange} />
-              </div>
-              <div className="pfm-field">
-                <label className="pfm-label">STOCK MÍNIMO</label>
-                <input className="pfm-input" type="number" name="stock_minimo_general" value={form.stock_minimo_general} onChange={handleChange} />
-              </div>
-              <div className="pfm-field">
                 <label className="pfm-label">COSTO</label>
-                <input className="pfm-input" type="number" name="costo_unitario" value={form.costo_unitario} onChange={handleChange} />
+                <input 
+                  className="pfm-input" 
+                  type="number" 
+                  name="costo_unitario" 
+                  value={form.costo_unitario === 0 ? "" : form.costo_unitario} 
+                  onChange={handleChange} 
+                  placeholder="0"
+                />
+              </div>
+              <div className="pfm-field">
+                <label className="pfm-label">MARGEN (%)</label>
+                <input 
+                  className="pfm-input" 
+                  type="number" 
+                  name="margen_ganancia" 
+                  value={form.margen_ganancia === 0 ? "" : form.margen_ganancia} 
+                  onChange={handleChange} 
+                  placeholder="0"
+                />
               </div>
               <div className="pfm-field">
                 <label className="pfm-label">PRECIO VENTA</label>
                 <input className="pfm-input pfm-input--readonly" type="number" value={form.precio_venta} disabled />
-              </div>
-              <div className="pfm-field">
-                <label className="pfm-label">MARGEN (%)</label>
-                <input className="pfm-input" type="number" name="margen_ganancia" value={form.margen_ganancia} onChange={handleChange} />
               </div>
             </div>
           </div>

@@ -43,6 +43,7 @@ export const ProductsProvider = ({ children }) => {
   const createNewProduct = async (newProduct) => {
     try {
       const res = await ProductsAPI.createProduct(newProduct);
+      console.log(res.data.data)
       setProducts((prev) => [...prev, res.data.data]);
       return { status: true, data: res.data };
     } catch (error) {

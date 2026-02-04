@@ -237,7 +237,10 @@ export class ProductsModel {
         status: true,
         code: 201,
         msg: "Producto e inventario creados correctamente",
-        data: data,
+        data: {
+          ...data,
+          id: producto.id,
+        },
       };
     } catch (error) {
       if (connection) await connection.query("ROLLBACK");
@@ -962,13 +965,13 @@ export class ProductsModel {
     }
   }
 
-static async getLotesProductoById(id_producto) {
-  let connection;
-  try {
-    connection = await pool.connect();
+  static async getLotesProductoById(id_producto) {
+    let connection;
+    try {
+      connection = await pool.connect();
 
-    const result = await connection.query(
-      `
+      const result = await connection.query(
+        `
       SELECT 
         l.id,
         l.id_producto,
@@ -990,30 +993,29 @@ static async getLotesProductoById(id_producto) {
       WHERE l.id_producto = $1
       ORDER BY l.id DESC
       `,
-      [id_producto],
-    );
+        [id_producto],
+      );
 
-    if (!result.rows.length) {
+      if (!result.rows.length) {
+        return {
+          status: false,
+          code: 404,
+          msg: "No se encontraron lotes para este producto",
+        };
+      }
+
+      return { status: true, code: 200, data: result.rows };
+    } catch (error) {
       return {
         status: false,
-        code: 404,
-        msg: "No se encontraron lotes para este producto",
+        code: 500,
+        msg: "Error al obtener lotes",
+        error: error.message,
       };
+    } finally {
+      if (connection) connection.release();
     }
-
-    return { status: true, code: 200, data: result.rows };
-  } catch (error) {
-    return {
-      status: false,
-      code: 500,
-      msg: "Error al obtener lotes",
-      error: error.message,
-    };
-  } finally {
-    if (connection) connection.release();
   }
-}
-
 
   static async createLote(data) {
     let connection;

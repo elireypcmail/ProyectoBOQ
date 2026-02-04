@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { 
   Pencil, Trash2, X, Package, Tag, Layers, Hash, 
   TrendingUp, DollarSign, AlertCircle, Bookmark,
-  History, Boxes
+  History, Boxes, Warehouse // Importamos Warehouse
 } from "lucide-react";
 import ListLots from "../Products/ListLots"; 
 import ListPrices from "../Products/ListPrices";
+import ListEdeposits from "../Products/ListEdeposits"; // Importamos el nuevo componente
 import "../../styles/ui/ModalDetailed.css";
 
 const ModalDetailed = ({
@@ -46,7 +47,7 @@ const ModalDetailed = ({
           </button>
         </div>
 
-        {/* NAVEGACIÓN DE PESTAÑAS ESTATICA */}
+        {/* NAVEGACIÓN DE PESTAÑAS */}
         <div className="pdm-tabs">
           <button 
             className={`pdm-tab-btn ${activeTab === 'general' ? 'active' : ''}`}
@@ -60,6 +61,15 @@ const ModalDetailed = ({
           >
             <Boxes size={16} /> Lotes
           </button>
+          
+          {/* NUEVA PESTAÑA: DEPOSITOS */}
+          <button 
+            className={`pdm-tab-btn ${activeTab === 'depositos' ? 'active' : ''}`}
+            onClick={() => setActiveTab('depositos')}
+          >
+            <Warehouse size={16} /> Existencia por Depósito
+          </button>
+
           <button 
             className={`pdm-tab-btn ${activeTab === 'precios' ? 'active' : ''}`}
             onClick={() => setActiveTab('precios')}
@@ -132,6 +142,13 @@ const ModalDetailed = ({
           {activeTab === "lotes" && (
             <div className="pdm-tab-content animate-fade-in">
               <ListLots id_producto={product.id} />
+            </div>
+          )}
+
+          {/* VISTA: DEPOSITOS (CONECTADA) */}
+          {activeTab === "depositos" && (
+            <div className="pdm-tab-content animate-fade-in">
+              <ListEdeposits id_producto={product.id} />
             </div>
           )}
 

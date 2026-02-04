@@ -73,8 +73,8 @@ const ListPrices = ({ productId }) => {
               <th><Calendar size={14} /> Fecha y Hora</th>
               <th><User size={14} /> Usuario</th>
               <th>Costo Unitario</th>
-              <th>Precio Venta</th>
               <th>Margen</th>
+              <th>Precio Venta</th>
               <th className="center">Acciones</th>
             </tr>
           </thead>
@@ -89,8 +89,8 @@ const ListPrices = ({ productId }) => {
                   <strong>{a.usuario_nombre}</strong>
                 </td>
                 <td><PriceChange oldVal={a.costo_unitario_anterior} newVal={a.costo_unitario_nuevo} /></td>
-                <td><PriceChange oldVal={a.precio_venta_anterior} newVal={a.precio_venta_nuevo} /></td>
                 <td><PriceChange oldVal={a.margen_ganancia_anterior} newVal={a.margen_ganancia_nuevo} isPercent /></td>
+                <td><PriceChange oldVal={a.precio_venta_anterior} newVal={a.precio_venta_nuevo} /></td>
                 <td className="center">
                   <button className="lph-action-btn" onClick={() => { setSelectedAudit(a); setIsDetailsModalOpen(true); }}>
                     <SlOptionsVertical size={14} />

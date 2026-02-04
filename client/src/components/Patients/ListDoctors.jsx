@@ -10,7 +10,8 @@ import {
   AlertTriangle,
   Plus
 } from "lucide-react";
-import { SlOptionsVertical } from "react-icons/sl"
+import Select from "react-select"; // <- react-select import
+import { SlOptionsVertical } from "react-icons/sl";
 import "../../styles/components/ListZone.css";
 
 const ListDoctors = () => {
@@ -49,20 +50,18 @@ const ListDoctors = () => {
     getAllTipoMedicos();
   }, []);
 
-  // -------------------- Funciones de formateo de inputs --------------------
+  // -------------------- Formateo inputs --------------------
   const handleNameInput = (value, setter) => {
-const formatted = value
-  .replace(/[^a-zA-Z0-9ÁÉÍÓÚÜÑáéíóúüñ\s]/g, "")
-  .toUpperCase();
+    const formatted = value
+      .replace(/[^a-zA-Z0-9ÁÉÍÓÚÜÑáéíóúüñ\s]/g, "")
+      .toUpperCase();
     setter(formatted);
   };
 
   const handlePhoneInput = (value) => {
     let digits = value.replace(/\D/g, "");
     if (digits.length > 11) digits = digits.slice(0, 11);
-    if (digits.length > 4) {
-      return digits.slice(0, 4) + "-" + digits.slice(4);
-    }
+    if (digits.length > 4) return digits.slice(0, 4) + "-" + digits.slice(4);
     return digits;
   };
 
@@ -78,6 +77,16 @@ const formatted = value
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  // -------------------- React-Select opciones --------------------
+  const tipoOptions = useMemo(() =>
+    tipoMedicos.map(tipo => ({ value: tipo.id, label: tipo.nombre })),
+    [tipoMedicos]
+  );
+
+  const selectedTipoOption = tipoOptions.find(
+    opt => opt.value === Number(selectedTipoId)
+  ) || null;
 
   // -------------------- Acciones --------------------
   const openEditModal = (medico) => {
@@ -164,7 +173,6 @@ const formatted = value
   // -------------------- Render --------------------
   return (
     <div className="orders-container">
-
       {/* HEADER */}
       <div className="orders-header">
         <div>
@@ -214,10 +222,7 @@ const formatted = value
                 <td className="hide-mobile">{medico.telefono || "-"}</td>
                 <td className="hide-mobile">{medico.tipo}</td>
                 <td className="center">
-                  {/* Desktop */}
                   <div className="actions-desktop">
-                    {/* <button className="icon-btn edit" onClick={() => openEditModal(medico)}><Pencil size={16} /></button> */}
-                    {/* <button className="icon-btn delete" onClick={() => openDeleteModal(medico)}><Trash2 size={16} /></button> */}
                     <button className="icon-btn edit" onClick={() => { 
                       setSelectedMedico(medico); 
                       setIsDetailsModalOpen(true); 
@@ -225,7 +230,6 @@ const formatted = value
                       <SlOptionsVertical size={16}/>
                     </button>
                   </div>
-                  {/* Mobile */}
                   <div className="actions-mobile">
                     <button className="icon-btn" onClick={() => { 
                       setSelectedMedico(medico); 
@@ -274,11 +278,19 @@ const formatted = value
 
             {!isCreatingTipo ? (
               <div className="select-zone-container">
-                <select className="modal-input" value={selectedTipoId} onChange={(e) => setSelectedTipoId(e.target.value)}>
-                  <option value="">Selecciona un tipo de médico</option>
-                  {tipoMedicos.map(tipo => <option key={tipo.id} value={tipo.id}>{tipo.nombre}</option>)}
-                </select>
-                <button className="btn-add-zone-primary" onClick={() => setIsCreatingTipo(true)}><Plus size={16} /> Tipo</button>
+                <div style={{ flex: 1 }}>
+                  <Select
+                    placeholder="Selecciona un tipo de médico"
+                    options={tipoOptions}
+                    value={selectedTipoOption}
+                    onChange={(option) => setSelectedTipoId(option ? option.value : "")}
+                    isClearable
+                    classNamePrefix="react-select"
+                  />
+                </div>
+                <button className="btn-add-zone-primary" onClick={() => setIsCreatingTipo(true)}>
+                  <Plus size={16} /> Tipo
+                </button>
               </div>
             ) : (
               <div className="new-zone-container">

@@ -1,0 +1,201 @@
+.edep-wrapper {
+  padding: 10px;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Header & Search */
+.edep-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 15px;
+}
+
+.edep-search-container {
+  position: relative;
+  flex: 1;
+}
+
+.edep-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+}
+
+.edep-search-input {
+  width: 100%;
+  padding: 10px 10px 10px 40px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.edep-search-input:focus {
+  border-color: #6366f1;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+.edep-btn-new {
+  background: #1e293b;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.edep-btn-new:hover { background: #0f172a; }
+
+/* Grid & Cards */
+.edep-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.edep-item {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px;
+  transition: all 0.2s;
+}
+
+.edep-item.is-low {
+  border-color: #fed7aa;
+  background: #fffaf5;
+}
+
+.edep-item-top {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.edep-info {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.edep-main-icon { color: #6366f1; }
+
+.edep-info h4 {
+  margin: 0;
+  font-size: 14.5px;
+  color: #1e293b;
+}
+
+.edep-info small { color: #64748b; font-size: 11px; }
+
+.edep-actions { display: flex; gap: 4px; }
+
+.edep-actions button {
+  background: #f1f5f9;
+  border: none;
+  padding: 6px;
+  border-radius: 8px;
+  color: #475569;
+  cursor: pointer;
+}
+
+.edep-actions button:hover { color: #6366f1; background: #e0e7ff; }
+.edep-actions button.del:hover { color: #ef4444; background: #fee2e2; }
+
+/* Stats Row */
+.edep-stats-row {
+  display: flex;
+  gap: 10px;
+}
+
+.edep-stat-box {
+  flex: 1;
+  background: #f8fafc;
+  padding: 8px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.edep-stat-box .label {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.edep-stat-box .value {
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.edep-warning-tag {
+  margin-top: 12px;
+  background: #ffedd5;
+  color: #9a3412;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+}
+
+/* Modals */
+.edep-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+}
+
+.edep-modal-content {
+  background: white;
+  padding: 24px;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 400px;
+}
+
+.edep-field { margin-bottom: 16px; }
+.edep-field label { display: block; font-size: 13px; margin-bottom: 6px; color: #475569; }
+.edep-field input, .edep-field select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  outline: none;
+}
+
+.edep-field-row { display: flex; gap: 12px; }
+
+.edep-modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.edep-btn-save { flex: 2; background: #6366f1; color: white; border: none; padding: 10px; border-radius: 10px; cursor: pointer; }
+.edep-btn-cancel { flex: 1; background: #f1f5f9; color: #475569; border: none; padding: 10px; border-radius: 10px; cursor: pointer; }
+.edep-btn-delete { background: #ef4444; color: white; border: none; padding: 10px; border-radius: 10px; cursor: pointer; width: 100%; }
