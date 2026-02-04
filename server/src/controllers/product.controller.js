@@ -28,13 +28,32 @@ controller.getProductById = async (req, res) => {
   }
 };
 
+controller.getProductAud = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    console.log(id)
+
+    if (!id) return res.status(400).json({ error: "Product id required" });
+
+    const result = await ProductsModel.getProductAudById(id);
+    return res.status(result.code).json(result);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
 controller.createProduct = async (req, res) => {
   try {
-    const { descripcion, id_categoria, id_marca, files, estatus } = req.body;
-    if (!descripcion || !id_categoria || !id_marca)
+    const data = req.body;
+
+    console.log(data)
+
+    if (!data.descripcion || !data.id_categoria || !data.id_marca)
       return res.status(400).json({ error: "descripcion, id_categoria y id_marca son obligatorios" });
 
-    const result = await ProductsModel.createProduct({ descripcion, id_categoria, id_marca, files, estatus });
+    const result = await ProductsModel.createProduct(data);
+    console.log(result)
     return res.status(result.code).json(result);
   } catch (error) {
     return res.status(500).json({ error: error.message });
@@ -45,10 +64,11 @@ controller.updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
     const data = req.body;
-    if (!id) return res.status(400).json({ error: "Product id required" });
+    if (!id) return res.status(400).json({ error: "El id del producto es requerido" });
     if (Object.keys(data).length === 0) return res.status(400).json({ error: "No data to update" });
 
     const result = await ProductsModel.updateProduct(id, data);
+    console.log(result)
     return res.status(result.code).json(result);
   } catch (error) {
     return res.status(500).json({ error: error.message });
@@ -321,13 +341,13 @@ controller.getLoteProductoById = async (req, res) => {
 
 controller.createLote = async (req, res) => {
   try {
-    const { id_producto, nro_lote, fecha_vencimiento, estatus = true } = req.body;
+    const { id_producto, nro_lote, id_deposito, fecha_vencimiento, estatus = true } = req.body;
 
     console.log(req.body)
 
-    if (!id_producto || !nro_lote) return res.status(400).json({ error: "id_producto y nro_lote son obligatorios" });
+    if ( !nro_lote || !fecha_vencimiento ) return res.status(400).json({ error: "nro_lote y fecha de vencimiento son obligatorios" });
 
-    const result = await ProductsModel.createLote({ id_producto, nro_lote, fecha_vencimiento, estatus });
+    const result = await ProductsModel.createLote({id_producto, nro_lote, id_deposito, fecha_vencimiento, estatus });
     return res.status(result.code).json(result);
   } catch (error) {
     return res.status(500).json({ error: error.message });

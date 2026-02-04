@@ -15,6 +15,7 @@ export const useProducts = () => {
 
 export const ProductsProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
+  const [audits, setAudits] = useState([]);
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
   const [lotes, setLotes] = useState([]);
@@ -38,11 +39,11 @@ export const ProductsProvider = ({ children }) => {
       ]);
     }
   };
-
+  
   const createNewProduct = async (newProduct) => {
     try {
       const res = await ProductsAPI.createProduct(newProduct);
-      setProducts((prev) => [...prev, res.data]);
+      setProducts((prev) => [...prev, res.data.data]);
       return { status: true, data: res.data };
     } catch (error) {
       setErrors((prev) => [
@@ -52,11 +53,11 @@ export const ProductsProvider = ({ children }) => {
       return { status: false, error: error.response?.data || error.message };
     }
   };
-
+  
   const editProduct = async (id, product) => {
     try {
       const res = await ProductsAPI.updateProduct(id, product);
-      const updated = res.data;
+      const updated = res.data.data;
       setProducts((prev) => prev.map((p) => (p.id === id ? updated : p)));
       return { status: true, data: updated };
     } catch (error) {
@@ -67,7 +68,7 @@ export const ProductsProvider = ({ children }) => {
       return { status: false, error: error.response?.data || error.message };
     }
   };
-
+  
   const deleteProductById = async (id) => {
     try {
       const res = await ProductsAPI.deleteProduct(id);
@@ -79,6 +80,22 @@ export const ProductsProvider = ({ children }) => {
         error.response?.data || ["Error deleting product"],
       ]);
       return { status: false, error: error.response?.data || error.message };
+    }
+  };
+  
+  // -------------------- PRODUCTOS --------------------
+  
+    const getAuditProd = async (id_producto) => {
+    try {
+      setAudits([])
+      const res = await ProductsAPI.getProductAudById(id_producto);
+      console.log(res.data.data);
+      setAudits(res.data?.data || []);
+    } catch (error) {
+      setErrors((prev) => [
+        ...prev,
+        error.response?.data || ["Error fetching lotes"],
+      ]);
     }
   };
 
@@ -94,7 +111,7 @@ export const ProductsProvider = ({ children }) => {
       ]);
     }
   };
-
+  
   const createNewCategory = async (newCategory) => {
     try {
       const res = await ProductsAPI.createCategory(newCategory);
@@ -502,6 +519,7 @@ export const ProductsProvider = ({ children }) => {
     <ProductsContext.Provider
       value={{
         products,
+        audits,
         categories,
         brands,
         lotes,
@@ -517,6 +535,8 @@ export const ProductsProvider = ({ children }) => {
         editProduct,
         deleteProductById,
 
+        getAuditProd,
+        
         getAllCategories,
         createNewCategory,
         editCategory,

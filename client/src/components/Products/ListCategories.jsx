@@ -199,9 +199,10 @@ const ListCategories = () => {
           <div className="modal-content">
             <h3>Crear Categoría</h3>
             <input 
+              placeholder="Nombre"
               className="modal-input" 
               value={editName} 
-              onChange={(e) => handleNameInput(e.target.value, setEditName)} 
+              onChange={(e) => setEditName(e.target.value.toUpperCase())} 
             />
             <div className="modal-footer">
               <button className="btn-secondary" onClick={() => setIsCreateModalOpen(false)}>Cancelar</button>
@@ -217,9 +218,10 @@ const ListCategories = () => {
           <div className="modal-content">
             <h3>Editar Categoría</h3>
             <input 
+              placeholder="Nombre"
               className="modal-input" 
               value={editName} 
-              onChange={(e) => handleNameInput(e.target.value, setEditName)} 
+              onChange={(e) => setEditName(e.target.value.toUpperCase())} 
             />
             <div className="modal-footer">
               <button className="btn-secondary" onClick={() => setIsEditModalOpen(false)}>Cancelar</button>

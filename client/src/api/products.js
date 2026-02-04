@@ -8,6 +8,9 @@ export const createProduct = (data) => instanceApp.post("/productos", data);
 export const updateProduct = (id, data) => instanceApp.put(`/productos/${id}`, data);
 export const deleteProduct = (id) => instanceApp.delete(`/productos/${id}`);
 
+// -------------------- PRODUCTOS AUDITORIA --------------------
+export const getProductAudById = (id) => instanceApp.get(`/productos/auditoria/precio/${id}`);
+
 // -------------------- CATEGORIAS --------------------
 export const getAllCategories = () => instanceApp.get("/categorias");
 export const getCategoryById = (id) => instanceApp.get(`/categorias/${id}`);

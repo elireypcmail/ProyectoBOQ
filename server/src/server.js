@@ -46,7 +46,6 @@ app.use("/pacientes",patientsRouter)
 app.use("/tipos/medicos",typesDocRouter)
 app.use("/seguros",insurancesRouter)
 app.use("/historias",storiesRouter)
-
 app.use("/categorias",categoriesRouter)
 app.use("/productos",productsRouter)
 app.use("/marcas",brandsRouter)

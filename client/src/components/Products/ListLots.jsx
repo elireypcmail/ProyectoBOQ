@@ -2,371 +2,267 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useProducts } from "../../context/ProductsContext";
 import {
   Search,
-  ChevronLeft,
-  ChevronRight,
   Pencil,
   Trash2,
   AlertTriangle,
-  Plus
+  Plus,
+  Warehouse,
+  Calendar,
+  Tag,
+  X
 } from "lucide-react";
-import { SlOptionsVertical } from "react-icons/sl";
-import "../../styles/components/ListZone.css";
+import "../../styles/components/ListLots.css";
 
 const ListLots = ({ id_producto }) => {
   const {
     lotes,
-    getAllLotes,
+    deposits,
+    getAllLotesByProd,
+    getAllDeposits,
     createNewLote,
     editLote,
-    deleteLoteById
+    deleteLoteById,
   } = useProducts();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const itemsPerPage = 5;
 
-  // ---------------- MODALES ----------------
   const [selectedLote, setSelectedLote] = useState(null);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
-  // ---------------- FORM ----------------
-  const [nroLote, setNroLote] = useState("");
-  const [fechaVencimiento, setFechaVencimiento] = useState("");
+  const [formData, setFormData] = useState({
+    nro_lote: "",
+    id_deposito: "",
+    fecha_vencimiento: "",
+    estatus: true,
+  });
+
+  const today = new Date().toISOString().split("T")[0];
 
   useEffect(() => {
-    getAllLotes();
-  }, []);
+    getAllLotesByProd(id_producto);
+    getAllDeposits();
+  }, [id_producto]);
 
-  // ---------------- FILTRADO (OBLIGATORIO POR PRODUCTO) ----------------
   const filteredLotes = useMemo(() => {
-    return (Array.isArray(lotes) ? lotes : [])
-      .filter(l => l.id_producto === id_producto)
-      .filter(l =>
-        (l.nro_lote ?? "")
-          .toUpperCase()
-          .includes(searchTerm.toUpperCase())
+    const base = Array.isArray(lotes) ? lotes : [];
+    return base
+      .filter((l) => l.id_producto === id_producto)
+      .filter((l) =>
+        l.nro_lote?.toLowerCase().includes(searchTerm.toLowerCase()),
       );
   }, [lotes, searchTerm, id_producto]);
 
-  const totalPages = Math.ceil(filteredLotes.length / itemsPerPage);
   const currentLotes = filteredLotes.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    currentPage * itemsPerPage,
   );
 
-  // ---------------- ACCIONES ----------------
-  const resetForm = () => {
-    setNroLote("");
-    setFechaVencimiento("");
+  const handleOpenForm = (lote = null) => {
+    if (lote) {
+      setSelectedLote(lote);
+      setFormData({
+        nro_lote: lote.nro_lote,
+        id_deposito: lote.id_deposito,
+        fecha_vencimiento: lote.fecha_vencimiento?.split("T")[0] || "",
+        estatus: true,
+      });
+    } else {
+      setSelectedLote(null);
+      setFormData({
+        nro_lote: "",
+        id_deposito: "",
+        fecha_vencimiento: "",
+        estatus: true,
+      });
+    }
+    setIsFormModalOpen(true);
   };
 
-  const openEditModal = (lote) => {
-    setSelectedLote(lote);
-    setNroLote(lote.nro_lote);
-    setFechaVencimiento(lote.fecha_vencimiento?.split("T")[0] || "");
-    setIsEditModalOpen(true);
+  const handleSubmit = async () => {
+    const { nro_lote, id_deposito, fecha_vencimiento } = formData;
+
+    // 1. Campos obligatorios
+    if (!nro_lote || !id_deposito || !fecha_vencimiento) {
+      alert("Por favor, complete todos los campos obligatorios.");
+      return;
+    }
+
+    // 2. Validación de fecha futura
+    if (fecha_vencimiento <= today) {
+      alert("La fecha de caducidad debe ser posterior a la fecha actual.");
+      return;
+    }
+
+    // 3. Validación de depósito duplicado para este producto
+    // Comprobamos si ya existe un lote con ese depósito (excluyendo el lote actual si es edición)
+    const isDepositoOcupado = lotes.some(lote => 
+      lote.id_deposito === parseInt(id_deposito) && 
+      lote.id !== selectedLote?.id
+    );
+
+    if (isDepositoOcupado) {
+      const depoName = deposits.find(d => d.id === parseInt(id_deposito))?.nombre;
+      alert(`El depósito "${depoName}" ya está asignado a otro lote de este producto.`);
+      return;
+    }
+
+    const payload = { ...formData, id_producto };
+    if (selectedLote) await editLote(selectedLote.id, payload);
+    else await createNewLote(payload);
+    
+    setIsFormModalOpen(false);
+    getAllLotesByProd(id_producto);
   };
 
-  const handleNroLoteInput = (value) => {
-    // Solo números
-    return value.replace(/\D/g, "");
-  };
+  const isExpired = (date) => date && new Date(date) < new Date();
 
-
-  const handleCreate = async () => {
-    if (!nroLote) return;
-
-    await createNewLote({
-      nro_lote: nroLote.trim(),
-      fecha_vencimiento: fechaVencimiento || null,
-      id_producto
-    });
-
-    setIsCreateModalOpen(false);
-    resetForm();
-    getAllLotes();
-  };
-
-  const handleUpdate = async () => {
-    if (!selectedLote) return;
-
-    await editLote(selectedLote.id, {
-      nro_lote: nroLote.trim(),
-      fecha_vencimiento: fechaVencimiento || null,
-      id_producto
-    });
-
-    setIsEditModalOpen(false);
-    setSelectedLote(null);
-    resetForm();
-    getAllLotes();
-  };
-
-  const handleDelete = async () => {
-    if (!selectedLote) return;
-
-    await deleteLoteById(selectedLote.id);
-    setIsDeleteModalOpen(false);
-    setSelectedLote(null);
-    getAllLotes();
-  };
-
-  // ---------------- RENDER ----------------
   return (
-    <div className="orders-container">
-
-      {/* HEADER */}
-      <div className="orders-header">
-        <div>
-          <h2>Lotes del Producto</h2>
-          <p>{filteredLotes.length} lotes registrados</p>
+    <div className="lots-container">
+      <div className="lots-header-section">
+        <div className="title-group">
+          <div className="icon-badge"><Tag size={20} /></div>
+          <div>
+            <h3>Gestión de Lotes</h3>
+            <p className="subtitle">{filteredLotes.length} lotes encontrados</p>
+          </div>
         </div>
-        <button
-          className="btn-primary"
-          onClick={() => {
-            resetForm();
-            setIsCreateModalOpen(true);
-          }}
-        >
-          <Plus size={16} /> Nuevo Lote
+        <button className="btn-add-main" onClick={() => handleOpenForm()}>
+          <Plus size={18} /> <span>Nuevo Lote</span>
         </button>
       </div>
 
-      {/* BUSCADOR */}
-      <div className="orders-toolbar">
-        <div className="search-box">
-          <Search size={16} />
+      <div className="lots-filter-bar">
+        <div className={`search-container ${searchTerm ? "active" : ""}`}>
+          <Search size={18} className="search-icon" />
           <input
-            placeholder="Buscar lote..."
+            type="text"
+            placeholder="Buscar por número de lote..."
             value={searchTerm}
-            onChange={e => {
+            onChange={(e) => {
               setSearchTerm(e.target.value);
               setCurrentPage(1);
             }}
           />
+          {searchTerm && (
+            <button className="clear-search" onClick={() => setSearchTerm("")}>
+              <X size={14} />
+            </button>
+          )}
+        </div>
+        <div className="filter-results-info">
+          Mostrando <strong>{currentLotes.length}</strong> de {filteredLotes.length}
         </div>
       </div>
 
-      {/* TABLA */}
-      <table className="orders-table">
-        <thead>
-          <tr>
-            <th className="hide-mobile">ID</th>
-            <th>Lote</th>
-            <th className="hide-mobile">Vencimiento</th>
-            <th className="center">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentLotes.length ? currentLotes.map(lote => (
-            <tr key={lote.id}>
-              <td className="hide-mobile">#{lote.id}</td>
-              <td>{lote.nro_lote}</td>
-              <td className="hide-mobile">
-                {lote.fecha_vencimiento
-                  ? new Date(lote.fecha_vencimiento).toLocaleDateString()
-                  : "—"}
-              </td>
-              <td className="center">
-                <button
-                  className="icon-btn"
-                  onClick={() => {
-                    setSelectedLote(lote);
-                    setIsDetailsModalOpen(true);
-                  }}
-                >
-                  <SlOptionsVertical size={16} />
-                </button>
-              </td>
-            </tr>
-          )) : (
+      <div className="lots-card">
+        <table className="lots-custom-table">
+          <thead>
             <tr>
-              <td colSpan="4" className="no-results">
-                No se encontraron lotes
-              </td>
+              <th>Número de Lote</th>
+              <th><Warehouse size={14} /> Deposito</th>
+              <th><Calendar size={14} /> Vencimiento</th>
+              <th>Estado</th>
+              <th className="text-center">Acciones</th>
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {currentLotes.length > 0 ? (
+              currentLotes.map((lote) => (
+                <tr key={lote.id}>
+                  <td className="col-lote">#{lote.nro_lote}</td>
+                  <td className="col-depo">{lote.deposito_nombre}</td>
+                  <td>
+                    <div className={`date-badge ${isExpired(lote.fecha_vencimiento) ? "is-expired" : ""}`}>
+                      {lote.fecha_vencimiento
+                        ? new Date(lote.fecha_vencimiento).toLocaleDateString()
+                        : "Indefinido"}
+                    </div>
+                  </td>
+                  <td><span className="status-tag st-active">Disponible</span></td>
+                  <td>
+                    <div className="actions-group">
+                      <button className="act-btn edit" onClick={() => handleOpenForm(lote)} title="Editar"><Pencil size={15} /></button>
+                      <button className="act-btn delete" onClick={() => { setSelectedLote(lote); setIsDeleteModalOpen(true); }} title="Eliminar"><Trash2 size={15} /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr><td colSpan="5" className="table-empty">No se encontraron lotes registrados.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
-      {/* PAGINACIÓN */}
-      {totalPages > 1 && (
-        <div className="orders-pagination">
-          <button
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(p => p - 1)}
-          >
-            <ChevronLeft size={18} />
-          </button>
-          <span>Página {currentPage} de {totalPages}</span>
-          <button
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage(p => p + 1)}
-          >
-            <ChevronRight size={18} />
-          </button>
+      {isFormModalOpen && (
+        <div className="modal-overlay-blur">
+          <div className="modal-card">
+            <div className="modal-header">
+              <h4>{selectedLote ? "Editar Información del Lote" : "Registrar Nuevo Lote"}</h4>
+              <p>Completa los datos técnicos del lote.</p>
+            </div>
+            <div className="modal-body">
+              <div className="input-group">
+                <label>Nro. de Lote</label>
+                <input
+                  type="text"
+                  value={formData.nro_lote}
+                  onChange={(e) => setFormData({ ...formData, nro_lote: e.target.value.toUpperCase() })}
+                  placeholder="Ej: LOTE-1020"
+                />
+              </div>
+              <div className="input-group">
+                <label>Depósito Destino</label>
+                <select
+                  value={formData.id_deposito}
+                  onChange={(e) => setFormData({ ...formData, id_deposito: e.target.value })}
+                >
+                  <option value="">Seleccionar ubicación...</option>
+                  {deposits?.map((d) => (
+                    <option key={d.id} value={d.id}>{d.nombre}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="input-group">
+                <label>Fecha de Caducidad</label>
+                <input
+                  type="date"
+                  min={today}
+                  value={formData.fecha_vencimiento}
+                  onChange={(e) => setFormData({ ...formData, fecha_vencimiento: e.target.value })}
+                />
+                <small className="input-help">Debe ser una fecha futura.</small>
+              </div>
+            </div>
+            <div className="modal-actions">
+              <button className="btn-secondary-link" onClick={() => setIsFormModalOpen(false)}>Descartar</button>
+              <button className="btn-primary-solid" onClick={handleSubmit}>Confirmar</button>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* MODAL DETALLES */}
-      {isDetailsModalOpen && selectedLote && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Detalle del Lote</h3>
-            <div className="modal-info-body">
-              <div className="detail-card"><strong>ID:</strong> #{selectedLote.id}</div>
-              <div className="detail-card"><strong>Lote:</strong> {selectedLote.nro_lote}</div>
-            </div>
-            <div className="modal-footer" style={{ flexDirection: "column", gap: "0.75rem" }}>
-              <button
-                className="btn-primary"
-                onClick={() => {
-                  setIsDetailsModalOpen(false);
-                  openEditModal(selectedLote);
+      {isDeleteModalOpen && (
+        <div className="modal-overlay-blur">
+          <div className="modal-card modal-danger">
+            <div className="danger-icon"><AlertTriangle size={32} /></div>
+            <h4>¿Eliminar este lote?</h4>
+            <p>Esta acción es irreversible y podría afectar el inventario.</p>
+            <div className="modal-actions">
+              <button className="btn-secondary-link" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
+              <button className="btn-danger-solid" onClick={async () => {
+                  await deleteLoteById(selectedLote.id);
+                  setIsDeleteModalOpen(false);
+                  getAllLotesByProd(id_producto);
                 }}
-              >
-                <Pencil size={16} /> Editar
-              </button>
-              <button
-                className="btn-danger"
-                onClick={() => {
-                  setIsDetailsModalOpen(false);
-                  setIsDeleteModalOpen(true);
-                }}
-              >
-                <Trash2 size={16} /> Eliminar
-              </button>
-              <button
-                className="btn-secondary"
-                onClick={() => setIsDetailsModalOpen(false)}
-              >
-                Cerrar
-              </button>
+              >Eliminar permanentemente</button>
             </div>
           </div>
         </div>
       )}
-
-      {/* MODAL ELIMINAR */}
-      {isDeleteModalOpen && selectedLote && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header-danger">
-              <AlertTriangle size={28} />
-              <h3>¿Eliminar lote?</h3>
-            </div>
-            <p>
-              Confirma eliminar el lote <strong>{selectedLote.nro_lote}</strong>
-            </p>
-            <div className="modal-footer">
-              <button
-                className="btn-secondary"
-                onClick={() => setIsDeleteModalOpen(false)}
-              >
-                Cancelar
-              </button>
-              <button
-                className="btn-danger"
-                onClick={handleDelete}
-              >
-                <Trash2 size={16} /> Eliminar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL CREAR */}
-      {isCreateModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Nuevo Lote</h3>
-
-            <div className="form-group">
-              <input
-                placeholder="Nro de Lote"
-                className="modal-input"
-                value={nroLote}
-                onChange={e => setNroLote(handleNroLoteInput(e.target.value))}
-              />
-            </div>
-
-            <div className="form-group">
-              <label style={{ marginBottom: "20px" }}>Fecha de vencimiento</label>
-              <input
-                placeholder="Fecha de vencimiento"
-                className="modal-input"
-                type="date"
-                value={fechaVencimiento}
-                onChange={e => setFechaVencimiento(e.target.value)}
-              />
-            </div>
-
-            <div className="modal-footer">
-              <button
-                className="btn-secondary"
-                onClick={() => setIsCreateModalOpen(false)}
-              >
-                Cancelar
-              </button>
-              <button
-                className="btn-primary"
-                onClick={handleCreate}
-              >
-                Guardar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL EDITAR */}
-      {isEditModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Editar Lote</h3>
-
-            <div className="form-group">
-              <label>Nro de Lote</label>
-              <input
-                className="modal-input"
-                placeholder="Nro de Lote"
-                value={nroLote}
-                onChange={e => setNroLote(e.target.value)}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Fecha de vencimiento</label>
-              <input
-                className="modal-input"
-                type="date"
-                value={fechaVencimiento}
-                onChange={e => setFechaVencimiento(e.target.value)}
-              />
-            </div>
-
-            <div className="modal-footer">
-              <button
-                className="btn-secondary"
-                onClick={() => setIsEditModalOpen(false)}
-              >
-                Cancelar
-              </button>
-              <button
-                className="btn-primary"
-                onClick={handleUpdate}
-              >
-                Guardar cambios
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 };

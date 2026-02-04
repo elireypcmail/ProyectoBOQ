@@ -195,10 +195,11 @@ const ListBrands = () => {
         <div className="modal-overlay">
           <div className="modal-content">
             <h3>Crear Marca</h3>
-            <input 
+            <input
+              placeholder="Nombre"
               className="modal-input" 
               value={editName} 
-              onChange={(e) => handleNameInput(e.target.value, setEditName)} 
+              onChange={(e) => setEditName(e.target.value.toUpperCase())} 
             />
             <div className="modal-footer">
               <button className="btn-secondary" onClick={() => setIsCreateModalOpen(false)}>Cancelar</button>
@@ -213,10 +214,11 @@ const ListBrands = () => {
         <div className="modal-overlay">
           <div className="modal-content">
             <h3>Editar Marca</h3>
-            <input 
+            <input
+              placeholder="Nombre"
               className="modal-input" 
               value={editName} 
-              onChange={(e) => handleNameInput(e.target.value, setEditName)} 
+              onChange={(e) => setEditName(e.target.value.toUpperCase())} 
             />
             <div className="modal-footer">
               <button className="btn-secondary" onClick={() => setIsEditModalOpen(false)}>Cancelar</button>

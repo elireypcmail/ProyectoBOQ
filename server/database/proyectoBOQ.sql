@@ -83,6 +83,7 @@ CREATE TABLE marcas (
 CREATE TABLE lotes (
   id SERIAL PRIMARY KEY,
   id_producto INT NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
+  id_deposito INT NOT NULL REFERENCES depositos(id) ON DELETE CASCADE,
   nro_lote VARCHAR(50) NOT NULL,
   fecha_vencimiento DATE,
   estatus BOOLEAN NOT NULL DEFAULT TRUE,
@@ -91,8 +92,7 @@ CREATE TABLE lotes (
 
 CREATE TABLE inventario (
   id SERIAL PRIMARY KEY,
-  id_lote INT NOT NULL REFERENCES lotes(id) ON DELETE CASCADE,
-  id_oficina INT NOT NULL REFERENCES oficinas(id) ON DELETE CASCADE,
+  id_producto INT NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
   nro_serie VARCHAR(100),
   existencia_general INT NOT NULL,
   costo_unitario DECIMAL(10,2) NOT NULL,

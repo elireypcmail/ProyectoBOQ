@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useEntity } from "../../context/EntityContext";
+// 1. Importar react-select
+import Select from "react-select";
 import {
   Search,
   ChevronLeft,
@@ -41,10 +43,29 @@ const ListOffices = () => {
     getAllEntities("zonas");
   }, []);
 
-  // -------------------- Función de formateo --------------------
+  // 2. Mapear opciones para react-select
+  const zoneOptions = useMemo(() => 
+    zones.map(z => ({ value: z.id, label: z.nombre })), 
+  [zones]);
+
+  // Estilos básicos para integrar con tu CSS
+  const customSelectStyles = {
+    control: (base) => ({
+      ...base,
+      borderRadius: '8px',
+      borderColor: '#e2e8f0',
+      minHeight: '45px',
+      fontSize: '14px'
+    }),
+    container: (base) => ({
+      ...base,
+      flex: 1
+    })
+  };
+
+  // 3. Función de formateo ajustada (Permite todo + Mayúsculas)
   const handleNameInput = (value, setter) => {
-    const formatted = value.replace(/[^a-zA-ZÁÉÍÓÚÜÑáéíóúüñ\s]/g, "").toUpperCase();
-    setter(formatted);
+    setter(value.toUpperCase());
   };
 
   const filteredOffices = useMemo(() => {
@@ -172,12 +193,6 @@ const ListOffices = () => {
                 <td className="hide-mobile"><span className="badge active">Activo</span></td>
                 <td className="center">
                   <div className="actions-desktop">
-                    {/* <button className="icon-btn edit" onClick={() => openEditModal(office)}>
-                      <Pencil size={16} />
-                    </button>
-                    <button className="icon-btn delete" onClick={() => openDeleteModal(office)}>
-                      <Trash2 size={16} />
-                    </button> */}
                     <button className="icon-btn edit" onClick={() => { setSelectedOffice(office); setIsDetailsModalOpen(true); }}>
                       <SlOptionsVertical size={16}/>
                     </button>
@@ -225,19 +240,18 @@ const ListOffices = () => {
             />
 
             {!isCreatingZone ? (
-              <div className="select-zone-container">
-                <select
-                  className="modal-input"
-                  value={selectedZoneId}
-                  onChange={(e) => setSelectedZoneId(e.target.value)}
-                >
-                  <option value="">Selecciona una zona</option>
-                  {zones.map((zone) => (
-                    <option key={zone.id} value={zone.id}>{zone.nombre}</option>
-                  ))}
-                </select>
-                <button className="btn-add-zone-primary" onClick={() => setIsCreatingZone(true)}>
-                  <Plus size={16} /> Zona
+              <div className="select-zone-container" style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '1rem' }}>
+                {/* 4. Selector react-select */}
+                <Select
+                  placeholder="Selecciona una zona"
+                  options={zoneOptions}
+                  value={zoneOptions.find(opt => opt.value === selectedZoneId)}
+                  onChange={(opt) => setSelectedZoneId(opt ? opt.value : "")}
+                  styles={customSelectStyles}
+                  isSearchable
+                />
+                <button className="btn-add-zone-primary" onClick={() => setIsCreatingZone(true)} style={{ height: '45px' }}>
+                  <Plus size={16} />
                 </button>
               </div>
             ) : (
@@ -271,6 +285,7 @@ const ListOffices = () => {
         </div>
       )}
 
+      {/* ... (Resto de los modales permanecen igual) ... */}
       {/* MODAL ELIMINAR */}
       {isDeleteModalOpen && selectedOffice && (
         <div className="modal-overlay">

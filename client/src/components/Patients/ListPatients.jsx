@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
+import Select from "react-select"; // Importamos React Select
 import { useHealth } from "../../context/HealtContext";
 import {
   Search,
@@ -58,6 +59,18 @@ const ListPatients = () => {
     getAllSeguros();
   }, []);
 
+  // --- Lógica para React Select ---
+  const seguroOptions = useMemo(() => {
+    return seguros.map(s => ({
+      value: s.id,
+      label: s.nombre
+    }));
+  }, [seguros]);
+
+  const currentSeguroValue = useMemo(() => {
+    return seguroOptions.find(opt => opt.value === idSeguro) || null;
+  }, [idSeguro, seguroOptions]);
+
   const filteredPacientes = useMemo(() => {
     return pacientes.filter(p =>
       p.nombre.toUpperCase().includes(searchTerm.toUpperCase())
@@ -66,6 +79,10 @@ const ListPatients = () => {
 
   // ---------------- FORMATOS ----------------
   const handleNameInput = (value, setter) => {
+    setter(value.replace(/[^a-zA-ZÁÉÍÓÚÜÑáéíóúüñ\s]/g, "").toUpperCase());
+  };
+
+  const handleNameUpperInput = (value, setter) => {
     setter(value.replace(/[^a-zA-ZÁÉÍÓÚÜÑáéíóúüñ\s]/g, "").toUpperCase());
   };
 
@@ -110,7 +127,6 @@ const ListPatients = () => {
       await editedPaciente(selectedPaciente.id, payload);
     } else {
       const res = await createNewPaciente(payload);
-      console.log(res.data)
       if (res?.data) {
         setSelectedPaciente(res.data);
         setIsDetailsModalOpen(true);
@@ -147,6 +163,20 @@ const ListPatients = () => {
     setIsDeleteModalOpen(false);
     setSelectedPaciente(null);
     getAllPacientes();
+  };
+
+  // Estilos personalizados para React Select
+  const customSelectStyles = {
+    control: (base) => ({
+      ...base,
+      borderRadius: "8px",
+      borderColor: "#e2e8f0",
+      minHeight: "45px",
+      boxShadow: "none",
+      "&:hover": { borderColor: "#cbd5e1" }
+    }),
+    menu: (base) => ({ ...base, borderRadius: "8px", zIndex: 9999 }),
+    placeholder: (base) => ({ ...base, color: "#94a3b8" })
   };
 
   return (
@@ -241,24 +271,29 @@ const ListPatients = () => {
               value={email}
               onChange={e => handleEmailInput(e.target.value, setEmail)}
             />
+
             <div className="select-zone-container">
-              <select
-                className="modal-input"
-                value={idSeguro}
-                onChange={e => setIdSeguro(e.target.value)}
-              >
-                <option value="">Seleccionar seguro</option>
-                {seguros.map(s => (
-                  <option key={s.id} value={s.id}>{s.nombre}</option>
-                ))}
-              </select>
+              <div style={{ flex: 1 }}>
+                <Select
+                  options={seguroOptions}
+                  value={currentSeguroValue}
+                  onChange={(option) => setIdSeguro(option ? option.value : "")}
+                  placeholder="Seleccionar seguro..."
+                  isClearable
+                  isSearchable
+                  noOptionsMessage={() => "No hay seguros registrados"}
+                  styles={customSelectStyles}
+                />
+              </div>
               <button
                 className="btn-add-zone-primary"
                 onClick={() => setIsCreateSeguroModalOpen(true)}
+                title="Nuevo Seguro"
               >
-                <Plus size={16} /> Nuevo Seguro
+                <Plus size={16} />
               </button>
             </div>
+
             <div className="modal-footer">
               <button className="btn-secondary" onClick={() => setIsCreateModalOpen(false)}>Cancelar</button>
               <button className="btn-primary" onClick={handleSavePaciente}>
@@ -367,7 +402,7 @@ const ListPatients = () => {
               className="modal-input"
               placeholder="Nombre"
               value={nuevoSeguroNombre}
-              onChange={e => handleNameInput(e.target.value, setNuevoSeguroNombre)}
+              onChange={(e) => setNuevoSeguroNombre(e.target.value.toUpperCase())}
             />
             <input
               className="modal-input"
@@ -400,8 +435,6 @@ const ListPatients = () => {
           </div>
         </div>
       )}
-
-
     </div>
   );
 };

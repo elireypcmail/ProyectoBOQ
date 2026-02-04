@@ -24,6 +24,7 @@ export const AuthProvider = ({children}) => {
     try {
       console.log(user)
       const res = await loginRequest(user)
+      localStorage.setItem("UserId", res.data.user.id)
       setUser(res.data)
       console.log(res.data)
       setIsAuthenticated(true)
@@ -34,6 +35,7 @@ export const AuthProvider = ({children}) => {
 
   const logout = () => {
     Cookies.remove('token')
+    localStorage.clear("UserId")
     setUser(null)
     setIsAuthenticated(false)
   }

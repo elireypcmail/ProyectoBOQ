@@ -1,0 +1,224 @@
+:root {
+  --lph-primary: #3b82f6;
+  --lph-success: #10b981;
+  --lph-danger: #ef4444;
+  --lph-bg: #ffffff;
+  --lph-border: #e2e8f0;
+  --lph-text-main: #1e293b;
+  --lph-text-muted: #64748b;
+}
+
+.lph-container {
+  background: var(--lph-bg);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  overflow: hidden;
+  padding: 1.5rem;
+}
+
+/* Header & Search */
+.lph-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+
+.lph-title-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.lph-icon-circle {
+  background: #eff6ff;
+  color: var(--lph-primary);
+  padding: 0.75rem;
+  border-radius: 50%;
+}
+
+.lph-search-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 350px;
+}
+
+.lph-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--lph-text-muted);
+}
+
+.lph-search-wrapper input {
+  width: 100%;
+  padding: 0.6rem 1rem 0.6rem 2.5rem;
+  border: 1px solid var(--lph-border);
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.lph-search-wrapper input:focus {
+  border-color: var(--lph-primary);
+}
+
+/* Table */
+.lph-table-container {
+  overflow-x: auto;
+}
+
+.lph-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.lph-table th {
+  background: #f8fafc;
+  padding: 1rem;
+  text-align: left;
+  color: var(--lph-text-muted);
+  font-weight: 600;
+  border-bottom: 2px solid var(--lph-border);
+}
+
+.lph-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--lph-border);
+  vertical-align: middle;
+}
+
+.lph-date-cell span { display: block; font-weight: 500; }
+.lph-date-cell small { color: var(--lph-text-muted); }
+
+/* Price Flow Component */
+.lph-price-flow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.lph-old-price {
+  color: var(--lph-text-muted);
+  text-decoration: line-through;
+  font-size: 0.8rem;
+}
+
+.lph-new-price {
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.lph-new-price.up { color: var(--lph-success); background: #ecfdf5; }
+.lph-new-price.down { color: var(--lph-danger); background: #fef2f2; }
+
+.lph-action-btn {
+  background: none;
+  border: none;
+  color: var(--lph-text-muted);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.lph-action-btn:hover { background: #f1f5f9; color: var(--lph-text-main); }
+
+/* Modal Styles */
+.lph-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.lph-modal-card {
+  background: white;
+  width: 90%;
+  max-width: 500px;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
+}
+
+.lph-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--lph-border);
+  padding-bottom: 0.75rem;
+}
+
+.lph-modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.lph-detail-item.full { grid-column: span 2; }
+
+.lph-detail-item label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--lph-text-muted);
+  font-weight: 700;
+}
+
+.lph-modal-comparison {
+  background: #f8fafc;
+  padding: 1rem;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.lph-comp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px dashed var(--lph-border);
+}
+
+.lph-btn-close-modal {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--lph-primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.lph-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.lph-pagination button {
+  background: white;
+  border: 1px solid var(--lph-border);
+  padding: 0.4rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.lph-pagination button:disabled { opacity: 0.4; cursor: not-allowed; }

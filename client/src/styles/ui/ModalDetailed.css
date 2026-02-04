@@ -1,0 +1,239 @@
+.pdm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7); /* Azul oscuro traslúcido */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  backdrop-filter: blur(8px);
+  padding: 20px;
+}
+
+.pdm-container {
+  background: white;
+  width: 100%;
+  max-width: 80VW;
+  max-height: 800px;
+  overflow-y: auto;
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  animation: pdm-slide-up 0.3s ease-out;
+}
+
+@keyframes pdm-slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Header */
+.pdm-header {
+  padding: 24px;
+  background: #f8fafc;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.pdm-tabs {
+  display: flex;
+  gap: 10px;
+  padding: 0 24px;
+  border-bottom: 1px solid #eee;
+  background: #f9f9f9;
+}
+
+.pdm-tab-btn {
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #666;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.pdm-tab-btn.active {
+  color: #2563eb; /* Color primario */
+  border-bottom-color: #2563eb;
+  font-weight: 600;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pdm-title-group {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.pdm-icon-main {
+  background: #3b82f6;
+  color: white;
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.pdm-title {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #1e293b;
+  font-weight: 700;
+}
+
+.pdm-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+.pdm-badge.active { background: #dcfce7; color: #166534; }
+.pdm-badge.inactive { background: #fee2e2; color: #991b1b; }
+
+.pdm-close-btn {
+  background: #f1f5f9;
+  border: none;
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s;
+}
+
+.pdm-close-btn:hover { background: #e2e8f0; color: #0f172a; }
+
+/* Body Content */
+.pdm-body { padding: 24px; }
+
+.pdm-main-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.pdm-info-item.full { grid-column: span 2; }
+
+.pdm-info-item label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.pdm-info-item p {
+  margin: 0;
+  font-size: 1rem;
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.pdm-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 24px 0;
+}
+
+/* Stats Grid */
+.pdm-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.pdm-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+.pdm-stat-icon { color: #64748b; }
+.pdm-stat-content small { display: block; font-size: 11px; color: #94a3b8; font-weight: 600; }
+.pdm-stat-content strong { font-size: 14px; color: #0f172a; }
+
+.pdm-stat-card.inventory { background: #eff6ff; border-color: #dbeafe; }
+.pdm-stat-card.warning { background: #fffbeb; border-color: #fef3c7; }
+.pdm-stat-card.finance { background: #f8fafc; }
+
+.pdm-profit-tag {
+  margin-top: 20px;
+  background: #f1f5f9;
+  padding: 12px 16px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+/* Footer Actions */
+.pdm-footer {
+  padding: 20px 24px;
+  background: #f8fafc;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #e2e8f0;
+}
+
+.pdm-footer-right { display: flex; gap: 12px; }
+
+.pdm-btn-action.delete {
+  background: none;
+  border: none;
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+}
+.pdm-btn-action.delete:hover { background: #fee2e2; }
+
+.pdm-btn-secondary {
+  padding: 10px 20px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pdm-btn-primary {
+  padding: 10px 20px;
+  background: #0f172a;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.pdm-btn-primary:hover { background: #334155; }
