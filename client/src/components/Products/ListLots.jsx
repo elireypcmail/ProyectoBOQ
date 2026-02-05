@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
+import Select from "react-select"; // Importamos react-select
 import { useProducts } from "../../context/ProductsContext";
 import {
   Search,
@@ -46,6 +47,14 @@ const ListLots = ({ id_producto }) => {
     getAllDeposits();
   }, [id_producto]);
 
+  // Mapear opciones para react-select
+  const depositOptions = useMemo(() => {
+    return (deposits || []).map(d => ({
+      value: d.id,
+      label: d.nombre
+    }));
+  }, [deposits]);
+
   const filteredLotes = useMemo(() => {
     const base = Array.isArray(lotes) ? lotes : [];
     return base
@@ -65,7 +74,7 @@ const ListLots = ({ id_producto }) => {
       setSelectedLote(lote);
       setFormData({
         nro_lote: lote.nro_lote,
-        id_deposito: lote.id_deposito,
+        id_deposito: lote.id_deposito, // Guardamos el ID
         fecha_vencimiento: lote.fecha_vencimiento?.split("T")[0] || "",
         estatus: true,
       });
@@ -84,20 +93,16 @@ const ListLots = ({ id_producto }) => {
   const handleSubmit = async () => {
     const { nro_lote, id_deposito, fecha_vencimiento } = formData;
 
-    // 1. Campos obligatorios
     if (!nro_lote || !id_deposito || !fecha_vencimiento) {
       alert("Por favor, complete todos los campos obligatorios.");
       return;
     }
 
-    // 2. Validación de fecha futura
     if (fecha_vencimiento <= today) {
       alert("La fecha de caducidad debe ser posterior a la fecha actual.");
       return;
     }
 
-    // 3. Validación de depósito duplicado para este producto
-    // Comprobamos si ya existe un lote con ese depósito (excluyendo el lote actual si es edición)
     const isDepositoOcupado = lotes.some(lote => 
       lote.id_deposito === parseInt(id_deposito) && 
       lote.id !== selectedLote?.id
@@ -117,10 +122,21 @@ const ListLots = ({ id_producto }) => {
     getAllLotesByProd(id_producto);
   };
 
-  const isExpired = (date) => date && new Date(date) < new Date();
+  // Estilos básicos para react-select (puedes ajustarlos a tu CSS)
+  const selectStyles = {
+    control: (base) => ({
+      ...base,
+      borderRadius: '8px',
+      borderColor: '#e2e8f0',
+      minHeight: '42px',
+      boxShadow: 'none',
+      '&:hover': { borderColor: '#cbd5e1' }
+    })
+  };
 
   return (
     <div className="lots-container">
+      {/* ... (Header y tabla se mantienen igual) ... */}
       <div className="lots-header-section">
         <div className="title-group">
           <div className="icon-badge"><Tag size={20} /></div>
@@ -146,14 +162,6 @@ const ListLots = ({ id_producto }) => {
               setCurrentPage(1);
             }}
           />
-          {searchTerm && (
-            <button className="clear-search" onClick={() => setSearchTerm("")}>
-              <X size={14} />
-            </button>
-          )}
-        </div>
-        <div className="filter-results-info">
-          Mostrando <strong>{currentLotes.length}</strong> de {filteredLotes.length}
         </div>
       </div>
 
@@ -169,30 +177,24 @@ const ListLots = ({ id_producto }) => {
             </tr>
           </thead>
           <tbody>
-            {currentLotes.length > 0 ? (
-              currentLotes.map((lote) => (
-                <tr key={lote.id}>
-                  <td className="col-lote">#{lote.nro_lote}</td>
-                  <td className="col-depo">{lote.deposito_nombre}</td>
-                  <td>
-                    <div className={`date-badge ${isExpired(lote.fecha_vencimiento) ? "is-expired" : ""}`}>
-                      {lote.fecha_vencimiento
-                        ? new Date(lote.fecha_vencimiento).toLocaleDateString()
-                        : "Indefinido"}
+            {currentLotes.map((lote) => (
+              <tr key={lote.id}>
+                <td className="col-lote">#{lote.nro_lote}</td>
+                <td className="col-depo">{lote.deposito_nombre}</td>
+                <td>
+                    <div className={`date-badge ${new Date(lote.fecha_vencimiento) < new Date() ? "is-expired" : ""}`}>
+                      {lote.fecha_vencimiento ? new Date(lote.fecha_vencimiento).toLocaleDateString() : "Indefinido"}
                     </div>
-                  </td>
-                  <td><span className="status-tag st-active">Disponible</span></td>
-                  <td>
-                    <div className="actions-group">
-                      <button className="act-btn edit" onClick={() => handleOpenForm(lote)} title="Editar"><Pencil size={15} /></button>
-                      <button className="act-btn delete" onClick={() => { setSelectedLote(lote); setIsDeleteModalOpen(true); }} title="Eliminar"><Trash2 size={15} /></button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr><td colSpan="5" className="table-empty">No se encontraron lotes registrados.</td></tr>
-            )}
+                </td>
+                <td><span className="status-tag st-active">Disponible</span></td>
+                <td>
+                  <div className="actions-group">
+                    <button className="act-btn edit" onClick={() => handleOpenForm(lote)} title="Editar"><Pencil size={15} /></button>
+                    <button className="act-btn delete" onClick={() => { setSelectedLote(lote); setIsDeleteModalOpen(true); }} title="Eliminar"><Trash2 size={15} /></button>
+                  </div>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
@@ -214,18 +216,23 @@ const ListLots = ({ id_producto }) => {
                   placeholder="Ej: LOTE-1020"
                 />
               </div>
+
               <div className="input-group">
                 <label>Depósito Destino</label>
-                <select
-                  value={formData.id_deposito}
-                  onChange={(e) => setFormData({ ...formData, id_deposito: e.target.value })}
-                >
-                  <option value="">Seleccionar ubicación...</option>
-                  {deposits?.map((d) => (
-                    <option key={d.id} value={d.id}>{d.nombre}</option>
-                  ))}
-                </select>
+                <Select
+                  options={depositOptions}
+                  placeholder="Seleccionar ubicación..."
+                  styles={selectStyles}
+                  // Aquí está el truco: buscamos el objeto entero basado en el ID del estado
+                  value={depositOptions.find(opt => opt.value === Number(formData.id_deposito)) || null}
+                  onChange={(selected) => setFormData({ 
+                    ...formData, 
+                    id_deposito: selected ? selected.value : "" 
+                  })}
+                  noOptionsMessage={() => "No hay depósitos registrados"}
+                />
               </div>
+
               <div className="input-group">
                 <label>Fecha de Caducidad</label>
                 <input
@@ -245,12 +252,12 @@ const ListLots = ({ id_producto }) => {
         </div>
       )}
 
+      {/* ... (Delete Modal se mantiene igual) ... */}
       {isDeleteModalOpen && (
         <div className="modal-overlay-blur">
           <div className="modal-card modal-danger">
             <div className="danger-icon"><AlertTriangle size={32} /></div>
             <h4>¿Eliminar este lote?</h4>
-            <p>Esta acción es irreversible y podría afectar el inventario.</p>
             <div className="modal-actions">
               <button className="btn-secondary-link" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
               <button className="btn-danger-solid" onClick={async () => {

@@ -37,7 +37,7 @@ const ModalDetailed = ({
   const hasHistory = auditList.length > 0;
 
   const formatCurrency = (val) => 
-    new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG' }).format(val);
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
 
   return (
     <div className="pdm-overlay">

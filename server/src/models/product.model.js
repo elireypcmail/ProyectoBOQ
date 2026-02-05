@@ -1008,7 +1008,7 @@ static async createProduct(data) {
         l.estatus,
         l.fecha_creacion,
 
-        d.id AS deposito_id,
+        d.id AS id_deposito,
         d.nombre AS deposito_nombre
 
       FROM lotes l
