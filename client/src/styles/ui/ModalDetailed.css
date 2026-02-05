@@ -14,8 +14,6 @@
   background: white;
   width: 100%;
   max-width: 80VW;
-  max-height: 800px;
-  overflow-y: auto;
   border-radius: 20px;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   overflow: hidden;
@@ -119,7 +117,11 @@
 .pdm-close-btn:hover { background: #e2e8f0; color: #0f172a; }
 
 /* Body Content */
-.pdm-body { padding: 24px; }
+.pdm-body { 
+  padding: 24px; 
+  max-height: 400px;
+  overflow-y: auto;
+}
 
 .pdm-main-info {
   display: grid;

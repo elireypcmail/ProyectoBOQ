@@ -396,12 +396,12 @@ controller.getAllInventory = async (req, res) => {
 controller.createInventory = async (req, res) => {
   try {
     // const {id} = req.params
-    const { id_lote, id_oficina, nro_serie, existencia_general, costo_unitario, precio_venta, margen_ganancia, stock_minimo_general, estatus } = req.body;
+    const { id_lote, id_oficina, sku, existencia_general, costo_unitario, precio_venta, margen_ganancia, stock_minimo_general, estatus } = req.body;
     console.log(req.body)
     if (!id_lote || !id_oficina || existencia_general == null || costo_unitario == null || precio_venta == null || margen_ganancia == null || stock_minimo_general == null)
       return res.status(400).json({ error: "Campos obligatorios incompletos" });
 
-    const result = await ProductsModel.createInventory({ id_lote, id_oficina, nro_serie, existencia_general, costo_unitario, precio_venta, margen_ganancia, stock_minimo_general, estatus });
+    const result = await ProductsModel.createInventory({ id_lote, id_oficina, sku, existencia_general, costo_unitario, precio_venta, margen_ganancia, stock_minimo_general, estatus });
     console.log(result)
     return res.status(result.code).json(result);
   } catch (error) {

@@ -1,12 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"; // Añadido useEffect
 import { 
   Pencil, Trash2, X, Package, Tag, Layers, Hash, 
   TrendingUp, DollarSign, AlertCircle, Bookmark,
-  History, Boxes, Warehouse // Importamos Warehouse
+  History, Boxes, Warehouse, Lock // Añadido Lock para el icono de bloqueo
 } from "lucide-react";
+import { useProducts } from "../../context/ProductsContext";
 import ListLots from "../Products/ListLots"; 
 import ListPrices from "../Products/ListPrices";
-import ListEdeposits from "../Products/ListEdeposits"; // Importamos el nuevo componente
+import ListEdeposits from "../Products/ListEdeposits";
 import "../../styles/ui/ModalDetailed.css";
 
 const ModalDetailed = ({
@@ -19,11 +20,24 @@ const ModalDetailed = ({
   onDelete
 }) => {
   const [activeTab, setActiveTab] = useState("general");
+  const { getAuditProd, audits } = useProducts();
+
+  // Cargar auditorías cuando el modal se abre o cambia el producto
+  useEffect(() => {
+    if (isOpen && product?.id) {
+      getAuditProd(product.id);
+    }
+  }, [isOpen, product?.id]);
 
   if (!isOpen || !product) return null;
 
+  // Verificamos si hay movimientos (auditorías)
+  // Asumiendo que 'audits' es un array o tiene una propiedad data que lo es
+  const auditList = Array.isArray(audits) ? audits : (audits?.data || []);
+  const hasHistory = auditList.length > 0;
+
   const formatCurrency = (val) => 
-    new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'USD' }).format(val);
+    new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG' }).format(val);
 
   return (
     <div className="pdm-overlay">
@@ -62,26 +76,23 @@ const ModalDetailed = ({
             <Boxes size={16} /> Lotes
           </button>
           
-          {/* NUEVA PESTAÑA: DEPOSITOS */}
           <button 
             className={`pdm-tab-btn ${activeTab === 'depositos' ? 'active' : ''}`}
             onClick={() => setActiveTab('depositos')}
           >
-            <Warehouse size={16} /> Existencia por Depósito
+            <Warehouse size={16} /> Existencias
           </button>
 
           <button 
             className={`pdm-tab-btn ${activeTab === 'precios' ? 'active' : ''}`}
             onClick={() => setActiveTab('precios')}
           >
-            <History size={16} /> Precios y Costos
+            <History size={16} /> Auditoría
           </button>
         </div>
 
-        {/* CUERPO CON SCROLL */}
+        {/* CUERPO */}
         <div className="pdm-body">
-          
-          {/* VISTA: GENERAL */}
           {activeTab === "general" && (
             <div className="pdm-tab-content animate-fade-in">
               <div className="pdm-main-info">
@@ -138,33 +149,35 @@ const ModalDetailed = ({
             </div>
           )}
 
-          {/* VISTA: LOTES */}
           {activeTab === "lotes" && (
             <div className="pdm-tab-content animate-fade-in">
               <ListLots id_producto={product.id} />
             </div>
           )}
 
-          {/* VISTA: DEPOSITOS (CONECTADA) */}
           {activeTab === "depositos" && (
             <div className="pdm-tab-content animate-fade-in">
               <ListEdeposits id_producto={product.id} />
             </div>
           )}
 
-          {/* VISTA: PRECIOS */}
           {activeTab === "precios" && (
             <div className="pdm-tab-content animate-fade-in">
               <ListPrices productId={product.id} />
             </div>
           )}
-
         </div>
 
-        {/* FOOTER ESTATICO */}
+        {/* FOOTER ESTATICO CON VALIDACIÓN */}
         <div className="pdm-footer">
-          <button className="pdm-btn-action delete" onClick={onDelete}>
-            <Trash2 size={16} /> <span>Eliminar Producto</span>
+          <button 
+            className={`pdm-btn-action delete ${hasHistory ? 'disabled' : ''}`} 
+            onClick={!hasHistory ? onDelete : null}
+            title={hasHistory ? "No se puede eliminar un producto con historial de movimientos" : "Eliminar este producto"}
+            disabled={hasHistory}
+          >
+            {hasHistory ? <Lock size={16} /> : <Trash2 size={16} />}
+            <span>{hasHistory ? "Eliminación Bloqueada" : "Eliminar Producto"}</span>
           </button>
           
           <div className="pdm-footer-right">

@@ -93,7 +93,7 @@ const ListDoctors = () => {
     setSelectedMedico(medico);
     setEditName(medico.nombre);
     setEditPhone(medico.telefono || "");
-    setSelectedTipoId(medico.id_tipo);
+    setSelectedTipoId(medico.id_tipomedico);
     setIsEditModalOpen(true);
     setIsCreatingTipo(false);
     setNewTipoName("");

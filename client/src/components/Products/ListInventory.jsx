@@ -44,7 +44,7 @@ const ListInventory = ({ id_producto }) => {
   // Form
   const [idLote, setIdLote] = useState("");
   const [idOffice, setIdOffice] = useState("");
-  const [nroSerie, setNroSerie] = useState("");
+  const [nroSerie, setSku] = useState("");
   const [existencia, setExistencia] = useState("");
   const [stockMinimo, setStockMinimo] = useState("");
   const [precioVenta, setPrecioVenta] = useState("");
@@ -107,7 +107,7 @@ const ListInventory = ({ id_producto }) => {
   const resetForm = () => {
     setIdLote("");
     setIdOffice("");
-    setNroSerie("");
+    setSku("");
     setExistencia("");
     setStockMinimo("");
     setPrecioVenta("");
@@ -128,7 +128,7 @@ const ListInventory = ({ id_producto }) => {
     setSelectedItem(item);
     setIdLote(item.id_lote);
     setIdOffice(item.id_oficina);
-    setNroSerie(item.nro_serie ?? "");
+    setSku(item.sku ?? "");
     setExistencia(item.existencia_general);
     setStockMinimo(item.stock_minimo_general);
     setPrecioVenta(item.precio_venta);
@@ -160,7 +160,7 @@ const ListInventory = ({ id_producto }) => {
       id_producto,
       id_lote: Number(idLote),
       id_oficina: Number(idOffice),
-      nro_serie: nroSerie,
+      sku: nroSerie,
       existencia_general: Number(existencia),
       stock_minimo_general: Number(stockMinimo),
       precio_venta: Number(precioVenta),
@@ -195,7 +195,7 @@ const ListInventory = ({ id_producto }) => {
     const payload = {
       id_lote: Number(idLote),
       id_oficina: Number(idOffice),
-      nro_serie: nroSerie,
+      sku: nroSerie,
       existencia_general: Number(existencia),
       stock_minimo_general: Number(stockMinimo),
       precio_venta: Number(precioVenta),
@@ -276,7 +276,7 @@ const ListInventory = ({ id_producto }) => {
                 <td className="hide-mobile">#{item.inventario_id}</td>
                 <td>{item.nro_lote}</td>
                 <td>{item.oficina_nombre}</td>
-                <td className="center">{item.nro_serie}</td>
+                <td className="center">{item.sku}</td>
                 <td className="center">{item.existencia_general}</td>
                 <td className="center">{item.stock_minimo_general}</td>
                 <td className="center">{item.precio_venta}</td>
@@ -330,7 +330,7 @@ const ListInventory = ({ id_producto }) => {
               <div className="detail-card"><strong>ID:</strong> #{selectedItem.inventario_id}</div>
               <div className="detail-card"><strong>Lote:</strong> {selectedItem.nro_lote}</div>
               <div className="detail-card"><strong>Oficina:</strong> {selectedItem.oficina_nombre}</div>
-              <div className="detail-card"><strong>Nro Serie:</strong> {selectedItem.nro_serie}</div>
+              <div className="detail-card"><strong>Nro Serie:</strong> {selectedItem.sku}</div>
               <div className="detail-card"><strong>Existencia:</strong> {selectedItem.existencia_general}</div>
               <div className="detail-card"><strong>Stock Mín:</strong> {selectedItem.stock_minimo_general}</div>
               <div className="detail-card"><strong>Costo Unit:</strong> {selectedItem.costo_unitario}</div>
@@ -433,7 +433,7 @@ const ListInventory = ({ id_producto }) => {
               <input
                 className="modal-input"
                 value={nroSerie}
-                onChange={e => setNroSerie(e.target.value.replace(/\D/g, ""))}
+                onChange={e => setSku(e.target.value.replace(/\D/g, ""))}
                 placeholder="Ej: 12345"
               />
             </div>
@@ -528,7 +528,7 @@ const ListInventory = ({ id_producto }) => {
               <input
                 className="modal-input"
                 value={nroSerie}
-                onChange={e => setNroSerie(e.target.value.replace(/\D/g, ""))}
+                onChange={e => setSku(e.target.value.replace(/\D/g, ""))}
               />
             </div>
 

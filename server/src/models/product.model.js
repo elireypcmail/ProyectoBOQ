@@ -14,7 +14,7 @@ export class ProductsModel {
         c.nombre AS categoria,
         m.nombre AS marca,
         COALESCE(SUM(i.existencia_general), 0) AS existencia_general,
-        i.nro_serie,
+        i.sku,
         i.costo_unitario,
         i.precio_venta,
         i.margen_ganancia,
@@ -33,7 +33,7 @@ export class ProductsModel {
       WHERE p.estatus = TRUE
       GROUP BY 
         p.id, c.nombre, m.nombre, 
-        i.nro_serie, i.costo_unitario, i.precio_venta, i.margen_ganancia, i.stock_minimo_general
+        i.sku, i.costo_unitario, i.precio_venta, i.margen_ganancia, i.stock_minimo_general
       ORDER BY p.id DESC
     `);
 
@@ -65,7 +65,7 @@ export class ProductsModel {
         p.*,
         c.nombre AS categoria,
         m.nombre AS marca,
-        i.nro_serie,
+        i.sku,
         i.existencia_general,
         i.costo_unitario,
         i.precio_venta,
@@ -178,82 +178,109 @@ export class ProductsModel {
     }
   }
 
-  static async createProduct(data) {
-    let connection;
+static async createProduct(data) {
+  let connection;
 
-    try {
-      connection = await pool.connect();
-      await connection.query("BEGIN");
+  try {
+    connection = await pool.connect();
+    await connection.query("BEGIN");
 
-      // 1️⃣ Validar duplicado
-      const duplicate = await connection.query(
-        `SELECT id FROM productos WHERE LOWER(descripcion) = LOWER($1)`,
-        [data.descripcion],
-      );
+    // 1️⃣ Validar duplicado
+    const duplicate = await connection.query(
+      `SELECT id FROM productos WHERE LOWER(descripcion) = LOWER($1)`,
+      [data.descripcion]
+    );
 
-      if (duplicate.rows.length) {
-        await connection.query("ROLLBACK");
-        return { status: false, code: 409, msg: "El producto ya existe" };
-      }
-
-      // 2️⃣ Crear producto
-      const productResult = await connection.query(
-        `INSERT INTO productos (descripcion, id_categoria, id_marca, files)
-        VALUES ($1,$2,$3,$4)
-        RETURNING *`,
-        [data.descripcion, data.id_categoria, data.id_marca, null],
-      );
-
-      const producto = productResult.rows[0];
-
-      // 3️⃣ Crear inventario
-      const invResult = await connection.query(
-        `INSERT INTO inventario (
-          id_producto,
-          nro_serie,
-          existencia_general,
-          costo_unitario,
-          precio_venta,
-          margen_ganancia,
-          stock_minimo_general
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7)
-        RETURNING *`,
-        [
-          producto.id,
-          data.nro_serie,
-          data.existencia_general,
-          data.costo_unitario,
-          data.precio_venta,
-          data.margen_ganancia,
-          data.stock_minimo_general,
-        ],
-      );
-
-      const inventario = invResult.rows[0];
-
-      await connection.query("COMMIT");
-
-      return {
-        status: true,
-        code: 201,
-        msg: "Producto e inventario creados correctamente",
-        data: {
-          ...data,
-          id: producto.id,
-        },
-      };
-    } catch (error) {
-      if (connection) await connection.query("ROLLBACK");
-      return {
-        status: false,
-        code: 500,
-        msg: "Error al crear producto",
-        error: error.message,
-      };
-    } finally {
-      if (connection) connection.release();
+    if (duplicate.rows.length) {
+      await connection.query("ROLLBACK");
+      return { status: false, code: 409, msg: "El producto ya existe" };
     }
+
+    // 2️⃣ Crear producto
+    const productResult = await connection.query(
+      `INSERT INTO productos (
+        descripcion,
+        id_categoria,
+        id_marca,
+        files
+      ) VALUES ($1,$2,$3,$4)
+      RETURNING *`,
+      [
+        data.descripcion,
+        data.id_categoria,
+        data.id_marca,
+        null
+      ]
+    );
+
+    const producto = productResult.rows[0];
+
+    // 3️⃣ Crear inventario general
+    await connection.query(
+      `INSERT INTO inventario (
+        id_producto,
+        sku,
+        existencia_general,
+        costo_unitario,
+        precio_venta,
+        margen_ganancia,
+        stock_minimo_general
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+      [
+        producto.id,
+        data.sku,
+        data.existencia_general,
+        data.costo_unitario,
+        data.precio_venta,
+        data.margen_ganancia,
+        data.stock_minimo_general
+      ]
+    );
+
+    // 4️⃣ Crear edeposito para TODOS los depósitos
+    await connection.query(
+      `
+      INSERT INTO edeposito (
+        id_producto,
+        id_deposito,
+        existencia_deposito,
+        stock_minimo_deposito
+      )
+      SELECT
+        $1,
+        d.id,
+        0,
+        0
+      FROM depositos d
+      WHERE d.estatus = TRUE
+      `,
+      [producto.id]
+    );
+
+    await connection.query("COMMIT");
+
+    return {
+      status: true,
+      code: 201,
+      msg: "Producto, inventario y depósitos creados correctamente",
+      data: {
+        ...data,
+        id: producto.id
+      }
+    };
+  } catch (error) {
+    if (connection) await connection.query("ROLLBACK");
+    return {
+      status: false,
+      code: 500,
+      msg: "Error al crear producto",
+      error: error.message
+    };
+  } finally {
+    if (connection) connection.release();
   }
+}
+
 
   static async updateProduct(id, data) {
     let connection;
@@ -322,7 +349,7 @@ export class ProductsModel {
 
       // 4️⃣ Inventario
       const inventarioFields = [
-        "nro_serie",
+        "sku",
         "existencia_general",
         "costo_unitario",
         "precio_venta",
@@ -1127,7 +1154,7 @@ export class ProductsModel {
           i.id AS inventario_id,
           i.id_oficina,
           z.nombre AS oficina_nombre,
-          i.nro_serie,
+          i.sku,
           i.existencia_general,
           i.costo_unitario,
           i.precio_venta,

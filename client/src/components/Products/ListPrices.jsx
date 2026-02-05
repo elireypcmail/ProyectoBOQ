@@ -50,7 +50,7 @@ const ListPrices = ({ productId }) => {
         <div className="lph-title-section">
           <div className="lph-icon-circle"><History size={20} /></div>
           <div>
-            <h2>Historial de Precios</h2>
+            <h2>Historial de Precios y Costos</h2>
             <p>Se han encontrado {filteredAudits.length} modificaciones</p>
           </div>
         </div>
@@ -59,7 +59,7 @@ const ListPrices = ({ productId }) => {
           <Search size={18} className="lph-search-icon" />
           <input
             type="text"
-            placeholder="Buscar por usuario o descripción..."
+            placeholder="Buscar por usuario..."
             value={searchTerm}
             onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
           />
@@ -98,7 +98,7 @@ const ListPrices = ({ productId }) => {
                 </td>
               </tr>
             )) : (
-              <tr><td colSpan="6" className="lph-empty">No se registran cambios de precio recientemente</td></tr>
+              <tr><td colSpan="6" className="lph-empty">No se registran cambios recientemente</td></tr>
             )}
           </tbody>
         </table>

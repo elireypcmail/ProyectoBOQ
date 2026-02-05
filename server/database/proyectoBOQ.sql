@@ -93,7 +93,7 @@ CREATE TABLE lotes (
 CREATE TABLE inventario (
   id SERIAL PRIMARY KEY,
   id_producto INT NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
-  nro_serie VARCHAR(100),
+  sku VARCHAR(100),
   existencia_general INT NOT NULL,
   costo_unitario DECIMAL(10,2) NOT NULL,
   precio_venta DECIMAL(10,2) NOT NULL,

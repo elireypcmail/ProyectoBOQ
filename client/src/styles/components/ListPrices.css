@@ -31,6 +31,16 @@
   gap: 1rem;
 }
 
+.lph-close-btn{
+  background: #f1f5f9;
+  border: none;
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s;
+}
+
 .lph-icon-circle {
   background: #eff6ff;
   color: var(--lph-primary);
