@@ -1,88 +1,84 @@
 import React from 'react';
-import { X, History, FileText, ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
-import "../../styles/components/KardexDep.css"; // Reutilizamos estilos de Kardex
+import { History, FileText } from 'lucide-react';
+import "../../styles/components/ListLots.css"; // Usamos el mismo CSS
 
-const KardexG = ({ id_producto, onClose }) => {
-  // Aquí cargarás los datos de tu tabla 'kardexg' filtrando por id_producto
+const KardexG = ({ id_producto, onClose, isInline = false }) => {
+  // Aquí cargarías los datos de tu API
   const movimientos = []; 
 
-  const formatCurrency = (value) => 
-    new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG' }).format(value);
+  const formatCurrency = (val) => 
+    new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG' }).format(val);
+
+  const tableContent = (
+    <div className="table-container-inline">
+      <table className="lots-custom-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Documento</th>
+            <th>Detalle / Concepto</th>
+            <th className="text-center">Stock Inicial</th>
+            <th className="text-center">Entrada</th>
+            <th className="text-center">Salida</th>
+            <th className="text-center">Stock Final</th>
+            <th className="text-center">Costo Prom.</th>
+            <th className="text-center">Precio</th>
+            <th>Tipo</th>
+          </tr>
+        </thead>
+        <tbody>
+          {movimientos.length > 0 ? (
+            movimientos.map((m) => (
+              <tr key={m.id}>
+                <td className="col-date">{new Date(m.fecha).toLocaleDateString()}</td>
+                <td><code>{m.documento}</code></td>
+                <td>{m.detalle}</td>
+                <td className="text-center">{m.existencia_inicial}</td>
+                <td className="text-center" style={{ color: '#10b981', fontWeight: 'bold' }}>
+                    {m.entrada > 0 ? `+${m.entrada}` : '-'}
+                </td>
+                <td className="text-center" style={{ color: '#ef4444', fontWeight: 'bold' }}>
+                    {m.salida > 0 ? `-${m.salida}` : '-'}
+                </td>
+                <td className="text-center"><strong>{m.existencia_final}</strong></td>
+                <td className="text-center">{formatCurrency(m.costo)}</td>
+                <td className="text-center">{formatCurrency(m.precio)}</td>
+                <td>
+                    <span className={`status-tag ${m.tipo === 'ENTRADA' ? 'st-active' : 'is-expired'}`}>
+                        {m.tipo}
+                    </span>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="10" style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
+                <FileText size={40} style={{ marginBottom: '10px', opacity: 0.5 }} />
+                <p>No hay movimientos consolidados para este producto.</p>
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  if (isInline) return tableContent;
 
   return (
-    <div className="kdx-modal-overlay">
-      <div className="kdx-container-wide">
-        <div className="kdx-header kdx-header-general">
-          <div className="kdx-title">
-            <div className="kdx-icon-box kdx-icon-general"><History size={20} /></div>
+    <div className="modal-overlay-blur">
+      <div className="modal-card" style={{ maxWidth: '90%', width: '1200px' }}>
+        <div className="modal-header">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
             <div>
-              <h3>Kardex General del Producto</h3>
-              <p>Historial Consolidado | ID: <strong>{id_producto}</strong></p>
+                <h4>Kardex General</h4>
+                <p>Producto ID: {id_producto}</p>
             </div>
-          </div>
-          <button className="kdx-close-btn" onClick={onClose}><X size={22} /></button>
-        </div>
-
-        <div className="kdx-body">
-          <div className="kdx-table-responsive">
-            <table className="kdx-main-table">
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Documento</th>
-                  <th>Detalle / Concepto</th>
-                  <th className="text-center">Inicial</th>
-                  <th className="text-center">Entrada</th>
-                  <th className="text-center">Salida</th>
-                  <th className="text-center">Stock Final</th>
-                  <th>Costo Prom.</th>
-                  <th>Precio</th>
-                  <th>Tipo</th>
-                </tr>
-              </thead>
-              <tbody>
-                {movimientos.length > 0 ? (
-                  movimientos.map((m) => (
-                    <tr key={m.id} className={`kdx-row ${!m.estatus ? 'kdx-disabled' : ''}`}>
-                      <td className="kdx-date">{new Date(m.fecha).toLocaleDateString()}</td>
-                      <td className="kdx-doc"><code>{m.documento}</code></td>
-                      <td className="kdx-detail">{m.detalle}</td>
-                      <td className="text-center kdx-neutral">{m.existencia_inicial}</td>
-                      <td className="text-center kdx-entry">
-                        {m.entrada > 0 ? <span className="entry-val">+{m.entrada}</span> : '-'}
-                      </td>
-                      <td className="text-center kdx-exit">
-                        {m.salida > 0 ? <span className="exit-val">-{m.salida}</span> : '-'}
-                      </td>
-                      <td className="text-center kdx-final"><strong>{m.existencia_final}</strong></td>
-                      <td className="kdx-money">{formatCurrency(m.costo)}</td>
-                      <td className="kdx-money">{formatCurrency(m.precio)}</td>
-                      <td>
-                        <span className={`kdx-type-tag ${m.tipo.toLowerCase()}`}>
-                          {m.tipo}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="10" className="kdx-empty-state">
-                      <FileText size={48} />
-                      <p>No hay movimientos consolidados en el Kardex General.</p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+            <button className="act-btn delete" onClick={onClose}>&times;</button>
           </div>
         </div>
-
-        <div className="kdx-footer">
-          <div className="kdx-legend">
-            <span className="leg-entry">■ Entradas Totales</span>
-            <span className="leg-exit">■ Salidas Totales</span>
-          </div>
-          <button className="btn-close-kdx" onClick={onClose}>Cerrar Historial</button>
+        <div className="modal-body">
+          {tableContent}
         </div>
       </div>
     </div>
