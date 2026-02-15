@@ -23,7 +23,7 @@ const ProductFormModal = ({
     costo_unitario: 0,
     precio_venta: 0,
     margen_ganancia: 0,
-    stock_minimo_general: 1, // Inicializamos en 1 por defecto
+    stock_minimo_general: 1,
     estatus: true
   };
 
@@ -59,12 +59,18 @@ const ProductFormModal = ({
     }
   }, [initialData, isOpen]);
 
-  // Recalcular precio automáticamente
+  // Recalcular precio automáticamente permitiendo decimales
   useEffect(() => {
     const costo = Number(form.costo_unitario) || 0;
     const margen = Number(form.margen_ganancia) || 0;
     const precio = costo + (costo * (margen / 100));
-    setForm(prev => ({ ...prev, precio_venta: Math.floor(precio) }));
+    
+    // Se eliminó Math.floor para permitir decimales. 
+    // toFixed(2) asegura una precisión estándar de moneda.
+    setForm(prev => ({ 
+      ...prev, 
+      precio_venta: Number(precio.toFixed(2)) 
+    }));
   }, [form.costo_unitario, form.margen_ganancia]);
 
   if (!isOpen) return null;
@@ -76,6 +82,7 @@ const ProductFormModal = ({
     if (type === "text") {
       val = val.toUpperCase();
     } else if (type === "number") {
+      // Permitimos que el valor sea procesado como número con decimales
       val = value === "" ? "" : Number(value);
     }
 
@@ -83,7 +90,6 @@ const ProductFormModal = ({
     if (name === "margen_ganancia" && val !== "") val = Math.min(Math.max(val, 0), 100);
     if (name === "costo_unitario" && val !== "") val = Math.min(val, 100_000_000);
     
-    // RESTRICCIÓN: Stock mínimo siempre mayor a 0
     if (name === "stock_minimo_general" && val !== "") {
         val = Math.max(val, 1);
     }
@@ -94,7 +100,6 @@ const ProductFormModal = ({
   const handleSubmit = () => {
     const usuario_id = Number(localStorage.getItem("UserId"));
 
-    // VALIDACIÓN ESTRICTA DE CAMPOS OBLIGATORIOS
     const { descripcion, sku, id_categoria, id_marca, stock_minimo_general } = form;
 
     if (!descripcion.trim()) return alert("La descripción es obligatoria.");
@@ -108,6 +113,7 @@ const ProductFormModal = ({
     const finalData = {
       ...form,
       costo_unitario: Number(form.costo_unitario) || 0,
+      precio_venta: Number(form.precio_venta) || 0, // Aseguramos envío de decimales
       margen_ganancia: Number(form.margen_ganancia) || 0,
       stock_minimo_general: Number(form.stock_minimo_general),
       usuario_id
@@ -226,6 +232,7 @@ const ProductFormModal = ({
                   className="pfm-input" 
                   type="number" 
                   name="costo_unitario" 
+                  step="0.01"
                   value={form.costo_unitario === 0 ? "" : form.costo_unitario} 
                   onChange={handleChange} 
                   placeholder="0.00"
@@ -237,6 +244,7 @@ const ProductFormModal = ({
                   className="pfm-input" 
                   type="number" 
                   name="margen_ganancia" 
+                  step="0.01"
                   value={form.margen_ganancia === 0 ? "" : form.margen_ganancia} 
                   onChange={handleChange} 
                   placeholder="0"
@@ -247,6 +255,7 @@ const ProductFormModal = ({
                 <input 
                   className="pfm-input pfm-input--readonly" 
                   type="number" 
+                  step="0.01"
                   value={form.precio_venta} 
                   readOnly 
                 />

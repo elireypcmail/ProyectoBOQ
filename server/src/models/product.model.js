@@ -178,108 +178,266 @@ export class ProductsModel {
     }
   }
 
-static async createProduct(data) {
-  let connection;
+  static async getProductKardexById(id) {
+    let connection;
+    try {
+      connection = await pool.connect();
 
-  try {
-    connection = await pool.connect();
-    await connection.query("BEGIN");
+      const result = await connection.query(
+        `
+        SELECT 
+          k.id,
+          k.id_producto,
+          p.descripcion AS producto_nombre,
+          k.fecha,
+          k.existencia_inicial,
+          k.entrada,
+          k.salida,
+          k.existencia_final,
+          k.costo,
+          k.precio,
+          k.detalle,
+          k.documento,
+          k.tipo,
+          k.fecha_creacion
+        FROM kardexg k
+        INNER JOIN productos p ON k.id_producto = p.id
+        WHERE k.id_producto = $1
+        ORDER BY k.fecha_creacion DESC, k.id DESC
+        `,
+        [id]
+      );
 
-    // 1️⃣ Validar duplicado
-    const duplicate = await connection.query(
-      `SELECT id FROM productos WHERE LOWER(descripcion) = LOWER($1)`,
-      [data.descripcion]
-    );
-
-    if (duplicate.rows.length) {
-      await connection.query("ROLLBACK");
-      return { status: false, code: 409, msg: "El producto ya existe" };
-    }
-
-    // 2️⃣ Crear producto
-    const productResult = await connection.query(
-      `INSERT INTO productos (
-        descripcion,
-        id_categoria,
-        id_marca,
-        files
-      ) VALUES ($1,$2,$3,$4)
-      RETURNING *`,
-      [
-        data.descripcion,
-        data.id_categoria,
-        data.id_marca,
-        null
-      ]
-    );
-
-    const producto = productResult.rows[0];
-
-    // 3️⃣ Crear inventario general
-    await connection.query(
-      `INSERT INTO inventario (
-        id_producto,
-        sku,
-        existencia_general,
-        costo_unitario,
-        precio_venta,
-        margen_ganancia,
-        stock_minimo_general
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-      [
-        producto.id,
-        data.sku,
-        data.existencia_general,
-        data.costo_unitario,
-        data.precio_venta,
-        data.margen_ganancia,
-        data.stock_minimo_general
-      ]
-    );
-
-    // 4️⃣ Crear edeposito para TODOS los depósitos
-    await connection.query(
-      `
-      INSERT INTO edeposito (
-        id_producto,
-        id_deposito,
-        existencia_deposito,
-        stock_minimo_deposito
-      )
-      SELECT
-        $1,
-        d.id,
-        0,
-        0
-      FROM depositos d
-      WHERE d.estatus = TRUE
-      `,
-      [producto.id]
-    );
-
-    await connection.query("COMMIT");
-
-    return {
-      status: true,
-      code: 201,
-      msg: "Producto, inventario y depósitos creados correctamente",
-      data: {
-        ...data,
-        id: producto.id
+      if (result.rows.length === 0) {
+        return {
+          status: false,
+          code: 404,
+          msg: "No se encontraron movimientos de kardex para este producto",
+        };
       }
-    };
-  } catch (error) {
-    if (connection) await connection.query("ROLLBACK");
-    return {
-      status: false,
-      code: 500,
-      msg: "Error al crear producto",
-      error: error.message
-    };
-  } finally {
-    if (connection) connection.release();
+
+      return {
+        status: true,
+        code: 200,
+        msg: "Kardex obtenido correctamente",
+        data: result.rows,
+      };
+    } catch (error) {
+      return {
+        status: false,
+        code: 500,
+        msg: "Error al obtener el kardex del producto",
+        error: error.message,
+      };
+    } finally {
+      if (connection) connection.release();
+    }
   }
-}
+
+  static async getEDepositsByProduct(id_producto) {
+    let connection;
+    try {
+      connection = await pool.connect();
+
+      // Consultamos la tabla 'edeposito' unida con 'depositos' para sacar el nombre
+      const result = await connection.query(
+        `
+        SELECT 
+          e.id, 
+          e.id_producto, 
+          e.id_deposito, 
+          d.descripcion AS deposito_nombre, -- Importante para el filtro del frontend
+          e.existencia_deposito, 
+          e.stock_minimo_deposito,
+          e.estatus
+        FROM edeposito e
+        INNER JOIN depositos d ON e.id_deposito = d.id
+        WHERE e.id_producto = $1
+        ORDER BY d.descripcion ASC
+        `,
+        [id_producto]
+      );
+
+      return {
+        status: true,
+        code: 200,
+        msg: "Existencias por depósito obtenidas",
+        data: result.rows,
+      };
+    } catch (error) {
+      return {
+        status: false,
+        code: 500,
+        msg: "Error al obtener existencias por depósito",
+        error: error.message,
+      };
+    } finally {
+      if (connection) connection.release();
+    }
+  }
+
+  static async getProductKardexDep(id_producto, id_deposito) {
+    let connection;
+    try {
+      connection = await pool.connect();
+
+      const result = await connection.query(
+        `
+        SELECT 
+          k.id,
+          k.id_producto,
+          p.descripcion AS producto_nombre,
+          k.id_deposito,
+          d.nombre AS deposito_nombre,
+          k.fecha,
+          k.existencia_inicial,
+          k.entrada,
+          k.salida,
+          k.existencia_final,
+          k.costo,
+          k.precio,
+          k.detalle,
+          k.documento,
+          k.tipo,
+          k.fecha_creacion
+        FROM kardexdep k
+        INNER JOIN productos p ON k.id_producto = p.id
+        INNER JOIN depositos d ON k.id_deposito = d.id
+        WHERE k.id_producto = $1 AND k.id_deposito = $2
+        ORDER BY k.fecha_creacion DESC, k.id DESC
+        `,
+        [id_producto, id_deposito]
+      );
+
+      if (result.rows.length === 0) {
+        return {
+          status: false, // O true con data vacía, depende de tu preferencia
+          code: 404,
+          msg: "No hay movimientos en este depósito para este producto",
+          data: [] 
+        };
+      }
+
+      return {
+        status: true,
+        code: 200,
+        msg: "Kardex de depósito obtenido",
+        data: result.rows,
+      };
+    } catch (error) {
+      return {
+        status: false,
+        code: 500,
+        msg: "Error al obtener el kardex del depósito",
+        error: error.message,
+      };
+    } finally {
+      if (connection) connection.release();
+    }
+  }
+
+  static async createProduct(data) {
+    let connection;
+
+    try {
+      connection = await pool.connect();
+      await connection.query("BEGIN");
+
+      // 1️⃣ Validar duplicado
+      const duplicate = await connection.query(
+        `SELECT id FROM productos WHERE LOWER(descripcion) = LOWER($1)`,
+        [data.descripcion]
+      );
+
+      if (duplicate.rows.length) {
+        await connection.query("ROLLBACK");
+        return { status: false, code: 409, msg: "El producto ya existe" };
+      }
+
+      // 2️⃣ Crear producto
+      const productResult = await connection.query(
+        `INSERT INTO productos (
+          descripcion,
+          id_categoria,
+          id_marca,
+          files
+        ) VALUES ($1,$2,$3,$4)
+        RETURNING *`,
+        [
+          data.descripcion,
+          data.id_categoria,
+          data.id_marca,
+          null
+        ]
+      );
+
+      const producto = productResult.rows[0];
+
+      // 3️⃣ Crear inventario general
+      await connection.query(
+        `INSERT INTO inventario (
+          id_producto,
+          sku,
+          existencia_general,
+          costo_unitario,
+          precio_venta,
+          margen_ganancia,
+          stock_minimo_general
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+        [
+          producto.id,
+          data.sku,
+          data.existencia_general,
+          data.costo_unitario,
+          data.precio_venta,
+          data.margen_ganancia,
+          data.stock_minimo_general
+        ]
+      );
+
+      // 4️⃣ Crear edeposito para TODOS los depósitos
+      await connection.query(
+        `
+        INSERT INTO edeposito (
+          id_producto,
+          id_deposito,
+          existencia_deposito,
+          stock_minimo_deposito
+        )
+        SELECT
+          $1,
+          d.id,
+          0,
+          0
+        FROM depositos d
+        WHERE d.estatus = TRUE
+        `,
+        [producto.id]
+      );
+
+      await connection.query("COMMIT");
+
+      return {
+        status: true,
+        code: 201,
+        msg: "Producto, inventario y depósitos creados correctamente",
+        data: {
+          ...data,
+          id: producto.id
+        }
+      };
+    } catch (error) {
+      if (connection) await connection.query("ROLLBACK");
+      return {
+        status: false,
+        code: 500,
+        msg: "Error al crear producto",
+        error: error.message
+      };
+    } finally {
+      if (connection) connection.release();
+    }
+  }
 
 
   static async updateProduct(id, data) {
@@ -967,6 +1125,7 @@ static async createProduct(data) {
           l.id_producto,
           p.descripcion AS producto,
           l.nro_lote,
+          l.cantidad,
           l.fecha_vencimiento,
           l.estatus,
           l.fecha_creacion
@@ -1004,6 +1163,7 @@ static async createProduct(data) {
         l.id_producto,
         p.descripcion AS producto,
         l.nro_lote,
+        l.cantidad,
         l.fecha_vencimiento,
         l.estatus,
         l.fecha_creacion,
@@ -1044,71 +1204,221 @@ static async createProduct(data) {
     }
   }
 
-  static async createLote(data) {
-    let connection;
-    try {
-      connection = await pool.connect();
-      const duplicate = await connection.query(
-        `SELECT id FROM lotes WHERE id_producto=$1 AND LOWER(nro_lote)=LOWER($2)`,
-        [data.id_producto, data.nro_lote],
-      );
-      if (duplicate.rows.length)
-        return {
-          status: false,
-          code: 409,
-          msg: "El lote ya existe para este producto",
-        };
-      const keys = Object.keys(data);
-      const values = Object.values(data);
-      const placeholders = keys.map((_, i) => `$${i + 1}`).join(",");
-      const insert = await connection.query(
-        `INSERT INTO lotes (${keys.join(",")}) VALUES (${placeholders}) RETURNING *`,
-        values,
-      );
-      return {
-        status: true,
-        code: 201,
-        msg: "Lote creado correctamente",
-        data: insert.rows[0],
-      };
-    } catch (error) {
-      return {
-        status: false,
-        code: 500,
-        msg: "Error al crear lote",
-        error: error.message,
-      };
-    } finally {
-      if (connection) connection.release();
+static async createLote(data) {
+  let connection;
+  try {
+    connection = await pool.connect();
+    await connection.query('BEGIN');
+
+    // 1. Validaciones iniciales
+    const { id_deposito, id_producto, nro_lote, cantidad } = data;
+    
+    if (!id_deposito) {
+      throw new Error("El id_deposito es obligatorio.");
     }
+
+    // 2. Verificar duplicados (Mismo producto y nro de lote)
+    const duplicate = await connection.query(
+      `SELECT id FROM lotes WHERE id_producto=$1 AND LOWER(nro_lote)=LOWER($2)`,
+      [id_producto, nro_lote],
+    );
+    
+    if (duplicate.rows.length) {
+      await connection.query('ROLLBACK');
+      return { status: false, code: 409, msg: "El lote ya existe para este producto" };
+    }
+
+    // 3. Insertar el Lote 
+    // Mantenemos data intacto para que incluya id_deposito en el INSERT
+    const keys = Object.keys(data);
+    const values = Object.values(data);
+    const placeholders = keys.map((_, i) => `$${i + 1}`).join(",");
+    
+    const insertLote = await connection.query(
+      `INSERT INTO lotes (${keys.join(",")}) VALUES (${placeholders}) RETURNING *`,
+      values,
+    );
+
+    const cantidadLote = parseInt(cantidad);
+
+    // 4. Actualización de Inventarios y Kardex (Si cantidad > 0)
+    if (cantidadLote > 0) {
+      
+      /* A. ACTUALIZACIÓN GLOBAL */
+      const invResult = await connection.query(
+        `SELECT existencia_general, costo_unitario, precio_venta FROM inventario WHERE id_producto = $1 FOR UPDATE`,
+        [id_producto]
+      );
+
+      if (invResult.rows.length === 0) {
+        throw new Error("El producto no existe en el inventario global.");
+      }
+
+      const { existencia_general, costo_unitario, precio_venta } = invResult.rows[0];
+      const nuevaExistenciaGeneral = existencia_general + cantidadLote;
+
+      await connection.query(
+        `UPDATE inventario SET existencia_general = $1 WHERE id_producto = $2`,
+        [nuevaExistenciaGeneral, id_producto]
+      );
+
+      await connection.query(
+        `INSERT INTO kardexg (
+          id_producto, fecha, existencia_inicial, entrada, salida, 
+          existencia_final, costo, precio, detalle, documento, tipo
+        ) VALUES ($1, CURRENT_DATE, $2, $3, 0, $4, $5, $6, $7, $8, 'ENTRADA')`,
+        [id_producto, existencia_general, cantidadLote, nuevaExistenciaGeneral, costo_unitario, precio_venta, `Registro de lote: ${nro_lote}`, `LOTE-${nro_lote}`]
+      );
+
+      /* B. ACTUALIZACIÓN POR DEPÓSITO */
+      const depResult = await connection.query(
+          `SELECT existencia_deposito FROM edeposito WHERE id_producto = $1 AND id_deposito = $2 FOR UPDATE`,
+          [id_producto, id_deposito]
+      );
+
+      let existenciaInicialDep = 0;
+      let nuevaExistenciaDep = 0;
+
+      if (depResult.rows.length === 0) {
+          existenciaInicialDep = 0;
+          nuevaExistenciaDep = cantidadLote;
+          await connection.query(
+              `INSERT INTO edeposito (id_producto, id_deposito, existencia_deposito, stock_minimo_deposito) 
+               VALUES ($1, $2, $3, 0)`,
+              [id_producto, id_deposito, nuevaExistenciaDep]
+          );
+      } else {
+          existenciaInicialDep = depResult.rows[0].existencia_deposito;
+          nuevaExistenciaDep = existenciaInicialDep + cantidadLote;
+          await connection.query(
+              `UPDATE edeposito SET existencia_deposito = $1 WHERE id_producto = $2 AND id_deposito = $3`,
+              [nuevaExistenciaDep, id_producto, id_deposito]
+          );
+      }
+
+      await connection.query(
+          `INSERT INTO kardexdep (
+            id_producto, id_deposito, fecha, existencia_inicial, entrada, salida, 
+            existencia_final, costo, precio, detalle, documento, tipo
+          ) VALUES ($1, $2, CURRENT_DATE, $3, $4, 0, $5, $6, $7, $8, $9, 'ENTRADA')`,
+          [id_producto, id_deposito, existenciaInicialDep, cantidadLote, nuevaExistenciaDep, costo_unitario, precio_venta, `Entrada por Lote: ${nro_lote}`, `LOTE-${nro_lote}`]
+      );
+    }
+
+    await connection.query('COMMIT');
+
+    return {
+      status: true,
+      code: 201,
+      msg: "Lote creado e inventarios actualizados",
+      data: insertLote.rows[0],
+    };
+
+  } catch (error) {
+    if (connection) await connection.query('ROLLBACK');
+    console.error("Error createLote:", error);
+    return {
+      status: false,
+      code: 500,
+      msg: "Error al crear lote",
+      error: error.message,
+    };
+  } finally {
+    if (connection) connection.release();
   }
+}
 
   static async updateLote(id, data) {
     let connection;
     try {
       connection = await pool.connect();
+      await connection.query('BEGIN');
+
+      // 1. Obtener los datos actuales del lote antes de actualizar
+      const oldLoteRes = await connection.query(
+        `SELECT id_producto, cantidad, nro_lote FROM lotes WHERE id = $1 FOR UPDATE`,
+        [id]
+      );
+
+      if (!oldLoteRes.rows.length) {
+        await connection.query('ROLLBACK');
+        return { status: false, code: 404, msg: "Lote no encontrado" };
+      }
+
+      const oldLote = oldLoteRes.rows[0];
       const fields = Object.keys(data);
-      if (!fields.length)
-        return {
-          status: false,
-          code: 400,
-          msg: "No se enviaron datos para actualizar",
-        };
+      
+      if (!fields.length) {
+        await connection.query('ROLLBACK');
+        return { status: false, code: 400, msg: "No se enviaron datos" };
+      }
+
+      // 2. Actualizar el lote
       const values = Object.values(data);
       const setClause = fields.map((f, i) => `${f}=$${i + 1}`).join(",");
       const result = await connection.query(
         `UPDATE lotes SET ${setClause} WHERE id=$${fields.length + 1} RETURNING *`,
-        [...values, id],
+        [...values, id]
       );
-      if (!result.rows.length)
-        return { status: false, code: 404, msg: "Lote no encontrado" };
+
+      const nuevoLote = result.rows[0];
+
+      // 3. Si la cantidad cambió, ajustar inventario y Kardex
+      if (data.cantidad !== undefined && parseInt(data.cantidad) !== oldLote.cantidad) {
+        const diferencia = parseInt(data.cantidad) - oldLote.cantidad;
+
+        // Obtener datos actuales de inventario
+        const invRes = await connection.query(
+          `SELECT existencia_general, costo_unitario, precio_venta FROM inventario WHERE id_producto = $1 FOR UPDATE`,
+          [oldLote.id_producto]
+        );
+
+        if (invRes.rows.length > 0) {
+          const inv = invRes.rows[0];
+          const nuevaExistenciaGeneral = inv.existencia_general + diferencia;
+
+          // Actualizar inventario
+          await connection.query(
+            `UPDATE inventario SET existencia_general = $1 WHERE id_producto = $2`,
+            [nuevaExistenciaGeneral, oldLote.id_producto]
+          );
+
+          // Registrar en Kardex el ajuste
+          const tipoMovimiento = diferencia > 0 ? 'AJUSTE ENTRADA' : 'AJUSTE SALIDA';
+          const entrada = diferencia > 0 ? diferencia : 0;
+          const salida = diferencia < 0 ? Math.abs(diferencia) : 0;
+
+          await connection.query(
+            `INSERT INTO kardexg (
+              id_producto, fecha, existencia_inicial, entrada, salida, 
+              existencia_final, costo, precio, detalle, documento, tipo
+            ) VALUES ($1, CURRENT_DATE, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+            [
+              oldLote.id_producto,
+              inv.existencia_general,
+              entrada,
+              salida,
+              nuevaExistenciaGeneral,
+              inv.costo_unitario,
+              inv.precio_venta,
+              `Ajuste manual de cantidad en lote: ${oldLote.nro_lote}`,
+              `MOD-LOTE-${id}`,
+              tipoMovimiento
+            ]
+          );
+        }
+      }
+
+      await connection.query('COMMIT');
       return {
         status: true,
         code: 200,
-        msg: "Lote actualizado correctamente",
-        data: result.rows[0],
+        msg: "Lote e inventario actualizados correctamente",
+        data: nuevoLote,
       };
+
     } catch (error) {
+      if (connection) await connection.query('ROLLBACK');
       return {
         status: false,
         code: 500,

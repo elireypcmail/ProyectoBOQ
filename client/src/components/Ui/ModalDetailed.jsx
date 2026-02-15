@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react"; // Añadido useEffect
+import React, { useState, useEffect } from "react";
 import { 
-  Pencil, Trash2, X, Package, Tag, Layers, Hash, 
-  TrendingUp, DollarSign, AlertCircle, Bookmark,
-  History, Boxes, Warehouse, Lock // Añadido Lock para el icono de bloqueo
+  Pencil, Trash2, X, Package, Tag, Layers, 
+  TrendingUp, DollarSign, Bookmark, AlertCircle,
+  History, Boxes, Warehouse, Lock, Image as ImageIcon // <--- Importamos ImageIcon
 } from "lucide-react";
 import { useProducts } from "../../context/ProductsContext";
 import ListLots from "../Products/ListLots"; 
@@ -12,7 +12,7 @@ import "../../styles/ui/ModalDetailed.css";
 
 const ModalDetailed = ({
   isOpen,
-  product,
+  product: initialProduct,
   category,
   brand,
   onClose,
@@ -20,35 +20,36 @@ const ModalDetailed = ({
   onDelete
 }) => {
   const [activeTab, setActiveTab] = useState("general");
-  const { getAuditProd, audits } = useProducts();
+  const { getAuditProd, audits, getProductsById, products } = useProducts();
 
-  // Cargar auditorías cuando el modal se abre o cambia el producto
+  const product = products.find(p => p.id === initialProduct?.id) || initialProduct;
+
   useEffect(() => {
-    if (isOpen && product?.id) {
-      getAuditProd(product.id);
-    }
+    if (isOpen) setActiveTab("general");
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen && product?.id) getAuditProd(product.id);
   }, [isOpen, product?.id]);
 
   if (!isOpen || !product) return null;
 
-  // Verificamos si hay movimientos (auditorías)
-  // Asumiendo que 'audits' es un array o tiene una propiedad data que lo es
   const auditList = Array.isArray(audits) ? audits : (audits?.data || []);
   const hasHistory = auditList.length > 0;
 
   const formatCurrency = (val) => 
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
 
+  const handleRefreshProduct = () => getProductsById(product.id);
+
   return (
     <div className="pdm-overlay">
       <div className="pdm-container">
         
-        {/* HEADER ESTATICO */}
+        {/* HEADER */}
         <div className="pdm-header">
           <div className="pdm-title-group">
-            <div className="pdm-icon-main">
-              <Package size={24} />
-            </div>
+            <div className="pdm-icon-main"><Package size={24} /></div>
             <div>
               <h3 className="pdm-title">{product.descripcion}</h3>
               <span className={`pdm-badge ${product.estatus ? 'active' : 'inactive'}`}>
@@ -56,67 +57,68 @@ const ModalDetailed = ({
               </span>
             </div>
           </div>
-          <button className="pdm-close-btn" onClick={onClose}>
-            <X size={20} />
-          </button>
+          <button className="pdm-close-btn" onClick={onClose}><X size={20} /></button>
         </div>
 
-        {/* NAVEGACIÓN DE PESTAÑAS */}
+        {/* TABS */}
         <div className="pdm-tabs">
-          <button 
-            className={`pdm-tab-btn ${activeTab === 'general' ? 'active' : ''}`}
-            onClick={() => setActiveTab('general')}
-          >
-            <Bookmark size={16} /> Información General
+          <button className={`pdm-tab-btn ${activeTab === 'general' ? 'active' : ''}`} onClick={() => setActiveTab('general')}>
+            <Bookmark size={16} /> General
           </button>
-          <button 
-            className={`pdm-tab-btn ${activeTab === 'lotes' ? 'active' : ''}`}
-            onClick={() => setActiveTab('lotes')}
-          >
+          <button className={`pdm-tab-btn ${activeTab === 'lotes' ? 'active' : ''}`} onClick={() => setActiveTab('lotes')}>
             <Boxes size={16} /> Lotes
           </button>
-          
-          <button 
-            className={`pdm-tab-btn ${activeTab === 'depositos' ? 'active' : ''}`}
-            onClick={() => setActiveTab('depositos')}
-          >
+          <button className={`pdm-tab-btn ${activeTab === 'depositos' ? 'active' : ''}`} onClick={() => setActiveTab('depositos')}>
             <Warehouse size={16} /> Existencias
           </button>
-
-          <button 
-            className={`pdm-tab-btn ${activeTab === 'precios' ? 'active' : ''}`}
-            onClick={() => setActiveTab('precios')}
-          >
+          <button className={`pdm-tab-btn ${activeTab === 'precios' ? 'active' : ''}`} onClick={() => setActiveTab('precios')}>
             <History size={16} /> Auditoría
           </button>
         </div>
 
-        {/* CUERPO */}
+        {/* BODY */}
         <div className="pdm-body">
           {activeTab === "general" && (
             <div className="pdm-tab-content animate-fade-in">
-              <div className="pdm-main-info">
-                <div className="pdm-info-item">
-                  <label><Layers size={14} /> Categoría</label>
-                  <p>{category || "Sin categoría"}</p>
+              
+              {/* --- NUEVA SECCIÓN SUPERIOR: IMAGEN + INFO --- */}
+              <div className="pdm-general-hero">
+                
+                {/* Contenedor de la Imagen (Placeholder) */}
+                <div className="pdm-image-container">
+                  {/* Aquí pondrás tu lógica <img src={...} /> más tarde */}
+                  <div className="pdm-image-placeholder">
+                    <ImageIcon size={48} strokeWidth={1.5} />
+                    <span>Sin imagen</span>
+                  </div>
                 </div>
-                <div className="pdm-info-item">
-                  <label><Tag size={14} /> Marca</label>
-                  <p>{brand || "Sin marca"}</p>
+
+                {/* Info básica movida aquí */}
+                <div className="pdm-main-info">
+                  <div className="pdm-info-item">
+                    <label><Layers size={14} /> Categoría</label>
+                    <p>{category || "Sin categoría"}</p>
+                  </div>
+                  <div className="pdm-info-item">
+                    <label><Tag size={14} /> Marca</label>
+                    <p>{brand || "Sin marca"}</p>
+                  </div>
+                  {/* Puedes agregar más info textual aquí si deseas */}
                 </div>
               </div>
 
               <div className="pdm-divider"></div>
 
-              <div className="pdm-stats-grid">
-                <div className="pdm-stat-card inventory">
-                  <div className="pdm-stat-icon"><Hash size={18} /></div>
-                  <div className="pdm-stat-content">
-                    <small>Existencia General</small>
-                    <strong>{product.existencia_general} unidades</strong>
-                  </div>
-                </div>
+              {/* DASHBOARD DE EXISTENCIA RÁPIDA ACTUALIZADA */}
+              <div className="pdm-stat-card inventory" style={{ marginBottom: '1.5rem', background: '#f0f9ff' }}>
+                 <div className="pdm-stat-icon"><Package size={20} /></div>
+                 <div className="pdm-stat-content">
+                    <small>Existencia General Actualizada</small>
+                    <strong style={{ fontSize: '1.2rem' }}>{product.existencia_general} unidades</strong>
+                 </div>
+              </div>
 
+              <div className="pdm-stats-grid">
                 <div className="pdm-stat-card warning">
                   <div className="pdm-stat-icon"><AlertCircle size={18} /></div>
                   <div className="pdm-stat-content">
@@ -124,7 +126,6 @@ const ModalDetailed = ({
                     <strong>{product.stock_minimo_general} unidades</strong>
                   </div>
                 </div>
-
                 <div className="pdm-stat-card finance">
                   <div className="pdm-stat-icon"><DollarSign size={18} /></div>
                   <div className="pdm-stat-content">
@@ -132,7 +133,6 @@ const ModalDetailed = ({
                     <strong>{formatCurrency(product.costo_unitario)}</strong>
                   </div>
                 </div>
-
                 <div className="pdm-stat-card finance">
                   <div className="pdm-stat-icon"><TrendingUp size={18} /></div>
                   <div className="pdm-stat-content">
@@ -141,23 +141,26 @@ const ModalDetailed = ({
                   </div>
                 </div>
               </div>
-
-              <div className="pdm-profit-tag">
-                <span>Margen de Ganancia Establecido:</span>
-                <strong>{product.margen_ganancia}%</strong>
-              </div>
             </div>
           )}
 
           {activeTab === "lotes" && (
             <div className="pdm-tab-content animate-fade-in">
-              <ListLots id_producto={product.id} />
+              <ListLots 
+                id_producto={product.id} 
+                onRefreshProducts={handleRefreshProduct} 
+              />
             </div>
           )}
 
           {activeTab === "depositos" && (
             <div className="pdm-tab-content animate-fade-in">
-              <ListEdeposits id_producto={product.id} />
+              <ListEdeposits 
+                id_producto={product.id} 
+                existenciaGeneral={product.existencia_general}
+                stockMinimoGeneral={product.stock_minimo_general}
+                onRefreshProducts={handleRefreshProduct}
+              />
             </div>
           )}
 
@@ -168,13 +171,13 @@ const ModalDetailed = ({
           )}
         </div>
 
-        {/* FOOTER ESTATICO CON VALIDACIÓN */}
+        {/* FOOTER */}
         <div className="pdm-footer">
           <button 
             className={`pdm-btn-action delete ${hasHistory ? 'disabled' : ''}`} 
             onClick={!hasHistory ? onDelete : null}
-            title={hasHistory ? "No se puede eliminar un producto con historial de movimientos" : "Eliminar este producto"}
             disabled={hasHistory}
+            title={hasHistory ? "Protección: Producto con movimientos de auditoría" : "Eliminar"}
           >
             {hasHistory ? <Lock size={16} /> : <Trash2 size={16} />}
             <span>{hasHistory ? "Eliminación Bloqueada" : "Eliminar Producto"}</span>

@@ -8,6 +8,8 @@ import ListProducts from "../components/Products/ListProducts";
 import ListCategories from "../components/Products/ListCategories";
 import ListBrands from "../components/Products/ListBrands";
 import ListLots from "../components/Products/ListLots";
+import ListSuppliers from "../components/Purchases/ListSuplliers";
+import ListPurchases from "../components/Purchases/ListPurchases";
 
 import ListZones from "../components/Entities/ListZones";
 import ListDeposits from "../components/Entities/ListDeposits";
@@ -20,7 +22,7 @@ import { Menu, X } from "lucide-react";
 import "../styles/pages/HomePage.css";
 
 export default function HomePage() {
-  const [activeComponent, setActiveComponent] = useState("zones");
+  const [activeComponent, setActiveComponent] = useState("products");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const sidebarRef = useRef(null);
 
@@ -87,6 +89,8 @@ export default function HomePage() {
               {activeComponent === "offices" && <ListOffices />}
               {activeComponent === "doctors" && <ListDoctors />}
               {activeComponent === "types-doctors" && <ListTypesDoctor />}
+              {activeComponent === "suppliers" && <ListSuppliers />}
+              {activeComponent === "purchases" && <ListPurchases />}
             </div>
           </section>
         </main>

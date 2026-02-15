@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import Select from "react-select"; // Importamos React Select
+import Select from "react-select";
 import { useHealth } from "../../context/HealtContext";
 import {
   Search,
@@ -11,14 +11,17 @@ import {
   FileText
 } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
+
+// Importar PhoneInput
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
+
 import ListStories from "./ListStories";
-import MediaUploader from "../Multimedia/MediaUploader";
 import "../../styles/components/ListZone.css";
 
 const ListPatients = () => {
   const {
     pacientes,
-    medicos,
     seguros,
     getAllPacientes,
     getAllMedicos,
@@ -36,14 +39,16 @@ const ListPatients = () => {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isCreateSeguroModalOpen, setIsCreateSeguroModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-
   const [isStoriesModalOpen, setIsStoriesModalOpen] = useState(false);
   const [selectedPaciente, setSelectedPaciente] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
 
   // ---------------- FORMULARIOS PACIENTE ----------------
   const [nombre, setNombre] = useState("");
-  const [documento, setDocumento] = useState("");
+  
+  // CAMBIO 1: Estado unificado para documento
+  const [documentoField, setDocumentoField] = useState("");
+  
   const [telefono, setTelefono] = useState("");
   const [email, setEmail] = useState("");
   const [idSeguro, setIdSeguro] = useState("");
@@ -77,32 +82,42 @@ const ListPatients = () => {
     );
   }, [pacientes, searchTerm]);
 
-  // ---------------- FORMATOS ----------------
+  // ---------------- FORMATOS Y HELPERS ----------------
   const handleNameInput = (value, setter) => {
     setter(value.replace(/[^a-zA-ZÁÉÍÓÚÜÑáéíóúüñ\s]/g, "").toUpperCase());
   };
 
-  const handleNameUpperInput = (value, setter) => {
-    setter(value.replace(/[^a-zA-ZÁÉÍÓÚÜÑáéíóúüñ\s]/g, "").toUpperCase());
-  };
+  // CAMBIO 2: Lógica unificada de documento (Letra + Guion + 10 Números)
+  const handleDocumentInput = (value) => {
+    const upperValue = value.toUpperCase();
+    const cleanValue = upperValue.replace(/[^A-Z0-9]/g, "");
 
-  const handleDocumentoInput = (value, setter) => {
-    const digits = value.replace(/\D/g, "").slice(0, 8);
-    setter(digits ? `V-${digits}` : "V-");
-  };
+    if (!cleanValue) {
+      setDocumentoField("");
+      return;
+    }
 
-  const handlePhoneInput = (value, setter) => {
-    const digits = value.replace(/\D/g, "").slice(0, 11);
-    setter(digits.length > 4 ? `${digits.slice(0, 4)}-${digits.slice(4)}` : digits);
-  };
+    const firstChar = cleanValue.charAt(0);
+    const rest = cleanValue.slice(1);
 
-  const handleEmailInput = (value, setter) => {
-    setter(value.replace(/\s/g, ""));
+    // Validar que primero sea Letra
+    if (!/^[A-Z]$/.test(firstChar)) {
+      return; 
+    }
+
+    // Validar resto Números (max 10)
+    const numbersOnly = rest.replace(/[^0-9]/g, "").slice(0, 10);
+
+    const formatted = numbersOnly.length > 0 
+      ? `${firstChar}-${numbersOnly}` 
+      : firstChar;
+
+    setDocumentoField(formatted);
   };
 
   const resetForm = () => {
     setNombre("");
-    setDocumento("");
+    setDocumentoField(""); // Reset campo único
     setTelefono("");
     setEmail("");
     setIdSeguro("");
@@ -112,13 +127,19 @@ const ListPatients = () => {
 
   // ---------------- CREAR / EDITAR PACIENTE ----------------
   const handleSavePaciente = async () => {
-    if (!nombre || !documento) return;
+    if (!nombre || !documentoField) return alert("Nombre y documento son obligatorios");
+
+    // Validación simple de longitud mínima (Letra + Guion + al menos 1 número)
+    if (documentoField.length < 3) {
+        alert("El documento debe tener un formato válido (Ej: V-123456)");
+        return;
+    }
 
     const payload = {
       nombre,
-      documento,
+      documento: documentoField, // Se envía directo
       telefono,
-      email,
+      email: email.toLowerCase().trim(),
       id_seguro: idSeguro || null,
       estatus: true
     };
@@ -140,11 +161,11 @@ const ListPatients = () => {
 
   // ---------------- CREAR SEGURO ----------------
   const handleCreateSeguro = async () => {
-    if (!nuevoSeguroNombre || !nuevoSeguroContacto || !nuevoSeguroTelefono) return;
+    if (!nuevoSeguroNombre || !nuevoSeguroTelefono) return;
 
     await createNewSeguro({
-      nombre: nuevoSeguroNombre,
-      contacto: nuevoSeguroContacto,
+      nombre: nuevoSeguroNombre.toUpperCase(),
+      contacto: nuevoSeguroContacto.toUpperCase(),
       telefono: nuevoSeguroTelefono,
       estatus: true
     });
@@ -156,7 +177,6 @@ const ListPatients = () => {
     getAllSeguros();
   };
 
-  // ---------------- ELIMINAR ----------------
   const handleDeletePaciente = async () => {
     if (!selectedPaciente) return;
     await deletePacienteById(selectedPaciente.id);
@@ -165,7 +185,6 @@ const ListPatients = () => {
     getAllPacientes();
   };
 
-  // Estilos personalizados para React Select
   const customSelectStyles = {
     control: (base) => ({
       ...base,
@@ -187,13 +206,7 @@ const ListPatients = () => {
           <h2>Pacientes</h2>
           <p>Total: {filteredPacientes.length}</p>
         </div>
-        <button
-          className="btn-primary"
-          onClick={() => {
-            resetForm();
-            setIsCreateModalOpen(true);
-          }}
-        >
+        <button className="btn-primary" onClick={() => { resetForm(); setIsCreateModalOpen(true); }}>
           <Plus size={16} /> Nuevo Paciente
         </button>
       </div>
@@ -227,13 +240,7 @@ const ListPatients = () => {
               <td>{p.nombre}</td>
               <td className="hide-mobile">{p.documento}</td>
               <td className="center">
-                <button
-                  className="icon-btn"
-                  onClick={() => {
-                    setSelectedPaciente(p);
-                    setIsDetailsModalOpen(true);
-                  }}
-                >
+                <button className="icon-btn" onClick={() => { setSelectedPaciente(p); setIsDetailsModalOpen(true); }}>
                   <SlOptionsVertical size={16} />
                 </button>
               </td>
@@ -247,31 +254,44 @@ const ListPatients = () => {
         <div className="modal-overlay">
           <div className="modal-content">
             <h3>{isEditing ? "Editar Paciente" : "Nuevo Paciente"}</h3>
+            
+            <label className="modal-label">Nombre Completo</label>
             <input
               className="modal-input"
-              placeholder="Nombre"
+              placeholder="Ej: MARÍA PÉREZ"
               value={nombre}
               onChange={e => handleNameInput(e.target.value, setNombre)}
             />
+
+            <label className="modal-label">Documento</label>
+            {/* CAMBIO 3: Input Único */}
             <input
-              className="modal-input"
-              placeholder="Documento (V-12345678)"
-              value={documento}
-              onChange={e => handleDocumentoInput(e.target.value, setDocumento)}
-            />
-            <input
-              className="modal-input"
-              placeholder="Teléfono (1234-1234567)"
-              value={telefono}
-              onChange={e => handlePhoneInput(e.target.value, setTelefono)}
-            />
-            <input
-              className="modal-input"
-              placeholder="Email"
-              value={email}
-              onChange={e => handleEmailInput(e.target.value, setEmail)}
+                className="modal-input"
+                placeholder="Ej: V-12345678 (Letra + Números)"
+                value={documentoField}
+                onChange={(e) => handleDocumentInput(e.target.value)}
             />
 
+            <label className="modal-label">Teléfono</label>
+            <div className="phone-input-container" style={{ marginBottom: '15px' }}>
+              <PhoneInput
+                country={'ve'}
+                value={telefono}
+                onChange={val => setTelefono(val)}
+                inputStyle={{ width: '100%', height: '45px', borderRadius: '8px' }}
+              />
+            </div>
+
+            <label className="modal-label">Email</label>
+            <input
+              className="modal-input"
+              type="email"
+              placeholder="correo@ejemplo.com"
+              value={email}
+              onChange={e => setEmail(e.target.value.replace(/\s/g, ""))}
+            />
+
+            <label className="modal-label">Seguro Médico</label>
             <div className="select-zone-container">
               <div style={{ flex: 1 }}>
                 <Select
@@ -281,15 +301,10 @@ const ListPatients = () => {
                   placeholder="Seleccionar seguro..."
                   isClearable
                   isSearchable
-                  noOptionsMessage={() => "No hay seguros registrados"}
                   styles={customSelectStyles}
                 />
               </div>
-              <button
-                className="btn-add-zone-primary"
-                onClick={() => setIsCreateSeguroModalOpen(true)}
-                title="Nuevo Seguro"
-              >
+              <button className="btn-add-zone-primary" onClick={() => setIsCreateSeguroModalOpen(true)}>
                 <Plus size={16} />
               </button>
             </div>
@@ -311,83 +326,33 @@ const ListPatients = () => {
             <h3>Detalles de {selectedPaciente.nombre}</h3>
             <div className="modal-info-body">
               <div className="detail-card"><strong>Documento:</strong> {selectedPaciente.documento}</div>
-              <div className="detail-card"><strong>Teléfono:</strong> {selectedPaciente.telefono}</div>
-              <div className="detail-card"><strong>Email:</strong> {selectedPaciente.email}</div>
+              <div className="detail-card"><strong>Teléfono:</strong> {selectedPaciente.telefono ? `+${selectedPaciente.telefono}` : "-"}</div>
+              <div className="detail-card"><strong>Email:</strong> {selectedPaciente.email || "-"}</div>
               <div className="detail-card"><strong>Seguro:</strong> {seguros.find(s => s.id === selectedPaciente.id_seguro)?.nombre || "-"}</div>
             </div>
             <div className="modal-footer" style={{ flexDirection: "column", gap: "0.75rem" }}>
-              <button
-                className="btn-primary"
-                onClick={() => {
-                  setIsDetailsModalOpen(false);
-                  setIsStoriesModalOpen(true);
-                }}
-              >
-                <FileText size={16} />Historias
+              <button className="btn-primary" onClick={() => { setIsDetailsModalOpen(false); setIsStoriesModalOpen(true); }}>
+                <FileText size={16} /> Historias
               </button>
-              <button
-                className="btn-primary"
-                onClick={() => {
+              <button className="btn-primary" onClick={() => {
                   setIsDetailsModalOpen(false);
                   setIsCreateModalOpen(true);
                   setIsEditing(true);
                   setNombre(selectedPaciente.nombre);
-                  setDocumento(selectedPaciente.documento);
+                  
+                  // CAMBIO 4: Cargar documento directo al estado unificado
+                  setDocumentoField(selectedPaciente.documento || "");
+                  
                   setTelefono(selectedPaciente.telefono);
                   setEmail(selectedPaciente.email);
                   setIdSeguro(selectedPaciente.id_seguro);
-                }}
-              >
+                }}>
                 <Pencil size={16} /> Editar
               </button>
-              <button
-                className="btn-danger"
-                onClick={() => {
-                  setIsDetailsModalOpen(false);
-                  setIsDeleteModalOpen(true);
-                }}
-              >
+              <button className="btn-danger" onClick={() => { setIsDetailsModalOpen(false); setIsDeleteModalOpen(true); }}>
                 <Trash2 size={16} /> Eliminar
               </button>
               <button className="btn-secondary" onClick={() => setIsDetailsModalOpen(false)}>Cerrar</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL LIST STORIES */}
-      {isStoriesModalOpen && selectedPaciente && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ width: '90%', maxWidth: '1200px' }}>
-            <h3>Historias de {selectedPaciente.nombre}</h3>
-            <ListStories pacienteId={selectedPaciente.id} />
-            <div className="modal-footer">
-              <button
-                className="btn-secondary"
-                onClick={() => {
-                  setIsStoriesModalOpen(false);
-                  setSelectedPaciente(null);
-                }}
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL ELIMINAR PACIENTE */}
-      {isDeleteModalOpen && selectedPaciente && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header-danger">
-              <AlertTriangle size={28} />
-              <h3>¿Eliminar paciente?</h3>
-            </div>
-            <p>Esta acción no se puede deshacer</p>
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
-              <button className="btn-danger" onClick={handleDeletePaciente}><Trash2 size={16} /> Eliminar</button>
             </div>
           </div>
         </div>
@@ -398,39 +363,47 @@ const ListPatients = () => {
         <div className="modal-overlay">
           <div className="modal-content">
             <h3>Nuevo Seguro</h3>
-            <input
-              className="modal-input"
-              placeholder="Nombre"
-              value={nuevoSeguroNombre}
-              onChange={(e) => setNuevoSeguroNombre(e.target.value.toUpperCase())}
-            />
-            <input
-              className="modal-input"
-              placeholder="Contacto"
-              value={nuevoSeguroContacto}
-              onChange={e => handleNameInput(e.target.value, setNuevoSeguroContacto)}
-            />
-            <input
-              className="modal-input"
-              placeholder="Teléfono"
-              value={nuevoSeguroTelefono}
-              onChange={e => handlePhoneInput(e.target.value, setNuevoSeguroTelefono)}
-            />
+            <input className="modal-input" placeholder="Nombre de la empresa" value={nuevoSeguroNombre} onChange={e => setNuevoSeguroNombre(e.target.value.toUpperCase())} />
+            <input className="modal-input" placeholder="Persona de contacto" value={nuevoSeguroContacto} onChange={e => handleNameInput(e.target.value, setNuevoSeguroContacto)} />
+            
+            <div className="phone-input-container" style={{ marginBottom: '15px' }}>
+              <PhoneInput
+                country={'ve'}
+                value={nuevoSeguroTelefono}
+                onChange={val => setNuevoSeguroTelefono(val)}
+                inputStyle={{ width: '100%', height: '40px' }}
+              />
+            </div>
+
             <div className="modal-footer">
-              <button
-                className="btn-secondary"
-                onClick={() => {
-                  setIsCreateSeguroModalOpen(false);
-                  setNuevoSeguroNombre("");
-                  setNuevoSeguroContacto("");
-                  setNuevoSeguroTelefono("");
-                }}
-              >
-                Cancelar
-              </button>
-              <button className="btn-primary" onClick={handleCreateSeguro}>
-                <Save size={16} /> Guardar Seguro
-              </button>
+              <button className="btn-secondary" onClick={() => setIsCreateSeguroModalOpen(false)}>Cancelar</button>
+              <button className="btn-primary" onClick={handleCreateSeguro}><Save size={16} /> Guardar Seguro</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL ELIMINAR PACIENTE */}
+      {isDeleteModalOpen && selectedPaciente && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header-danger"><AlertTriangle size={28} /><h3>¿Eliminar paciente?</h3></div>
+            <p>Se eliminará a <strong>{selectedPaciente.nombre}</strong>. Esta acción no se puede deshacer.</p>
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
+              <button className="btn-danger" onClick={handleDeletePaciente}><Trash2 size={16} /> Eliminar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL HISTORIAS */}
+      {isStoriesModalOpen && selectedPaciente && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ width: '95%', maxWidth: '1200px' }}>
+            <ListStories pacienteId={selectedPaciente.id} />
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={() => setIsStoriesModalOpen(false)}>Cerrar Historias</button>
             </div>
           </div>
         </div>

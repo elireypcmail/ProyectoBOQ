@@ -43,6 +43,36 @@ controller.getProductAud = async (req, res) => {
   }
 };
 
+controller.getProductKardex = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    console.log(id)
+
+    if (!id) return res.status(400).json({ error: "Product id required" });
+
+    const result = await ProductsModel.getProductKardexById(id);
+    return res.status(result.code).json(result);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+controller.getProductKardexDep = async (req, res) => {
+  try {
+    const { id, id_deposito } = req.params;
+
+    console.log(id)
+
+    if (!id) return res.status(400).json({ error: "Product id required" });
+
+    const result = await ProductsModel.getProductKardexDep(id, id_deposito);
+    return res.status(result.code).json(result);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
 controller.createProduct = async (req, res) => {
   try {
     const data = req.body;
@@ -341,13 +371,14 @@ controller.getLoteProductoById = async (req, res) => {
 
 controller.createLote = async (req, res) => {
   try {
-    const { id_producto, nro_lote, id_deposito, fecha_vencimiento, estatus = true } = req.body;
+    const { id_producto, nro_lote, id_deposito, cantidad, fecha_vencimiento, estatus = true } = req.body;
 
     console.log(req.body)
 
     if ( !nro_lote || !fecha_vencimiento ) return res.status(400).json({ error: "nro_lote y fecha de vencimiento son obligatorios" });
 
-    const result = await ProductsModel.createLote({id_producto, nro_lote, id_deposito, fecha_vencimiento, estatus });
+    const result = await ProductsModel.createLote({id_producto, nro_lote, id_deposito, cantidad, fecha_vencimiento, estatus });
+    console.log(result)
     return res.status(result.code).json(result);
   } catch (error) {
     return res.status(500).json({ error: error.message });

@@ -1,15 +1,21 @@
 import React from 'react';
-import { X, History, FileText, ArrowDown, ArrowUp, DollarSign } from 'lucide-react';
+import { useProducts } from "../../context/ProductsContext";
+import { X, History, FileText } from 'lucide-react';
 import "../../styles/components/KardexDep.css";
 
 const KardexDep = ({ deposito, onClose }) => {
-  // Nota: Cuando conectes tu API, aquí harías el fetch filtrando por
-  // id_producto e id_deposito.
-  const movimientos = []; // Aquí mapearás el resultado de tu consulta a la tabla 'kardexdep'
+  // Usamos la variable exacta que mostraste en el console.log
+  const { kardexDep } = useProducts(); 
 
-  // Formateador para dinero
-  const formatCurrency = (value) => 
-    new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG' }).format(value);
+  // Formateador para dólares (USD)
+  const formatCurrency = (value) => {
+    const number = parseFloat(value);
+    if (isNaN(number)) return "$0.00";
+    return new Intl.NumberFormat('en-US', { 
+        style: 'currency', 
+        currency: 'USD' 
+    }).format(number);
+  };
 
   return (
     <div className="kdx-modal-overlay">
@@ -18,8 +24,11 @@ const KardexDep = ({ deposito, onClose }) => {
           <div className="kdx-title">
             <div className="kdx-icon-box"><History size={20} /></div>
             <div>
-              <h3>Kardex Detallado</h3>
-              <p>Depósito: <strong>{deposito?.deposito_nombre}</strong> | ID Producto: <strong>{deposito?.id_producto}</strong></p>
+              <h3>Kardex Detallado por Sede</h3>
+              <p>
+                Depósito: <strong>{deposito?.deposito_nombre}</strong> | 
+                Producto: <strong>{kardexDep[0]?.producto_nombre || 'Cargando...'}</strong>
+              </p>
             </div>
           </div>
           <button className="kdx-close-btn" onClick={onClose}><X size={22} /></button>
@@ -43,20 +52,28 @@ const KardexDep = ({ deposito, onClose }) => {
                 </tr>
               </thead>
               <tbody>
-                {movimientos.length > 0 ? (
-                  movimientos.map((m) => (
-                    <tr key={m.id} className={`kdx-row ${!m.estatus ? 'kdx-disabled' : ''}`}>
-                      <td className="kdx-date">{new Date(m.fecha).toLocaleDateString()}</td>
+                {kardexDep && kardexDep.length > 0 ? (
+                  kardexDep.map((m, index) => (
+                    <tr key={m.id || index} className="kdx-row">
+                      <td className="kdx-date">
+                        {new Date(m.fecha).toLocaleDateString()}
+                      </td>
                       <td className="kdx-doc"><code>{m.documento}</code></td>
                       <td className="kdx-detail">{m.detalle}</td>
                       <td className="text-center kdx-neutral">{m.existencia_inicial}</td>
-                      <td className="text-center kdx-entry">{m.entrada > 0 ? `+${m.entrada}` : '-'}</td>
-                      <td className="text-center kdx-exit">{m.salida > 0 ? `-${m.salida}` : '-'}</td>
-                      <td className="text-center kdx-final"><strong>{m.existencia_final}</strong></td>
+                      <td className="text-center kdx-entry">
+                        {m.entrada > 0 ? `+${m.entrada}` : '-'}
+                      </td>
+                      <td className="text-center kdx-exit">
+                        {m.salida > 0 ? `-${m.salida}` : '-'}
+                      </td>
+                      <td className="text-center kdx-final">
+                        <strong>{m.existencia_final}</strong>
+                      </td>
                       <td className="kdx-money">{formatCurrency(m.costo)}</td>
                       <td className="kdx-money">{formatCurrency(m.precio)}</td>
                       <td>
-                        <span className={`kdx-type-tag ${m.tipo.toLowerCase()}`}>
+                        <span className={`kdx-type-tag ${m.tipo?.toLowerCase()}`}>
                           {m.tipo}
                         </span>
                       </td>
@@ -65,8 +82,10 @@ const KardexDep = ({ deposito, onClose }) => {
                 ) : (
                   <tr>
                     <td colSpan="10" className="kdx-empty-state">
-                      <FileText size={48} />
-                      <p>No se encontraron movimientos registrados en este depósito.</p>
+                      <div style={{ padding: '2rem', textAlign: 'center' }}>
+                        <FileText size={48} color="#cbd5e1" />
+                        <p>No hay movimientos en este depósito.</p>
+                      </div>
                     </td>
                   </tr>
                 )}

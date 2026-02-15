@@ -85,6 +85,7 @@ CREATE TABLE lotes (
   id_producto INT NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
   id_deposito INT NOT NULL REFERENCES depositos(id) ON DELETE CASCADE,
   nro_lote VARCHAR(50) NOT NULL,
+  cantidad INT NOT NULL,
   fecha_vencimiento DATE,
   estatus BOOLEAN NOT NULL DEFAULT TRUE,
   fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
@@ -228,6 +229,7 @@ CREATE TABLE vendedores (
   email VARCHAR(100),
   id_oficina INT NOT NULL REFERENCES oficinas(id) ON DELETE CASCADE,
   id_zona INT NOT NULL REFERENCES zonas(id) ON DELETE CASCADE,
+  comision DECIMAL(10,2) NOT NULL,
   estatus BOOLEAN NOT NULL DEFAULT TRUE,
   fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
@@ -338,6 +340,12 @@ CREATE TABLE compras (
   fecha_vencimiento DATE NOT NULL,
   id_proveedor INT NOT NULL REFERENCES proveedores(id) ON DELETE CASCADE,
   nro_factura VARCHAR(100) NOT NULL,
+
+  subtotal1 DECIMAL(10,2) NOT NULL,
+  descuentoPor DECIMAL(10,2) NOT NULL,
+  descuento DECIMAL(10,2) NOT NULL,
+  subtotal2 DECIMAL(10,2) NOT NULL,
+  cargo DECIMAL(10,2) NOT NULL,
   total DECIMAL(10,2) NOT NULL,
   abonado DECIMAL(10,2) NOT NULL,
   estado_pago TEXT NOT NULL,
@@ -347,16 +355,30 @@ CREATE TABLE compras (
 
 CREATE TABLE compras_detalle (
   id SERIAL PRIMARY KEY,
-  id_compra INT NOT NULL REFERENCES compras(id) ON DELETE CASCADE,
-  id_inventario INT NOT NULL REFERENCES inventario(id) ON DELETE CASCADE,
-  cantidad INT NOT NULL,
-  costo_compra DECIMAL(10,2) NOT NULL,
-  descuento1 DECIMAL(10,2) NOT NULL,
-  descuento2 DECIMAL(10,2) NOT NULL,
-  costo_descuento DECIMAL(10,2) NOT NULL,
+  id_compra INT NOT NULL 
+    REFERENCES compras(id) ON DELETE CASCADE,
+  id_inventario INT NOT NULL 
+    REFERENCES inventario(id) ON DELETE RESTRICT,
+  descripcion TEXT NOT NULL,
+  cantidad NUMERIC(14,4) NOT NULL CHECK (cantidad > 0),
+  costo_compra NUMERIC(14,6) NOT NULL CHECK (costo_compra >= 0),
+  -- Se calcula automáticamente
+  subtotal1 NUMERIC(14,6) 
+    GENERATED ALWAYS AS (cantidad * costo_compra) STORED,
+  descuento1 NUMERIC(14,6) DEFAULT 0,
+  descuento_por1 NUMERIC(7,4) DEFAULT 0,
+  descuento2 NUMERIC(14,6) DEFAULT 0,
+  descuento_por2 NUMERIC(7,4) DEFAULT 0,
+  subtotal2 NUMERIC(14,6) DEFAULT 0,
+  costo_desc_lineal NUMERIC(14,6) DEFAULT 0,
+  cargo_unitario NUMERIC(14,6) DEFAULT 0, -- prorrateado SUMA
+  costo_cargos NUMERIC(14,6) DEFAULT 0,
+  descuento_unitario NUMERIC(14,6) DEFAULT 0, -- prorrateado RESTA
+  costo_unitario_final NUMERIC(14,6) DEFAULT 0,
   estatus BOOLEAN NOT NULL DEFAULT TRUE,
-  fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+  fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
 
 CREATE TABLE compras_detalle_lote (
   id SERIAL PRIMARY KEY,

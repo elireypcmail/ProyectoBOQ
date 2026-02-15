@@ -11,6 +11,11 @@ import {
   Plus
 } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
+
+// 1. Importar PhoneInput y sus estilos
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
+
 import "../../styles/components/ListZone.css";
 
 const ListInsurances = () => {
@@ -61,12 +66,6 @@ const ListInsurances = () => {
     setter(value.replace(/[^a-zA-ZÁÉÍÓÚÜÑáéíóúüñ\s]/g, "").toUpperCase());
   };
 
-  const handlePhoneInput = (value, setter) => {
-    const digits = value.replace(/\D/g, "").slice(0, 11);
-    setter(digits.length > 4 ? `${digits.slice(0, 4)}-${digits.slice(4)}` : digits);
-  };
-
-
   // -------------------- Acciones --------------------
   const openEditModal = (seguro) => {
     setSelectedSeguro(seguro);
@@ -87,8 +86,8 @@ const ListInsurances = () => {
     await createNewSeguro({
       nombre: editName.trim(),
       contacto: editContacto.trim(),
-      telefono: editTelefono.trim(),
-      estatus: true // siempre activo por defecto
+      telefono: editTelefono, // Valor capturado por PhoneInput
+      estatus: true 
     });
     setIsCreateModalOpen(false);
     resetForm();
@@ -100,7 +99,7 @@ const ListInsurances = () => {
     await editedSeguro(selectedSeguro.id, {
       nombre: editName.trim(),
       contacto: editContacto.trim(),
-      telefono: editTelefono.trim(),
+      telefono: editTelefono,
       estatus: editEstatus
     });
     setIsEditModalOpen(false);
@@ -134,7 +133,7 @@ const ListInsurances = () => {
           <p>Total seguros: {filteredSeguros.length}</p>
         </div>
         <button className="btn-primary" onClick={() => {
-          resetForm(); // Limpia campos y asegura estatus activo
+          resetForm();
           setIsCreateModalOpen(true);
         }}>
           <Plus size={16} /> Nuevo Seguro
@@ -149,7 +148,7 @@ const ListInsurances = () => {
             type="text"
             placeholder="Buscar seguro..."
             value={searchTerm}
-            onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+            onChange={e => { setSearchTerm(e.target.value.toUpperCase()); setCurrentPage(1); }}
           />
         </div>
       </div>
@@ -172,7 +171,7 @@ const ListInsurances = () => {
                 <td>#{s.id}</td>
                 <td>{s.nombre}</td>
                 <td className="hide-mobile">{s.contacto || "-"}</td>
-                <td className="hide-mobile">{s.telefono || "-"}</td>
+                <td className="hide-mobile">{s.telefono ? `+${s.telefono}` : "-"}</td>
                 <td className="center">
                   <button className="icon-btn" onClick={() => { setSelectedSeguro(s); setIsDetailsModalOpen(true); }}>
                     <SlOptionsVertical size={16} />
@@ -203,26 +202,40 @@ const ListInsurances = () => {
           <div className="modal-content">
             <h3>{isCreateModalOpen ? "Crear Seguro" : "Editar Seguro"}</h3>
             
+            <label className="modal-label">Nombre de la Aseguradora</label>
             <input
               className="modal-input"
-              placeholder="Nombre"
+              placeholder="Ej: SEGUROS CARACAS"
               value={editName}
               onChange={e => handleNameInput(e.target.value, setEditName)}
             />
             
+            <label className="modal-label">Persona de Contacto</label>
             <input
               className="modal-input"
-              placeholder="Contacto"
+              placeholder="Ej: JUAN PÉREZ"
               value={editContacto}
               onChange={e => handleNameInput(e.target.value, setEditContacto)}
             />
             
-            <input
-              className="modal-input"
-              placeholder="Teléfono"
-              value={editTelefono}
-              onChange={e => handlePhoneInput(e.target.value, setEditTelefono)}
-            />
+            <label className="modal-label">Teléfono de Atención</label>
+            <div className="phone-input-container" style={{ marginBottom: '15px' }}>
+              <PhoneInput
+                country={'ve'}
+                value={editTelefono}
+                onChange={value => setEditTelefono(value)}
+                inputStyle={{
+                  width: '100%',
+                  height: '45px',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0'
+                }}
+                buttonStyle={{
+                  borderRadius: '8px 0 0 8px',
+                  border: '1px solid #e2e8f0'
+                }}
+              />
+            </div>
             
             <div className="modal-footer">
               <button
@@ -253,7 +266,7 @@ const ListInsurances = () => {
               <div className="detail-card"><strong>ID:</strong> <span>#{selectedSeguro.id}</span></div>
               <div className="detail-card"><strong>Nombre:</strong> <span>{selectedSeguro.nombre}</span></div>
               <div className="detail-card"><strong>Contacto:</strong> <span>{selectedSeguro.contacto || "-"}</span></div>
-              <div className="detail-card"><strong>Teléfono:</strong> <span>{selectedSeguro.telefono || "-"}</span></div>
+              <div className="detail-card"><strong>Teléfono:</strong> <span>{selectedSeguro.telefono ? `+${selectedSeguro.telefono}` : "-"}</span></div>
             </div>
             <div className="modal-footer" style={{ flexDirection: "column", gap: "0.75rem" }}>
               <button className="btn-primary" onClick={() => { setIsDetailsModalOpen(false); openEditModal(selectedSeguro); }}>

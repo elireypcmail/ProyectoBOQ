@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import Select from "react-select"; // Importamos react-select
+import Select from "react-select";
 import { useProducts } from "../../context/ProductsContext";
 import {
   Search,
@@ -9,12 +9,11 @@ import {
   Plus,
   Warehouse,
   Calendar,
-  Tag,
-  X
+  Tag
 } from "lucide-react";
 import "../../styles/components/ListLots.css";
 
-const ListLots = ({ id_producto }) => {
+const ListLots = ({ id_producto, onRefreshProducts }) => {
   const {
     lotes,
     deposits,
@@ -36,6 +35,7 @@ const ListLots = ({ id_producto }) => {
   const [formData, setFormData] = useState({
     nro_lote: "",
     id_deposito: "",
+    cantidad: "",
     fecha_vencimiento: "",
     estatus: true,
   });
@@ -47,7 +47,6 @@ const ListLots = ({ id_producto }) => {
     getAllDeposits();
   }, [id_producto]);
 
-  // Mapear opciones para react-select
   const depositOptions = useMemo(() => {
     return (deposits || []).map(d => ({
       value: d.id,
@@ -58,15 +57,15 @@ const ListLots = ({ id_producto }) => {
   const filteredLotes = useMemo(() => {
     const base = Array.isArray(lotes) ? lotes : [];
     return base
-      .filter((l) => l.id_producto === id_producto)
-      .filter((l) =>
-        l.nro_lote?.toLowerCase().includes(searchTerm.toLowerCase()),
+      .filter(l => l.id_producto === id_producto)
+      .filter(l =>
+        l.nro_lote?.toLowerCase().includes(searchTerm.toLowerCase())
       );
   }, [lotes, searchTerm, id_producto]);
 
   const currentLotes = filteredLotes.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   const handleOpenForm = (lote = null) => {
@@ -74,7 +73,8 @@ const ListLots = ({ id_producto }) => {
       setSelectedLote(lote);
       setFormData({
         nro_lote: lote.nro_lote,
-        id_deposito: lote.id_deposito, // Guardamos el ID
+        id_deposito: lote.id_deposito,
+        cantidad: lote.cantidad ?? "",
         fecha_vencimiento: lote.fecha_vencimiento?.split("T")[0] || "",
         estatus: true,
       });
@@ -83,6 +83,7 @@ const ListLots = ({ id_producto }) => {
       setFormData({
         nro_lote: "",
         id_deposito: "",
+        cantidad: "",
         fecha_vencimiento: "",
         estatus: true,
       });
@@ -91,10 +92,17 @@ const ListLots = ({ id_producto }) => {
   };
 
   const handleSubmit = async () => {
-    const { nro_lote, id_deposito, fecha_vencimiento } = formData;
+    const { nro_lote, id_deposito, cantidad, fecha_vencimiento } = formData;
 
-    if (!nro_lote || !id_deposito || !fecha_vencimiento) {
+    // 1. Validaciones básicas de campos vacíos
+    if (!nro_lote || !id_deposito || !fecha_vencimiento || cantidad === "") {
       alert("Por favor, complete todos los campos obligatorios.");
+      return;
+    }
+
+    // 2. Validación de coherencia de datos
+    if (Number(cantidad) < 0) {
+      alert("La cantidad no puede ser negativa.");
       return;
     }
 
@@ -103,40 +111,47 @@ const ListLots = ({ id_producto }) => {
       return;
     }
 
-    const isDepositoOcupado = lotes.some(lote => 
-      lote.id_deposito === parseInt(id_deposito) && 
-      lote.id !== selectedLote?.id
-    );
+    // --- NOTA: Se ha eliminado la restricción de "isDepositoOcupado" 
+    // para permitir múltiples lotes en el mismo depósito. ---
 
-    if (isDepositoOcupado) {
-      const depoName = deposits.find(d => d.id === parseInt(id_deposito))?.nombre;
-      alert(`El depósito "${depoName}" ya está asignado a otro lote de este producto.`);
-      return;
+    const payload = { 
+      ...formData, 
+      id_producto,
+      id_deposito: Number(id_deposito) // Aseguramos que sea numérico
+    };
+
+    if (selectedLote) {
+      await editLote(selectedLote.id, payload);
+    } else {
+      await createNewLote(payload);
     }
 
-    const payload = { ...formData, id_producto };
-    if (selectedLote) await editLote(selectedLote.id, payload);
-    else await createNewLote(payload);
-    
     setIsFormModalOpen(false);
-    getAllLotesByProd(id_producto);
+    await getAllLotesByProd(id_producto);
+    if (onRefreshProducts) await onRefreshProducts();
   };
 
-  // Estilos básicos para react-select (puedes ajustarlos a tu CSS)
+  const handleDeleteLote = async () => {
+    await deleteLoteById(selectedLote.id);
+    setIsDeleteModalOpen(false);
+    await getAllLotesByProd(id_producto);
+    if (onRefreshProducts) await onRefreshProducts();
+    setSelectedLote(null);
+  };
+
   const selectStyles = {
-    control: (base) => ({
+    control: base => ({
       ...base,
-      borderRadius: '8px',
-      borderColor: '#e2e8f0',
-      minHeight: '42px',
-      boxShadow: 'none',
-      '&:hover': { borderColor: '#cbd5e1' }
+      borderRadius: "8px",
+      borderColor: "#e2e8f0",
+      minHeight: "42px",
+      boxShadow: "none",
+      "&:hover": { borderColor: "#cbd5e1" }
     })
   };
 
   return (
     <div className="lots-container">
-      {/* ... (Header y tabla se mantienen igual) ... */}
       <div className="lots-header-section">
         <div className="title-group">
           <div className="icon-badge"><Tag size={20} /></div>
@@ -157,7 +172,7 @@ const ListLots = ({ id_producto }) => {
             type="text"
             placeholder="Buscar por número de lote..."
             value={searchTerm}
-            onChange={(e) => {
+            onChange={e => {
               setSearchTerm(e.target.value);
               setCurrentPage(1);
             }}
@@ -169,67 +184,94 @@ const ListLots = ({ id_producto }) => {
         <table className="lots-custom-table">
           <thead>
             <tr>
-              <th>Número de Lote</th>
-              <th><Warehouse size={14} /> Deposito</th>
+              <th>Lote</th>
+              <th><Warehouse size={14} /> Depósito</th>
+              <th>Cantidad</th>
               <th><Calendar size={14} /> Vencimiento</th>
               <th>Estado</th>
               <th className="text-center">Acciones</th>
             </tr>
           </thead>
           <tbody>
-            {currentLotes.map((lote) => (
+            {currentLotes.map(lote => (
               <tr key={lote.id}>
-                <td className="col-lote">#{lote.nro_lote}</td>
-                <td className="col-depo">{lote.deposito_nombre}</td>
+                <td>#{lote.nro_lote}</td>
+                <td>{lote.deposito_nombre}</td>
+                <td>{lote.cantidad}</td>
                 <td>
-                    <div className={`date-badge ${new Date(lote.fecha_vencimiento) < new Date() ? "is-expired" : ""}`}>
-                      {lote.fecha_vencimiento ? new Date(lote.fecha_vencimiento).toLocaleDateString() : "Indefinido"}
-                    </div>
+                  <div className={`date-badge ${new Date(lote.fecha_vencimiento) < new Date() ? "is-expired" : ""}`}>
+                    {new Date(lote.fecha_vencimiento).toLocaleDateString()}
+                  </div>
                 </td>
                 <td><span className="status-tag st-active">Disponible</span></td>
                 <td>
                   <div className="actions-group">
-                    <button className="act-btn edit" onClick={() => handleOpenForm(lote)} title="Editar"><Pencil size={15} /></button>
-                    <button className="act-btn delete" onClick={() => { setSelectedLote(lote); setIsDeleteModalOpen(true); }} title="Eliminar"><Trash2 size={15} /></button>
+                    <button className="act-btn edit" onClick={() => handleOpenForm(lote)}>
+                      <Pencil size={15} />
+                    </button>
+                    <button className="act-btn delete" onClick={() => {
+                      setSelectedLote(lote);
+                      setIsDeleteModalOpen(true);
+                    }}>
+                      <Trash2 size={15} />
+                    </button>
                   </div>
                 </td>
               </tr>
             ))}
+            {currentLotes.length === 0 && (
+              <tr>
+                <td colSpan="6" className="text-center">No hay lotes registrados para este producto.</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
 
+      {/* Modal de Formulario */}
       {isFormModalOpen && (
         <div className="modal-overlay-blur">
           <div className="modal-card">
             <div className="modal-header">
-              <h4>{selectedLote ? "Editar Información del Lote" : "Registrar Nuevo Lote"}</h4>
-              <p>Completa los datos técnicos del lote.</p>
+              <h4>{selectedLote ? "Editar Lote" : "Nuevo Lote"}</h4>
             </div>
+
             <div className="modal-body">
               <div className="input-group">
                 <label>Nro. de Lote</label>
                 <input
                   type="text"
                   value={formData.nro_lote}
-                  onChange={(e) => setFormData({ ...formData, nro_lote: e.target.value.toUpperCase() })}
-                  placeholder="Ej: LOTE-1020"
+                  onChange={e =>
+                    setFormData({ ...formData, nro_lote: e.target.value.toUpperCase() })
+                  }
                 />
               </div>
 
               <div className="input-group">
-                <label>Depósito Destino</label>
+                <label>Depósito</label>
                 <Select
                   options={depositOptions}
-                  placeholder="Seleccionar ubicación..."
                   styles={selectStyles}
-                  // Aquí está el truco: buscamos el objeto entero basado en el ID del estado
-                  value={depositOptions.find(opt => opt.value === Number(formData.id_deposito)) || null}
-                  onChange={(selected) => setFormData({ 
-                    ...formData, 
-                    id_deposito: selected ? selected.value : "" 
-                  })}
-                  noOptionsMessage={() => "No hay depósitos registrados"}
+                  value={depositOptions.find(o => o.value === Number(formData.id_deposito)) || null}
+                  onChange={opt =>
+                    setFormData({ ...formData, id_deposito: opt ? opt.value : "" })
+                  }
+                  placeholder="Seleccione un depósito..."
+                />
+              </div>
+
+              <div className="input-group">
+                <label>Cantidad</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={formData.cantidad}
+                  onChange={(e) => {
+                    let value = e.target.value.replace(/\D/g, "").replace(/^0+(?!$)/, "");
+                    setFormData({ ...formData, cantidad: value });
+                  }}
+                  placeholder="Ej: 150"
                 />
               </div>
 
@@ -239,33 +281,38 @@ const ListLots = ({ id_producto }) => {
                   type="date"
                   min={today}
                   value={formData.fecha_vencimiento}
-                  onChange={(e) => setFormData({ ...formData, fecha_vencimiento: e.target.value })}
+                  onChange={e =>
+                    setFormData({ ...formData, fecha_vencimiento: e.target.value })
+                  }
                 />
-                <small className="input-help">Debe ser una fecha futura.</small>
               </div>
             </div>
+
             <div className="modal-actions">
-              <button className="btn-secondary-link" onClick={() => setIsFormModalOpen(false)}>Descartar</button>
-              <button className="btn-primary-solid" onClick={handleSubmit}>Confirmar</button>
+              <button className="btn-secondary-link" onClick={() => setIsFormModalOpen(false)}>
+                Cancelar
+              </button>
+              <button className="btn-primary-solid" onClick={handleSubmit}>
+                Guardar
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ... (Delete Modal se mantiene igual) ... */}
+      {/* Modal de Eliminación */}
       {isDeleteModalOpen && (
         <div className="modal-overlay-blur">
           <div className="modal-card modal-danger">
             <div className="danger-icon"><AlertTriangle size={32} /></div>
             <h4>¿Eliminar este lote?</h4>
             <div className="modal-actions">
-              <button className="btn-secondary-link" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
-              <button className="btn-danger-solid" onClick={async () => {
-                  await deleteLoteById(selectedLote.id);
-                  setIsDeleteModalOpen(false);
-                  getAllLotesByProd(id_producto);
-                }}
-              >Eliminar permanentemente</button>
+              <button className="btn-secondary-link" onClick={() => setIsDeleteModalOpen(false)}>
+                Cancelar
+              </button>
+              <button className="btn-danger-solid" onClick={handleDeleteLote}>
+                Eliminar
+              </button>
             </div>
           </div>
         </div>

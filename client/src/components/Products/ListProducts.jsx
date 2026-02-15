@@ -2,20 +2,17 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useProducts } from "../../context/ProductsContext";
 import {
   Search,
-  ChevronLeft,
-  ChevronRight,
   Trash2,
   AlertTriangle,
   Plus,
-  History,
-  Boxes, // Nuevo icono para Lotes
-  X
+  X,
+  Loader2 // Importado para feedback de carga
 } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
 import ProductFormModal from "../Ui/ProductFormModal";
 import ModalDetailed from "../Ui/ModalDetailed";
 import ListPrices from "./ListPrices";
-import ListLots from "./ListLots"; // Importamos el componente de lotes
+import ListLots from "./ListLots";
 import "../../styles/components/ListZone.css";
 
 const ListProducts = () => {
@@ -26,6 +23,7 @@ const ListProducts = () => {
     getAllProducts,
     getAllCategories,
     getAllBrands,
+    getProductsById, // Inyectamos la función del contexto
     createNewProduct,
     editProduct,
     deleteProductById,
@@ -33,20 +31,15 @@ const ListProducts = () => {
     createNewBrand
   } = useProducts();
 
-  console.log(products)
-
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
-
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isLoadingProduct, setIsLoadingProduct] = useState(false);
   
-  // ESTADOS PARA MODALES DE SUB-GESTIÓN
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [isLotsOpen, setIsLotsOpen] = useState(false); // Estado para Lotes
+  const [isLotsOpen, setIsLotsOpen] = useState(false);
 
   useEffect(() => {
     getAllProducts();
@@ -60,7 +53,20 @@ const ListProducts = () => {
     );
   }, [products, searchTerm]);
 
-  /* Handlers */
+  // Handler para obtener info fresca del producto antes de abrir el detalle
+  const handleOpenDetail = async (id) => {
+    setIsLoadingProduct(true);
+    try {
+      const freshProduct = await getProductsById(id);
+      if (freshProduct) {
+        setSelectedProduct(freshProduct);
+        setIsDetailOpen(true);
+      }
+    } finally {
+      setIsLoadingProduct(false);
+    }
+  };
+
   const handleOnCreateCategory = async (nombre) => {
     const res = await createNewCategory({ nombre });
     await getAllCategories();
@@ -91,7 +97,7 @@ const ListProducts = () => {
           <input
             placeholder="Buscar producto..."
             value={searchTerm}
-            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
       </div>
@@ -119,13 +125,17 @@ const ListProducts = () => {
                   </span>
                 </td>
                 <td className="center">
-                  <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
-
-
-                    <button className="icon-btn" onClick={() => { setSelectedProduct(p); setIsDetailOpen(true); }}>
+                  <button 
+                    className="icon-btn" 
+                    onClick={() => handleOpenDetail(p.id)}
+                    disabled={isLoadingProduct}
+                  >
+                    {isLoadingProduct && selectedProduct?.id === p.id ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
                       <SlOptionsVertical size={16} />
-                    </button>
-                  </div>
+                    )}
+                  </button>
                 </td>
               </tr>
             ))}
@@ -133,50 +143,7 @@ const ListProducts = () => {
         </table>
       </div>
 
-      {/* --- MODAL DE LOTES (CONEXIÓN) --- */}
-      {isLotsOpen && selectedProduct && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ width: '95%', maxWidth: '900px', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3>Lotes: {selectedProduct.descripcion}</h3>
-              <button className="icon-btn" onClick={() => { setIsLotsOpen(false); setSelectedProduct(null); }}>
-                <X size={20} />
-              </button>
-            </div>
-            
-            {/* Inyección de ListLots con la Prop requerida */}
-            <ListLots id_producto={selectedProduct.id} />
-            
-            <div className="modal-footer" style={{ marginTop: '1rem' }}>
-              <button className="btn-secondary" onClick={() => { setIsLotsOpen(false); setSelectedProduct(null); }}>
-                Cerrar Lotes
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* --- MODAL HISTORIAL DE PRECIOS --- */}
-      {isHistoryOpen && selectedProduct && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ width: '95%', maxWidth: '1000px' }}>
-            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3>Historial de Precios: {selectedProduct.descripcion}</h3>
-              <button className="icon-btn" onClick={() => { setIsHistoryOpen(false); setSelectedProduct(null); }}>
-                <X size={20} />
-              </button>
-            </div>
-            <ListPrices productId={selectedProduct.id} />
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => { setIsHistoryOpen(false); setSelectedProduct(null); }}>
-                Cerrar Historial
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODALES UI EXISTENTES */}
+      {/* MODALES UI */}
       <ProductFormModal
         isOpen={isFormOpen}
         onClose={() => { setIsFormOpen(false); setSelectedProduct(null); }}

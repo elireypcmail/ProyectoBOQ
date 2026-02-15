@@ -16,6 +16,10 @@ router.delete("/:id", controller.deleteProduct)
 // Auditoria Precios
 router.get("/auditoria/precio/:id", controller.getProductAud)
 
+// Kardex General
+router.get("/kardex/:id", controller.getProductKardex)
+router.get("/kardex/deposito/:id/:id_deposito", controller.getProductKardexDep)
+
 // Depositos - EDepositos
 router.get("/deposito/existencias/:id", controller.getProductEdeposit)
 router.post("/deposito/existencias/:id", controller.createProductEdeposit)

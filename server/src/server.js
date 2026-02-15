@@ -13,12 +13,12 @@ import doctorsRouter from "./routes/doctors.routes.js"
 import typesDocRouter from "./routes/typesDoc.routes.js"
 import insurancesRouter from "./routes/insurances.routes.js"
 import storiesRouter from "./routes/stories.routes.js"
-
 import productsRouter from "./routes/products.routes.js"
 import categoriesRouter from "./routes/categories.routes.js"
 import brandsRouter from "./routes/brands.routes.js"
 import lotsRouter from "./routes/lots.routes.js"
-
+import SupsRouter from "./routes/suppliers.routes.js"
+import ShopRouter from "./routes/shopping.routes.js"
 
 const app = express()
 const server = http.createServer(app)
@@ -50,3 +50,5 @@ app.use("/categorias",categoriesRouter)
 app.use("/productos",productsRouter)
 app.use("/marcas",brandsRouter)
 app.use("/lotes",lotsRouter)
+app.use("/proveedores", SupsRouter)
+app.use("/compras", ShopRouter)

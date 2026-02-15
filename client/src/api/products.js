@@ -54,11 +54,7 @@ export const updateDeposit = (id, data) => instanceApp.put(`/auth/depositos/${id
 export const deleteDeposit = (id) => instanceApp.delete(`/auth/depositos/${id}`);
 
 // -------------------- KARDEX GENERAL --------------------
-export const getAllKardexG = () => instanceApp.get("/kardex/general");
-export const getKardexGById = (id) => instanceApp.get(`/kardex/general/${id}`);
-export const createKardexG = (data) => instanceApp.post("/kardex/general", data);
-
+export const getAllKardexG = (id) => instanceApp.get(`/productos/kardex/${id}`);
 // -------------------- KARDEX DEPOSITO --------------------
-export const getAllKardexDep = () => instanceApp.get("/kardex/deposit");
-export const getKardexDepById = (id) => instanceApp.get(`/kardex/deposit/${id}`);
-export const createKardexDep = (data) => instanceApp.post("/kardex/deposit", data);
+export const getAllKardexDep = (id, id_deposito) => instanceApp.get(`/productos/kardex/deposito/${id}/${id_deposito}`);
+

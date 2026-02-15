@@ -13,4 +13,5 @@ router.get("/:id", controller.getLoteById)
 router.get("/producto/:id", controller.getLoteProductoById)
 router.put("/:id", controller.updateLote)
 router.delete("/:id", controller.deleteLote)
+
 export default router

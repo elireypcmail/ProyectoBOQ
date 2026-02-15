@@ -1,0 +1,156 @@
+/* --- Contenedor Principal del Paso 4 --- */
+.pconf-step-container {
+    animation: pconf-fadeIn 0.5s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    width: 100%;
+    max-width: 100%; /* Evita que el contenedor crezca más que el padre */
+    box-sizing: border-box;
+}
+
+/* --- Encabezados de Sección --- */
+.pconf-section-header {
+    margin-bottom: 5px;
+}
+
+.pconf-section-header h3 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin: 0;
+}
+
+.pconf-section-header p {
+    color: #64748b;
+    font-size: 0.95rem;
+    margin-top: 5px;
+}
+
+/* --- Grid de Información General --- */
+.pconf-summary-grid {
+    display: grid;
+    /* Cambiado para mejor manejo de espacio */
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1px;
+    background: #e2e8f0;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.pconf-summary-card {
+    background: #ffffff;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0; /* Permite que el contenido se ajuste sin romper el grid */
+}
+
+.pconf-summary-card span {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #334155;
+    /* Evita desborde de textos largos (ej. emails o nombres de proveedores) */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* --- Tabla de Mercancía (Solución al desborde) --- */
+.pconf-table-wrapper {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    overflow-x: auto; /* Scroll horizontal si la tabla es muy ancha */
+    -webkit-overflow-scrolling: touch;
+}
+
+.pconf-items-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    min-width: 600px; /* Asegura legibilidad mínima en móviles */
+}
+
+.pconf-items-table th {
+    padding: 12px 15px;
+    background: #f8fafc;
+    text-align: left;
+    font-weight: 700;
+    color: #64748b;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.pconf-items-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #475569;
+    word-break: break-word; /* Rompe palabras largas si es necesario */
+}
+
+.pconf-desc { 
+    max-width: 250px; /* Limita ancho de descripción para dar espacio a números */
+    font-weight: 500; 
+    color: #1e293b; 
+}
+
+/* --- Pane de Totales Finales --- */
+.pconf-totals-pane {
+    width: 100%;
+    max-width: 550px;
+    margin-left: auto;
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-sizing: border-box;
+}
+
+.pconf-final-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.pconf-grand-total {
+    margin-top: 10px;
+    padding-top: 15px;
+    border-top: 2px solid #e2e8f0;
+}
+
+.pconf-total-amount {
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: #2563eb;
+    letter-spacing: -0.02em;
+}
+
+/* --- Animaciones --- */
+@keyframes pconf-fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Responsive Ajustado --- */
+@media (max-width: 768px) {
+    .pconf-summary-grid {
+        grid-template-columns: 1fr; /* Una columna en móvil para evitar apretar textos */
+    }
+    
+    .pconf-totals-pane {
+        max-width: 100%;
+    }
+
+    .pconf-total-amount {
+        font-size: 1.4rem;
+    }
+}

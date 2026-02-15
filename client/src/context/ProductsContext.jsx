@@ -25,6 +25,7 @@ export const ProductsProvider = ({ children }) => {
   const [kardexDep, setKardexDep] = useState([]);
   const [errors, setErrors] = useState([]);
   const [productDeposits, setProductDeposits] = useState([]);
+  const [productKardexG, setProductKardexG] = useState([]);
 
   // -------------------- PRODUCTOS --------------------
   const getAllProducts = async () => {
@@ -39,6 +40,38 @@ export const ProductsProvider = ({ children }) => {
       ]);
     }
   };
+
+  const getProductsById = async (id) => {
+    try {
+      const res = await ProductsAPI.getProductById(id);
+      const product = res.data?.data;
+
+      if (!product) return null;
+
+      setProducts((prevProducts) => {
+        const exists = prevProducts.find(p => p.id === id);
+
+        if (exists) {
+          // Actualiza el existente
+          return prevProducts.map(p =>
+            p.id === id ? product : p
+          );
+        } else {
+          // Lo agrega si no existe
+          return [...prevProducts, product];
+        }
+      });
+
+      return product;
+    } catch (error) {
+      setErrors((prev) => [
+        ...prev,
+        error.response?.data || ["Error fetching product by id"],
+      ]);
+      return null;
+    }
+  };
+
   
   const createNewProduct = async (newProduct) => {
     try {
@@ -463,10 +496,10 @@ export const ProductsProvider = ({ children }) => {
   };
 
   // -------------------- KARDEX GENERAL --------------------
-  const getAllKardexG = async () => {
+  const getKardexGByProd = async (id_producto) => {
     try {
-      const res = await ProductsAPI.getAllKardexG();
-      setKardexG(res.data?.data || []);
+      const res = await ProductsAPI.getAllKardexG(id_producto);
+      setProductKardexG(res.data?.data || []);
     } catch (error) {
       setErrors((prev) => [
         ...prev,
@@ -475,44 +508,16 @@ export const ProductsProvider = ({ children }) => {
     }
   };
 
-  const createNewKardexG = async (newKardex) => {
-    try {
-      const res = await ProductsAPI.createKardexG(newKardex);
-      setKardexG((prev) => [...prev, res.data]);
-      return { status: true, data: res.data };
-    } catch (error) {
-      setErrors((prev) => [
-        ...prev,
-        error.response?.data || ["Error creating kardex general"],
-      ]);
-      return { status: false, error: error.response?.data || error.message };
-    }
-  };
-
   // -------------------- KARDEX DEPOSITO --------------------
-  const getAllKardexDep = async () => {
+  const getAllKardexDep = async (id_producto, id_deposito) => {
     try {
-      const res = await ProductsAPI.getAllKardexDep();
+      const res = await ProductsAPI.getAllKardexDep(id_producto, id_deposito);
       setKardexDep(res.data?.data || []);
     } catch (error) {
       setErrors((prev) => [
         ...prev,
         error.response?.data || ["Error fetching kardex deposito"],
       ]);
-    }
-  };
-
-  const createNewKardexDep = async (newKardex) => {
-    try {
-      const res = await ProductsAPI.createKardexDep(newKardex);
-      setKardexDep((prev) => [...prev, res.data]);
-      return { status: true, data: res.data };
-    } catch (error) {
-      setErrors((prev) => [
-        ...prev,
-        error.response?.data || ["Error creating kardex deposito"],
-      ]);
-      return { status: false, error: error.response?.data || error.message };
     }
   };
 
@@ -527,11 +532,12 @@ export const ProductsProvider = ({ children }) => {
         inventory,
         deposits,
         productDeposits,
-        kardexG,
+        productKardexG,
         kardexDep,
         errors,
 
         getAllProducts,
+        getProductsById,
         createNewProduct,
         editProduct,
         deleteProductById,
@@ -569,11 +575,8 @@ export const ProductsProvider = ({ children }) => {
         editDeposit,
         deleteDepositById,
 
-        getAllKardexG,
-        createNewKardexG,
-
-        getAllKardexDep,
-        createNewKardexDep,
+        getKardexGByProd,
+        getAllKardexDep
       }}
     >
       {children}

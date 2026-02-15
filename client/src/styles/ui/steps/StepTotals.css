@@ -1,0 +1,209 @@
+/* --- Contenedor Principal --- */
+.ptotals-container {
+    padding: 20px;
+    max-width: 1500px;
+    margin: 0 auto;
+    background-color: #f1f5f9;
+    border-radius: 16px;
+    animation: ptotals-fadeIn 0.4s ease-out;
+}
+
+/* --- Cabecera --- */
+.ptotals-header {
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.ptotals-header h3 {
+    margin: 0;
+    color: #1e293b;
+    font-size: 1.6rem;
+    font-weight: 800;
+}
+
+.ptotals-header p {
+    margin: 5px 0 0;
+    color: #64748b;
+    font-size: 1rem;
+}
+
+/* --- Grid Principal --- */
+.ptotals-main-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 25px;
+}
+
+.ptotals-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* --- Tarjetas (Cards) --- */
+.ptotals-card {
+    background-color: #fff;
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+    transition: transform 0.2s ease;
+}
+
+.ptotals-card-discount { border-left: 5px solid #10b981; }
+.ptotals-card-logistics { border-left: 5px solid #3b82f6; }
+.ptotals-card-summary { 
+    height: 100%; 
+    display: flex; 
+    flex-direction: column; 
+    background-color: #ffffff;
+}
+
+.ptotals-card-title {
+    margin: 0 0 15px 0;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #475569;
+    font-weight: 700;
+}
+
+/* --- Grupos de Input --- */
+.ptotals-group {
+    margin-bottom: 20px;
+}
+
+.ptotals-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+}
+
+.ptotals-label-accent { color: #059669; }
+
+.ptotals-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* --- Inputs --- */
+.ptotals-input {
+    width: 100%;
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    font-size: 1.1rem;
+    outline: none;
+    text-align: right;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.ptotals-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.ptotals-input-readonly {
+    background-color: #f8fafc;
+    color: #64748b;
+    border-style: dashed;
+}
+
+.ptotals-input-success {
+    border-color: #10b981;
+    font-weight: 700;
+}
+
+.ptotals-prefix {
+    position: absolute;
+    left: 12px;
+    color: #94a3b8;
+    font-weight: 700;
+}
+
+.ptotals-suffix {
+    position: absolute;
+    right: 12px;
+    color: #94a3b8;
+    font-weight: 700;
+}
+
+/* --- Filas del Resumen (Ajustadas para números largos) --- */
+.ptotals-summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: 1rem;
+}
+
+.ptotals-summary-label { color: #94a3b8; flex-shrink: 0; }
+.ptotals-summary-value { 
+    font-weight: 700; 
+    color: #1e293b; 
+    /* font-family: 'Courier New', Courier, monospace; */
+    /* word-break: break-all; */
+    text-align: right;
+}
+
+.ptotals-value-red { color: #fb7185; }
+.ptotals-value-blue { color: #60a5fa; }
+
+.ptotals-spacer { flex-grow: 1; min-height: 20px; }
+
+/* --- Sección Total Final (ELÁSTICA) --- */
+.ptotals-footer {
+    border-top: 1px solid #e2e8f0;
+    padding-top: 20px;
+    margin-top: 20px;
+}
+
+.ptotals-footer-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+}
+
+.ptotals-total-text { font-size: 1.1rem; font-weight: 600; color: #1e293b; }
+.ptotals-currency { font-size: 0.8rem; color: #94a3b8; font-weight: 700; }
+
+.ptotals-grand-total {
+    font-size: 2.2rem; /* Tamaño base reducido para soportar más dígitos */
+    font-weight: 900;
+    text-align: right;
+    color: #3b82f6;
+    line-height: 1.1;
+    
+    /* Soporte para cuadrillones */
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-all; /* Rompe el número si es físicamente más ancho que la tarjeta */
+}
+
+.ptotals-savings-badge {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    text-align: center;
+    font-weight: 700;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+@keyframes ptotals-fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+    .ptotals-main-grid { grid-template-columns: 1fr; }
+    .ptotals-grand-total { font-size: 1.8rem; }
+}

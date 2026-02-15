@@ -10,8 +10,13 @@ import {
   AlertTriangle,
   Plus
 } from "lucide-react";
-import Select from "react-select"; // <- react-select import
+import Select from "react-select"; 
 import { SlOptionsVertical } from "react-icons/sl";
+
+// 1. Importar la dependencia de teléfono y sus estilos
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
+
 import "../../styles/components/ListZone.css";
 
 const ListDoctors = () => {
@@ -38,7 +43,7 @@ const ListDoctors = () => {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   const [editName, setEditName] = useState("");
-  const [editPhone, setEditPhone] = useState("");
+  const [editPhone, setEditPhone] = useState(""); // Aquí se guardará el nro internacional
   const [selectedTipoId, setSelectedTipoId] = useState("");
 
   // Crear tipo de médico al vuelo
@@ -53,16 +58,9 @@ const ListDoctors = () => {
   // -------------------- Formateo inputs --------------------
   const handleNameInput = (value, setter) => {
     const formatted = value
-      .replace(/[^a-zA-Z0-9ÁÉÍÓÚÜÑáéíóúüñ\s]/g, "")
+      .replace(/[^a-zA-ZÁÉÍÓÚÜÑáéíóúüñ\s]/g, "")
       .toUpperCase();
     setter(formatted);
-  };
-
-  const handlePhoneInput = (value) => {
-    let digits = value.replace(/\D/g, "");
-    if (digits.length > 11) digits = digits.slice(0, 11);
-    if (digits.length > 4) return digits.slice(0, 4) + "-" + digits.slice(4);
-    return digits;
   };
 
   // -------------------- Filtrado y paginación --------------------
@@ -115,9 +113,7 @@ const ListDoctors = () => {
       };
       await createNewMedico(newMedico);
       setIsCreateModalOpen(false);
-      setEditName("");
-      setEditPhone("");
-      setSelectedTipoId("");
+      resetStates();
       getAllMedicos();
     } catch (error) {
       console.error("Error creando médico:", error);
@@ -136,13 +132,19 @@ const ListDoctors = () => {
       await editedMedico(selectedMedico.id, updatedMedico);
       setIsEditModalOpen(false);
       setSelectedMedico(null);
-      setEditName("");
-      setEditPhone("");
-      setSelectedTipoId("");
+      resetStates();
       getAllMedicos();
     } catch (error) {
       console.error("Error editando médico:", error);
     }
+  };
+
+  const resetStates = () => {
+    setEditName("");
+    setEditPhone("");
+    setSelectedTipoId("");
+    setIsCreatingTipo(false);
+    setNewTipoName("");
   };
 
   const handleDelete = async () => {
@@ -170,7 +172,6 @@ const ListDoctors = () => {
     }
   };
 
-  // -------------------- Render --------------------
   return (
     <div className="orders-container">
       {/* HEADER */}
@@ -180,9 +181,7 @@ const ListDoctors = () => {
           <p>Personal médico registrado: {filteredMedicos.length}</p>
         </div>
         <button className="btn-primary" onClick={() => { 
-          setEditName(""); 
-          setEditPhone(""); 
-          setSelectedTipoId(""); 
+          resetStates();
           setIsCreateModalOpen(true); 
         }}>
           <Plus size={16} /> Nuevo Médico
@@ -219,25 +218,15 @@ const ListDoctors = () => {
               <tr key={medico.id}>
                 <td className="id hide-mobile">#{medico.id}</td>
                 <td>{medico.nombre}</td>
-                <td className="hide-mobile">{medico.telefono || "-"}</td>
+                <td className="hide-mobile">{medico.telefono ? `+${medico.telefono}` : "-"}</td>
                 <td className="hide-mobile">{medico.tipo}</td>
                 <td className="center">
-                  <div className="actions-desktop">
-                    <button className="icon-btn edit" onClick={() => { 
-                      setSelectedMedico(medico); 
-                      setIsDetailsModalOpen(true); 
-                    }}>
-                      <SlOptionsVertical size={16}/>
-                    </button>
-                  </div>
-                  <div className="actions-mobile">
-                    <button className="icon-btn" onClick={() => { 
-                      setSelectedMedico(medico); 
-                      setIsDetailsModalOpen(true); 
-                    }}>
-                      &#8942;
-                    </button>
-                  </div>
+                  <button className="icon-btn" onClick={() => { 
+                    setSelectedMedico(medico); 
+                    setIsDetailsModalOpen(true); 
+                  }}>
+                    <SlOptionsVertical size={16}/>
+                  </button>
                 </td>
               </tr>
             )) : (
@@ -263,24 +252,39 @@ const ListDoctors = () => {
         <div className="modal-overlay">
           <div className="modal-content">
             <h3>{isCreateModalOpen ? "Crear Médico" : "Editar Médico"}</h3>
+            
+            <label className="modal-label">Nombre Completo</label>
             <input
               className="modal-input"
-              placeholder="Nombre"
+              placeholder="Ej: DR. JUAN PÉREZ"
               value={editName}
               onChange={(e) => handleNameInput(e.target.value, setEditName)}
             />
-            <input
-              className="modal-input"
-              placeholder="Teléfono"
-              value={editPhone}
-              onChange={(e) => setEditPhone(handlePhoneInput(e.target.value))}
-            />
 
+            <label className="modal-label">Teléfono</label>
+            <div className="phone-input-container" style={{ marginBottom: '15px' }}>
+              <PhoneInput
+                country={'ve'}
+                value={editPhone}
+                onChange={(value) => setEditPhone(value)}
+                inputStyle={{
+                    width: '100%',
+                    height: '40px',
+                    borderRadius: '8px',
+                    border: '1px solid #ccc'
+                }}
+                buttonStyle={{
+                    borderRadius: '8px 0 0 8px'
+                }}
+              />
+            </div>
+
+            <label className="modal-label">Especialidad / Tipo</label>
             {!isCreatingTipo ? (
               <div className="select-zone-container">
                 <div style={{ flex: 1 }}>
                   <Select
-                    placeholder="Selecciona un tipo de médico"
+                    placeholder="Selecciona especialidad..."
                     options={tipoOptions}
                     value={selectedTipoOption}
                     onChange={(option) => setSelectedTipoId(option ? option.value : "")}
@@ -289,32 +293,35 @@ const ListDoctors = () => {
                   />
                 </div>
                 <button className="btn-add-zone-primary" onClick={() => setIsCreatingTipo(true)}>
-                  <Plus size={16} /> Tipo
+                  <Plus size={16} /> Nuevo
                 </button>
               </div>
             ) : (
               <div className="new-zone-container">
-                <label>Nuevo Tipo de Médico</label>
                 <div className="new-zone-inputs">
                   <input
                     className="modal-input"
                     placeholder="Nombre del nuevo tipo"
                     value={newTipoName}
-                    onChange={(e) => handleNameInput(e.target.value, setNewTipoName)}
+                    onChange={(e) => setNewTipoName(e.target.value.toUpperCase())}
                   />
-                  <button className="btn-primary" onClick={handleCreateTipo}><Save size={16} /> Guardar</button>
-                  <button className="btn-secondary" onClick={() => { setIsCreatingTipo(false); setNewTipoName(""); }}>Cancelar</button>
+                  <div style={{ display: 'flex', gap: '5px' }}>
+                    <button className="btn-primary" onClick={handleCreateTipo}><Save size={16} /></button>
+                    <button className="btn-secondary" onClick={() => { setIsCreatingTipo(false); setNewTipoName(""); }}>X</button>
+                  </div>
                 </div>
               </div>
             )}
 
             <div className="modal-footer">
               <button className="btn-secondary" onClick={() => {
-                setIsCreateModalOpen(false); setIsEditModalOpen(false);
-                setEditName(""); setEditPhone(""); setSelectedTipoId("");
-                setIsCreatingTipo(false); setNewTipoName("");
+                setIsCreateModalOpen(false); 
+                setIsEditModalOpen(false);
+                resetStates();
               }}>Cancelar</button>
-              <button className="btn-primary" onClick={isCreateModalOpen ? handleCreate : handleUpdate}><Save size={16} /> {isCreateModalOpen ? "Crear" : "Guardar"}</button>
+              <button className="btn-primary" onClick={isCreateModalOpen ? handleCreate : handleUpdate}>
+                <Save size={16} /> {isCreateModalOpen ? "Crear" : "Guardar"}
+              </button>
             </div>
           </div>
         </div>
@@ -324,12 +331,12 @@ const ListDoctors = () => {
       {isDetailsModalOpen && selectedMedico && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Detalles de {selectedMedico.nombre}</h3>
+            <h3>Detalles del Médico</h3>
             <div className="modal-info-body">
               <div className="detail-card"><strong>ID:</strong> <span>#{selectedMedico.id}</span></div>
               <div className="detail-card"><strong>Nombre:</strong> <span>{selectedMedico.nombre}</span></div>
               <div className="detail-card"><strong>Tipo:</strong> <span>{selectedMedico.tipo}</span></div>
-              <div className="detail-card"><strong>Teléfono:</strong> <span>{selectedMedico.telefono || "-"}</span></div>
+              <div className="detail-card"><strong>Teléfono:</strong> <span>{selectedMedico.telefono ? `+${selectedMedico.telefono}` : "-"}</span></div>
               <div className="detail-card"><strong>Estatus:</strong> <span>Activo</span></div>
             </div>
             <div className="modal-footer" style={{ flexDirection: "column", gap: "0.75rem" }}>
@@ -355,7 +362,7 @@ const ListDoctors = () => {
               <AlertTriangle size={28} />
               <h3>¿Eliminar médico?</h3>
             </div>
-            <p>Confirma que deseas eliminar <strong>{selectedMedico.nombre}</strong></p>
+            <p>¿Estás seguro de eliminar a <strong>{selectedMedico.nombre}</strong>?</p>
             <div className="modal-footer">
               <button className="btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
               <button className="btn-danger" onClick={handleDelete}><Trash2 size={16} /> Eliminar</button>
@@ -363,7 +370,6 @@ const ListDoctors = () => {
           </div>
         </div>
       )}
-
     </div>
   );
 };

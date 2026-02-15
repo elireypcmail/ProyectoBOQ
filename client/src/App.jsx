@@ -8,6 +8,8 @@ import { AuthProvider }                   from './context/AuthContext'
 import { EntityProvider }                   from './context/EntityContext'
 import { HealthProvider }                   from './context/HealtContext'
 import { ProductsProvider }                   from './context/ProductsContext'
+import { PurchasesProvider }                   from './context/PurchasesContext'
+import { IncExpProvider }                   from './context/IncExpContext'
 function App() {
   return (
     <div>
@@ -15,13 +17,17 @@ function App() {
         <EntityProvider>
           <HealthProvider>
             <ProductsProvider>
-              <BrowserRouter>
-                <Routes>
-                  <Route path='/' element={<LoginPage/>}></Route>
-                  <Route path='/inicio' element={<HomePage/>}></Route>
-                  {/* <Route path='/login' element={<LoginPage/>}></Route> */}
-                </Routes>      
-              </BrowserRouter>
+              <PurchasesProvider>
+                <IncExpProvider>
+                  <BrowserRouter>
+                    <Routes>
+                      <Route path='/' element={<LoginPage/>}></Route>
+                      <Route path='/inicio' element={<HomePage/>}></Route>
+                      {/* <Route path='/login' element={<LoginPage/>}></Route> */}
+                    </Routes>      
+                  </BrowserRouter>
+                </IncExpProvider>
+              </PurchasesProvider>
             </ProductsProvider>
           </HealthProvider>
         </EntityProvider>

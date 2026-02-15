@@ -1,60 +1,93 @@
 import React from 'react';
-import { History, FileText } from 'lucide-react';
-import "../../styles/components/ListLots.css"; // Usamos el mismo CSS
+import { History, FileText, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
+import "../../styles/components/ListLots.css";
 
-const KardexG = ({ id_producto, onClose, isInline = false }) => {
-  // Aquí cargarías los datos de tu API
-  const movimientos = []; 
+const KardexG = ({ id_producto, data, onClose, isInline = false }) => {
+  
+  const movimientos = Array.isArray(data) ? data : (data?.data || []);
 
-  const formatCurrency = (val) => 
-    new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG' }).format(val);
+  // Ajustado a Dólares (USD)
+  const formatCurrency = (val) => {
+    const number = parseFloat(val) || 0;
+    return new Intl.NumberFormat('en-US', { 
+      style: 'currency', 
+      currency: 'USD',
+      minimumFractionDigits: 2 
+    }).format(number);
+  };
 
   const tableContent = (
-    <div className="table-container-inline">
+    <div className="table-container-inline" style={{ overflowX: 'auto' }}>
       <table className="lots-custom-table">
         <thead>
           <tr>
             <th>Fecha</th>
             <th>Documento</th>
             <th>Detalle / Concepto</th>
-            <th className="text-center">Stock Inicial</th>
+            <th className="text-center">Existencia Inicial</th>
             <th className="text-center">Entrada</th>
             <th className="text-center">Salida</th>
-            <th className="text-center">Stock Final</th>
-            <th className="text-center">Costo Prom.</th>
-            <th className="text-center">Precio</th>
-            <th>Tipo</th>
+            <th className="text-center">Existencia Final</th>
+            <th className="text-right">Costo Prom.</th>
+            <th className="text-right">Precio</th>
+            <th className="text-center">Tipo</th>
           </tr>
         </thead>
         <tbody>
           {movimientos.length > 0 ? (
             movimientos.map((m) => (
               <tr key={m.id}>
-                <td className="col-date">{new Date(m.fecha).toLocaleDateString()}</td>
-                <td><code>{m.documento}</code></td>
-                <td>{m.detalle}</td>
-                <td className="text-center">{m.existencia_inicial}</td>
-                <td className="text-center" style={{ color: '#10b981', fontWeight: 'bold' }}>
-                    {m.entrada > 0 ? `+${m.entrada}` : '-'}
+                <td className="col-date">
+                  <div style={{ fontSize: '0.85rem' }}>
+                    {new Date(m.fecha).toLocaleDateString()}
+                  </div>
+                  <small style={{ color: '#94a3b8', fontSize: '0.7rem' }}>
+                    {new Date(m.fecha_creacion).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </small>
                 </td>
-                <td className="text-center" style={{ color: '#ef4444', fontWeight: 'bold' }}>
-                    {m.salida > 0 ? `-${m.salida}` : '-'}
-                </td>
-                <td className="text-center"><strong>{m.existencia_final}</strong></td>
-                <td className="text-center">{formatCurrency(m.costo)}</td>
-                <td className="text-center">{formatCurrency(m.precio)}</td>
                 <td>
-                    <span className={`status-tag ${m.tipo === 'ENTRADA' ? 'st-active' : 'is-expired'}`}>
-                        {m.tipo}
+                  <code style={{ background: '#f1f5f9', padding: '2px 4px', borderRadius: '4px', color: '#475569' }}>
+                    {m.documento}
+                  </code>
+                </td>
+                <td style={{ maxWidth: '200px', fontSize: '0.9rem' }}>{m.detalle}</td>
+                <td className="text-center" style={{ color: '#64748b' }}>{m.existencia_inicial}</td>
+                
+                <td className="text-center" style={{ color: '#10b981', fontWeight: '600' }}>
+                  {m.entrada > 0 ? (
+                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                      <ArrowUpCircle size={14} /> {m.entrada}
                     </span>
+                  ) : '-'}
+                </td>
+
+                <td className="text-center" style={{ color: '#ef4444', fontWeight: '600' }}>
+                  {m.salida > 0 ? (
+                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                      <ArrowDownCircle size={14} /> {m.salida}
+                    </span>
+                  ) : '-'}
+                </td>
+
+                <td className="text-center">
+                  <strong style={{ fontSize: '1rem', color: '#1e293b' }}>{m.existencia_final}</strong>
+                </td>
+                
+                <td className="text-right">{formatCurrency(m.costo)}</td>
+                <td className="text-right">{formatCurrency(m.precio)}</td>
+                
+                <td className="text-center">
+                  <span className={`status-tag ${m.tipo === 'ENTRADA' ? 'st-active' : 'is-expired'}`}>
+                    {m.tipo}
+                  </span>
                 </td>
               </tr>
             ))
           ) : (
             <tr>
-              <td colSpan="10" style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
-                <FileText size={40} style={{ marginBottom: '10px', opacity: 0.5 }} />
-                <p>No hay movimientos consolidados para este producto.</p>
+              <td colSpan="10" style={{ textAlign: 'center', padding: '4rem', color: '#94a3b8' }}>
+                <FileText size={48} style={{ marginBottom: '12px', opacity: 0.3, display: 'block', margin: '0 auto' }} />
+                <p style={{ fontWeight: '500' }}>No hay movimientos registrados.</p>
               </td>
             </tr>
           )}
@@ -67,14 +100,21 @@ const KardexG = ({ id_producto, onClose, isInline = false }) => {
 
   return (
     <div className="modal-overlay-blur">
-      <div className="modal-card" style={{ maxWidth: '90%', width: '1200px' }}>
+      <div className="modal-card" style={{ maxWidth: '95%', width: '1300px' }}>
         <div className="modal-header">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-            <div>
-                <h4>Kardex General</h4>
-                <p>Producto ID: {id_producto}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div className="icon-badge" style={{ background: '#eef2ff' }}>
+                  <History size={20} color="#6366f1" />
+                </div>
+                <div>
+                  <h4 style={{ margin: 0 }}>Kardex General Consolidado</h4>
+                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>
+                    Valores expresados en USD
+                  </p>
+                </div>
             </div>
-            <button className="act-btn delete" onClick={onClose}>&times;</button>
+            <button className="act-btn delete" onClick={onClose} style={{ fontSize: '24px' }}>&times;</button>
           </div>
         </div>
         <div className="modal-body">
