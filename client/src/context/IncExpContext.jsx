@@ -44,19 +44,25 @@ export const IncExpProvider = ({ children }) => {
    */
   const createNewShopping = async (shoppingData) => {
     try {
-      // shoppingData contiene: cabecera, totales_cargos, items y detalle_lotes
       const res = await ShoppingAPI.createShopping(shoppingData);
-      
-      const newEntry = res.data.data;
-      setShoppings((prev) => [newEntry, ...prev]);
-      
-      return { status: true, data: res.data };
+
+      // Solo validar éxito
+      if (res.data?.status) {
+        await getAllShoppings(); // refrescar lista desde el servidor
+      }
+
+      return { status: true };
     } catch (error) {
-      const errorDetail = error.response?.data?.msg || "Error en el servidor al procesar la compra";
+      const errorDetail =
+        error.response?.data?.msg ||
+        "Error en el servidor al procesar la compra";
+
       setErrors((prev) => [...prev, errorDetail]);
+
       return { status: false, error: errorDetail };
     }
   };
+
 
   const deleteShoppingById = async (id) => {
     try {

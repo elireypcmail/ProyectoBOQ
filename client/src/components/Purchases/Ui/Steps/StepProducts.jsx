@@ -10,57 +10,108 @@ const StepProducts = ({
   onOpenBatch,
   onEditProduct,
 }) => {
+  
   /* =========================================
-      HELPERS PARA NÚMEROS Y REDONDEO
+      CONSTANTES Y HELPERS
   ========================================= */
+  
+  const MAX_VALUE = 999999999; 
 
   const round2 = (num) => {
     return Math.round((num + Number.EPSILON) * 100) / 100;
   };
 
+  /**
+   * Ajuste clave: Si el valor viene de la DB como 123.00 (puntos),
+   * lo visualizamos con coma para que sea editable por nuestra lógica.
+   */
+  const formatInitialValue = (value) => {
+    if (value === null || value === undefined || value === "") return "";
+    
+    // Si detectamos que es un número puro o un string con punto decimal (tipo 123.50)
+    if (typeof value === "number" || (typeof value === "string" && value.includes(".") && !value.includes(","))) {
+      return value.toString().replace(".", ",");
+    }
+    return value.toString();
+  };
+
   const parseToFloat = (value) => {
     if (!value) return 0;
-    const standardNumber = value.toString().replace(/\./g, "").replace(",", ".");
+    if (typeof value === "number") return value;
+
+    const standardNumber = value
+      .toString()
+      .replace(/\./g, "") 
+      .replace(",", "."); 
+    
     return parseFloat(standardNumber) || 0;
   };
 
-  const calculateWidth = (value, minWidth) => {
-    const length = value ? value.toString().length : 0;
-    return `${Math.max(minWidth, length + 1)}ch`;
+  const calculateWidth = (value) => {
+    const text = value ? value.toString() : "";
+    const length = text.length; 
+    return `${Math.max(6, length + 2)}ch`;
   };
 
   /* =========================================
       MANEJO DE INPUTS
   ========================================= */
-  
-const handleInputChange = (id, field, value) => {
-  const currentItem = items.find(item => item.id === id);
-  if (!currentItem) return;
 
-  // 1. BLOQUEO Y ALERTA: Máximo 9 caracteres totales (incluyendo la coma)
-  if (value.length > 12) {
-    alert("Límite excedido: Solo se permiten 9 caracteres en total.");
-    return; 
-  }
-
-  // 2. VALIDACIÓN DE FORMATO: Solo números y máximo 2 decimales tras la coma
-  const regex = /^\d*(,\d{0,2})?$/;
-
-  if (value === "" || regex.test(value)) {
-    let finalValue = value;
-
-    // Limpieza de ceros iniciales (opcional, mantiene el 0 si es "0,")
-    if (value.length > 1 && value.startsWith("0") && value[1] !== ",") {
-      finalValue = value.substring(1);
+  const handleInputChange = (id, field, value) => {
+    if (value === "") {
+      updateItemState(id, field, "");
+      return;
     }
 
+    // Normalización: Si el usuario pega o el sistema trae un valor con punto decimal
+    // lo convertimos a coma para que pase la validación de la Regex
+    let valToProcess = value;
+    if (value.includes(".") && !value.includes(",")) {
+       const parts = value.split(".");
+       if (parts.length === 2) {
+          valToProcess = value.replace(".", ",");
+       }
+    }
+
+    // Regex: Permite dígitos, puntos y una sola coma (máximo 2 decimales)
+    const regex = /^[0-9.]*(,[0-9]{0,2})?$/;
+
+    if (regex.test(valToProcess)) {
+      const numericValue = parseToFloat(valToProcess);
+
+      if (numericValue > MAX_VALUE) {
+        alert("El valor no puede superar 999.999.999,00");
+        return; 
+      }
+
+      let finalValue = valToProcess;
+      if (valToProcess.length > 1 && valToProcess.startsWith("0") && valToProcess[1] !== ",") {
+        finalValue = valToProcess.substring(1);
+      }
+
+      updateItemState(id, field, finalValue);
+    }
+  };
+
+  const updateItemState = (id, field, value) => {
     const updatedItems = items.map((item) => {
-      if (item.id === id) return { ...item, [field]: finalValue };
+      if (item.id === id) return { ...item, [field]: value };
       return item;
     });
     setItems(updatedItems);
-  }
-};
+  };
+
+  const handleBlurFormat = (id, field, value) => {
+    if (!value) return;
+
+    const number = parseToFloat(value);
+    const formatted = number.toLocaleString("de-DE", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
+    updateItemState(id, field, formatted);
+  };
 
   const removeItem = (id) => {
     setItems(items.filter((item) => item.id !== id));
@@ -69,20 +120,20 @@ const handleInputChange = (id, field, value) => {
   /* =========================================
       EFECTOS DE VALIDACIÓN
   ========================================= */
+
   useEffect(() => {
     const updatedItems = items.map((item) => {
       const qty = parseToFloat(item.cantidad);
       const cost = parseToFloat(item.costo_unitario);
       const isValid = qty > 0 && cost > 0;
-      
+
       if (item.isValid !== isValid) {
         return { ...item, isValid };
       }
       return item;
     });
 
-    const hasChanges = JSON.stringify(updatedItems) !== JSON.stringify(items);
-    if (hasChanges) {
+    if (JSON.stringify(updatedItems) !== JSON.stringify(items)) {
       setItems(updatedItems);
     }
   }, [items, setItems]);
@@ -92,24 +143,15 @@ const handleInputChange = (id, field, value) => {
       <div className="section-header-alt">
         <h2>Gestión de Productos</h2>
         <p style={{ fontSize: "0.8rem", color: "#666" }}>
-          * Máximo 9 caracteres en total y 2 decimales (use la coma ",").
+          * Ingrese cantidad y costo. Use la coma (,) para decimales. Límite: 999.999.999,00
         </p>
       </div>
 
       <div className="pform-products-toolbar">
-        <div
-          className="search-container-full"
-          onClick={onOpenSearch}
-          style={{ cursor: "pointer" }}
-        >
+        <div className="search-container-full" onClick={onOpenSearch} style={{ cursor: "pointer" }}>
           <Search size={18} className="search-icon" />
-          <input
-            type="text"
-            placeholder="Buscar por SKU o descripción..."
-            readOnly
-          />
+          <input type="text" placeholder="Buscar por SKU o descripción..." readOnly />
         </div>
-
         <button className="btn-add-new-product" onClick={onOpenCreate}>
           <Plus size={18} /> Crear producto nuevo
         </button>
@@ -137,6 +179,7 @@ const handleInputChange = (id, field, value) => {
                 const qtyVal = parseToFloat(item.cantidad);
                 const costVal = parseToFloat(item.costo_unitario);
                 const totalLine = round2(qtyVal * costVal);
+                
                 const hasError = !item.cantidad || !item.costo_unitario || qtyVal <= 0 || costVal <= 0;
 
                 return (
@@ -148,28 +191,34 @@ const handleInputChange = (id, field, value) => {
                       <input
                         type="text"
                         className={`table-input-dynamic ${!qtyVal ? "input-error" : ""}`}
-                        style={{ 
-                            textAlign: "center", 
-                            width: calculateWidth(item.cantidad, 6)
+                        style={{
+                          textAlign: "center",
+                          width: calculateWidth(item.cantidad),
+                          minWidth: "60px"
                         }}
-                        value={qtyVal === 0 && !item.cantidad.toString().includes(',') ? "" : item.cantidad}
+                        // Se aplica el formateo inicial por si vienen datos de la DB
+                        value={formatInitialValue(item.cantidad)}
                         onChange={(e) => handleInputChange(item.id, "cantidad", e.target.value)}
-                        placeholder="0"
+                        onBlur={(e) => handleBlurFormat(item.id, "cantidad", e.target.value)}
+                        placeholder="0,00"
                         inputMode="decimal"
                       />
                     </td>
 
                     <td className="center">
-                      <div className="input" style={{ display: 'inline-flex', textAlign: "center", alignItems: 'center' }}>
+                      <div className="input" style={{ display: 'inline-flex', justifyContent: "center", alignItems: 'center' }}>
                         <input
                           type="text"
                           className={`table-input-dynamic ${!costVal ? "input-error" : ""}`}
-                          style={{ 
-                              textAlign: "left", 
-                              width: calculateWidth(item.costo_unitario, 8)
+                          style={{
+                            textAlign: "center",
+                            width: calculateWidth(item.costo_unitario),
+                            minWidth: "80px"
                           }}
-                          value={costVal === 0 && !item.costo_unitario.toString().includes(',') ? "" : item.costo_unitario}
+                          // Se aplica el formateo inicial por si vienen datos de la DB
+                          value={formatInitialValue(item.costo_unitario)}
                           onChange={(e) => handleInputChange(item.id, "costo_unitario", e.target.value)}
+                          onBlur={(e) => handleBlurFormat(item.id, "costo_unitario", e.target.value)}
                           placeholder="0,00"
                           inputMode="decimal"
                         />

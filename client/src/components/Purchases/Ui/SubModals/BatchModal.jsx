@@ -40,9 +40,15 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
     }));
   }, [deposits]);
 
+  // Helper para formatear moneda/números a estilo Venezuela (coma decimal)
+  const formatNumber = (num) => {
+    return num.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
   const handleQuantityChange = (e) => {
     const val = e.target.value;
     if (val.length > 9) return;
+    // Mantenemos la lógica interna con punto para cálculos de JS, visualmente el input type="number" depende del navegador
     const numVal = parseFloat(val);
     if (!isNaN(numVal) && numVal > remainingQuantity) {
         setFormData({ ...formData, cantidad: remainingQuantity.toString() });
@@ -69,7 +75,6 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
     const cleanLoteName = nro_lote.trim().toUpperCase();
 
     // --- LÓGICA DE UNIFICACIÓN ESTRICTA ---
-    // Buscamos un registro donde coincidan: Lote AND Depósito AND Fecha Vencimiento
     const existingLoteIndex = currentBatches.findIndex(
       l => l.id_deposito === id_deposito && 
            l.nro_lote === cleanLoteName && 
@@ -88,11 +93,15 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
       };
     } else {
       // Si alguno es diferente, es un nuevo ítem en la lista
-      const depoName = deposits.find(d => d.id === Number(id_deposito))?.nombre;
+      
+      // CAMBIO PRINCIPAL: Buscamos el objeto completo del depósito
+      const depositoCompleto = deposits.find(d => d.id === Number(id_deposito));
+
       const nuevoLote = {
         ...formData,
         nro_lote: cleanLoteName,
-        deposito_nombre: depoName,
+        deposito_nombre: depositoCompleto?.nombre, 
+        info_deposito: depositoCompleto, // <--- Aquí guardamos toda la info del depósito seleccionado
         id_temp: Date.now()
       };
       updatedLotesCompra = [...currentBatches, nuevoLote];
@@ -118,7 +127,7 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
   const handleFinalizeDistribution = () => {
     if (currentBatches.length === 0) return alert("Debe asignar al menos un lote.");
     if (remainingQuantity > 0.01) {
-       if(!window.confirm(`Aún quedan ${remainingQuantity.toFixed(2)} unidades. ¿Guardar así?`)) return;
+       if(!window.confirm(`Aún quedan ${formatNumber(remainingQuantity)} unidades. ¿Guardar así?`)) return;
     }
     onClose();
   };
@@ -136,7 +145,6 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
 
   if (!product) return null;
 
-  // Determinar si el botón debe decir "Sumar" o "Asignar"
   const isMatchFound = currentBatches.some(
     l => l.id_deposito === formData.id_deposito && 
          l.nro_lote === formData.nro_lote.trim().toUpperCase() &&
@@ -194,7 +202,7 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
                   placeholder="0.00"
                 />
                 <small style={{ fontSize: '0.65rem', color: '#64748b' }}>
-                  Máx: {remainingQuantity.toFixed(2)}
+                  Máx: {formatNumber(remainingQuantity)}
                 </small>
               </div>
 
@@ -223,15 +231,15 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
           <div className="bm-card">
             <h4 className="bm-card-title">Resumen de Distribución</h4>
             <div className="bm-summary-item bm-summary-info">
-              <span>Total Producto:</span> <strong>{maxQuantity.toLocaleString()}</strong>
+              <span>Total Producto:</span> <strong>{formatNumber(maxQuantity)}</strong>
             </div>
             <div className="bm-summary-item bm-summary-success">
-              <span>Asignado:</span> <strong>{allocatedQuantity.toLocaleString()}</strong>
+              <span>Asignado:</span> <strong>{formatNumber(allocatedQuantity)}</strong>
             </div>
             <div className="bm-summary-item">
               <span>Pendiente:</span>
               <strong className={remainingQuantity > 0.01 ? "bm-text-danger" : "bm-text-success"}>
-                {remainingQuantity.toFixed(2)}
+                {formatNumber(remainingQuantity)}
               </strong>
             </div>
           </div>
@@ -253,7 +261,7 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
                 <tr key={l.id_temp}>
                   <td><strong className="bm-td-lote">#{l.nro_lote}</strong></td>
                   <td>{l.deposito_nombre}</td>
-                  <td className="bm-text-center">{parseFloat(l.cantidad).toLocaleString()}</td>
+                  <td className="bm-text-center">{formatNumber(parseFloat(l.cantidad))}</td>
                   <td className="bm-text-center">
                     {l.fecha_vencimiento ? new Date(l.fecha_vencimiento + 'T00:00:00').toLocaleDateString() : 'N/A'}
                   </td>

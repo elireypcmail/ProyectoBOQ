@@ -362,7 +362,6 @@ CREATE TABLE compras_detalle (
   descripcion TEXT NOT NULL,
   cantidad NUMERIC(14,4) NOT NULL CHECK (cantidad > 0),
   costo_compra NUMERIC(14,6) NOT NULL CHECK (costo_compra >= 0),
-  -- Se calcula automáticamente
   subtotal1 NUMERIC(14,6) 
     GENERATED ALWAYS AS (cantidad * costo_compra) STORED,
   descuento1 NUMERIC(14,6) DEFAULT 0,

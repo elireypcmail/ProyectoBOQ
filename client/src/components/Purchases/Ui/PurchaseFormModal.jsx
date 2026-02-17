@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   CheckCircle,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { useProducts } from "../../../context/ProductsContext";
 import { useIncExp } from "../../../context/IncExpContext";
@@ -23,7 +24,8 @@ const PurchaseFormModal = ({ isOpen, onClose, initialData }) => {
   const { categories, brands, getAllProducts, createNewProduct, editProduct } =
     useProducts();
 
-  const { createNewShopping } = useIncExp();
+  // Extraemos 'shoppings' para validar duplicados
+  const { createNewShopping, shoppings, getAllShoppings } = useIncExp();
 
   /* ===============================
       ESTADOS INICIALES
@@ -74,6 +76,16 @@ const PurchaseFormModal = ({ isOpen, onClose, initialData }) => {
   const [processedItems, setProcessedItems] = useState([]);
 
   /* =========================================
+      LÓGICA DE VALIDACIÓN DE DUPLICADOS
+  ========================================= */
+  const isDuplicateInvoice = () => {
+    if (!formData.nro_factura || !shoppings) return false;
+    return shoppings.some(
+      (s) => s.nro_factura?.toString().trim().toLowerCase() === formData.nro_factura.trim().toLowerCase()
+    );
+  };
+
+  /* =========================================
       LÓGICA DE CÁLCULO
   ========================================= */
   const safeParse = (val) => {
@@ -83,65 +95,114 @@ const PurchaseFormModal = ({ isOpen, onClose, initialData }) => {
     return parseFloat(cleanVal) || 0;
   };
 
-  useEffect(() => {
-    const round = (num, dec = 2) => {
-      const factor = Math.pow(10, dec);
-      return Math.round((num + Number.EPSILON) * factor) / factor;
+  // useEffect(() => {
+  //   const round = (num, dec = 2) => {
+  //     const factor = Math.pow(10, dec);
+  //     return Math.round((num + Number.EPSILON) * factor) / factor;
+  //   };
+
+  //   const montoCargosTotales = safeParse(totals.cargos_monto);
+  //   const montoDescFijo = safeParse(totals.monto_descuento_fijo);
+
+  //   const subtotalBruto = items.reduce(
+  //     (acc, item) => acc + safeParse(item.cantidad) * safeParse(item.costo_unitario),
+  //     0
+  //   );
+
+  //   const finalTotal = round(subtotalBruto + montoCargosTotales - montoDescFijo);
+
+  //   setTotals((prev) => ({
+  //     ...prev,
+  //     subtotal: round(subtotalBruto),
+  //     total: finalTotal,
+  //     porcentaje_cargo_etiqueta: subtotalBruto > 0 ? (montoCargosTotales / subtotalBruto) * 100 : 0,
+  //     porcentaje_desc_etiqueta: subtotalBruto > 0 ? (montoDescFijo / subtotalBruto) * 100 : 0,
+  //   }));
+
+  //   const calculatedItems = items.map((item) => {
+  //     const qty = safeParse(item.cantidad);
+  //     const price = safeParse(item.costo_unitario);
+  //     const itemSubtotal = qty * price;
+  //     const proporcion = subtotalBruto > 0 ? itemSubtotal / subtotalBruto : 0;
+  //     const descUnitario = qty > 0 ? (montoDescFijo * proporcion) / qty : 0;
+  //     const cargoUnitario = qty > 0 ? (montoCargosTotales * proporcion) / qty : 0;
+  //     const precioConDescuento = price - descUnitario;
+  //     const costoFinal = precioConDescuento + cargoUnitario;
+
+  //     return {
+  //       ...item,
+  //       itemSubtotal: round(itemSubtotal),
+  //       descuentoUnitario: round(descUnitario, 4),
+  //       cargoUnitario: round(cargoUnitario, 4),
+  //       precioConDescuento: round(precioConDescuento, 4),
+  //       costo_final: round(costoFinal, 4),
+  //     };
+  //   });
+
+  //   setProcessedItems(calculatedItems);
+  // }, [items, totals.cargos_monto, totals.monto_descuento_fijo]);
+
+useEffect(() => {
+  const round = (num, dec = 2) => {
+    const factor = Math.pow(10, dec);
+    return Math.round((num + Number.EPSILON) * factor) / factor;
+  };
+
+  // 1️⃣ Obtener valores de entrada limpios
+  const montoCargosTotales = safeParse(totals.cargos_monto);
+  const montoDescFijo = safeParse(totals.monto_descuento_fijo);
+
+  // 2️⃣ Calcular Subtotal Bruto (Suma de items sin nada extra)
+  const subtotalBruto = items.reduce(
+    (acc, item) => acc + (safeParse(item.cantidad) * safeParse(item.costo_unitario)),
+    0
+  );
+
+  // 3️⃣ Definir la base abonable (Subtotal - Descuento) y el Total Final
+  const subtotalNeto = round(subtotalBruto - montoDescFijo);
+  const finalTotal = round(subtotalNeto + montoCargosTotales);
+
+  // 4️⃣ Actualizar el estado global de totales
+  setTotals((prev) => ({
+    ...prev,
+    subtotal: round(subtotalBruto),
+    subtotal_neto: subtotalNeto, // <--- Importante: Base para limitar el abono
+    total: finalTotal,           // Total final de la operación (Saldo inicial)
+    porcentaje_cargo_etiqueta: subtotalBruto > 0 ? (montoCargosTotales / subtotalBruto) * 100 : 0,
+    porcentaje_desc_etiqueta: subtotalBruto > 0 ? (montoDescFijo / subtotalBruto) * 100 : 0,
+  }));
+
+  // 5️⃣ Prorratear descuentos y cargos a cada producto
+  const calculatedItems = items.map((item) => {
+    const qty = safeParse(item.cantidad);
+    const price = safeParse(item.costo_unitario);
+    const itemSubtotal = qty * price;
+
+    // Calculamos la proporción de este item sobre el total para distribuir valores
+    const proporcion = subtotalBruto > 0 ? itemSubtotal / subtotalBruto : 0;
+
+    // Distribución proporcional
+    const descUnitario = qty > 0 ? (montoDescFijo * proporcion) / qty : 0;
+    const cargoUnitario = qty > 0 ? (montoCargosTotales * proporcion) / qty : 0;
+
+    // Cálculos de costo por unidad
+    const precioConDescuento = price - descUnitario;
+    const costoFinal = precioConDescuento + cargoUnitario; // El costo real que va al inventario
+
+    return {
+      ...item,
+      itemSubtotal: round(itemSubtotal),
+      descuentoUnitario: round(descUnitario, 4),
+      cargoUnitario: round(cargoUnitario, 4),
+      precioConDescuento: round(precioConDescuento, 4),
+      costo_final: round(costoFinal, 4),
     };
+  });
 
-    const subtotalBruto = items.reduce(
-      (acc, item) =>
-        acc + safeParse(item.cantidad) * safeParse(item.costo_unitario),
-      0,
-    );
+  setProcessedItems(calculatedItems);
 
-    const porcDescGlobal = safeParse(totals.descuento_global_extra);
-    const montoCargosTotales = safeParse(totals.cargos_monto);
-    const montoDescFijo = safeParse(totals.monto_descuento_fijo);
-
-    const montoDescuentoGlobal = round(subtotalBruto * (porcDescGlobal / 100));
-    const finalTotal = round(
-      subtotalBruto - montoDescuentoGlobal - montoDescFijo + montoCargosTotales,
-    );
-
-    setTotals((prev) => ({
-      ...prev,
-      subtotal: round(subtotalBruto),
-      monto_descuento_extra: montoDescuentoGlobal,
-      total: finalTotal,
-    }));
-
-    const cargoPorUnidadGlobal = items.reduce(
-      (acc, item) => acc + safeParse(item.cantidad),
-      0,
-    );
-    const cargoUnidad =
-      cargoPorUnidadGlobal > 0 ? montoCargosTotales / cargoPorUnidadGlobal : 0;
-
-    const calculatedItems = items.map((item) => {
-      const qty = safeParse(item.cantidad);
-      const price = safeParse(item.costo_unitario);
-      const itemSubtotal = qty * price;
-      const descUnitario = price * (porcDescGlobal / 100);
-      const precioConDescuento = price - descUnitario;
-      const costoFinal = precioConDescuento + cargoUnidad;
-
-      return {
-        ...item,
-        itemSubtotal: round(itemSubtotal),
-        precioConDescuento: round(precioConDescuento, 3),
-        cargoUnitario: round(cargoUnidad, 3),
-        costo_final: round(costoFinal, 3),
-      };
-    });
-
-    setProcessedItems(calculatedItems);
-  }, [
-    items,
-    totals.cargos_monto,
-    totals.descuento_global_extra,
-    totals.monto_descuento_fijo,
-  ]);
+  // Dependencias: Se dispara cuando cambian items, cargos o el descuento manual
+}, [items, totals.cargos_monto, totals.monto_descuento_fijo]);
 
   /* ===============================
       VALIDACIONES Y HANDLERS
@@ -151,15 +212,15 @@ const PurchaseFormModal = ({ isOpen, onClose, initialData }) => {
       case 1:
         return (
           formData.nro_factura?.trim() !== "" &&
+          !isDuplicateInvoice() && // No permitir avanzar si es duplicado
           (formData.id_proveedor !== "" || formData.proveedor !== "") &&
-          // formData.id_deposito !== "" &&
           formData.fecha_emision !== ""
         );
       case 2:
         return (
           items.length > 0 &&
           items.every(
-            (i) => safeParse(i.cantidad) > 0 && safeParse(i.costo_unitario) > 0,
+            (i) => safeParse(i.cantidad) > 0 && safeParse(i.costo_unitario) > 0
           )
         );
       case 3:
@@ -170,85 +231,81 @@ const PurchaseFormModal = ({ isOpen, onClose, initialData }) => {
     }
   };
 
-const handleFinalSubmit = async () => {
+  const handleFinalSubmit = async () => {
+    // Verificación final de seguridad
+    if (isDuplicateInvoice()) {
+      alert("Error: El número de factura ya existe. Por favor verifique.");
+      setStep(1);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      // 1. Extraemos y parseamos valores globales de configuración
-      const porcDescGlobal = safeParse(totals.descuento_global_extra);
       const montoCargosTotales = safeParse(totals.cargos_monto);
       const montoDescFijo = safeParse(totals.monto_descuento_fijo);
       const montoAbonado = safeParse(totals.monto_abonado);
+      const subtotalBase = safeParse(totals.subtotal);
 
-      // 2. Construcción del Payload con formateo decimal estricto
+      const porcentajeCalculado = subtotalBase > 0 
+        ? (montoDescFijo / subtotalBase) * 100 
+        : 0;
+
       const shoppingPayload = {
         id_proveedor: formData.id_proveedor,
         nro_factura: formData.nro_factura,
         fecha_emision: formData.fecha_emision,
         dias_plazo: parseInt(formData.dias_plazo) || 0,
         fecha_vencimiento: formData.fecha_vencimiento,
-        id_deposito_destino: formData.id_deposito,
-        id_usuario: 1, // ID del usuario actual (ajustar según tu auth)
-        
+        id_deposito_destino: formData.id_deposito, 
+        id_usuario: 1,
         totales_cargos: {
-          subtotal: parseFloat(safeParse(totals.subtotal).toFixed(2)),
-          porcentaje_descuento_global: parseFloat(porcDescGlobal.toFixed(2)),
+          subtotal: parseFloat(subtotalBase.toFixed(2)),
+          porcentaje_descuento_global: parseFloat(porcentajeCalculado.toFixed(2)), 
           monto_descuento_fijo: parseFloat(montoDescFijo.toFixed(2)),
-          // Suma de descuento por % más el descuento fijo
-          monto_descuento_extra: parseFloat((safeParse(totals.monto_descuento_extra) + montoDescFijo).toFixed(2)),
+          monto_descuento_extra: parseFloat(montoDescFijo.toFixed(2)),
           cargos_monto: parseFloat(montoCargosTotales.toFixed(2)),
           monto_abonado: parseFloat(montoAbonado.toFixed(2)),
           total: parseFloat(safeParse(totals.total).toFixed(2)),
-          saldo_pendiente: parseFloat((safeParse(totals.total) - montoAbonado).toFixed(2))
+          saldo_pendiente: parseFloat((safeParse(totals.total) - montoAbonado).toFixed(2)),
         },
-
-        items: processedItems.map(item => {
-          const qty = safeParse(item.cantidad);
-          const price = safeParse(item.costo_unitario);
-          
-          // Cálculo del descuento unitario basado en el porcentaje global
-          const descUnitario = price * (porcDescGlobal / 100);
-
-          return {
-            id_producto: item.id_producto || item.id,
-            Producto: item.descripcion || item.nombre,
-            // Usamos 3 decimales en costos unitarios para evitar errores de redondeo en masa
-            Cant: parseFloat(qty.toFixed(2)),
-            Costo_Base: parseFloat(price.toFixed(3)),
-            Descuento_Unitario: parseFloat(descUnitario.toFixed(3)),
-            Cargo_Unitario: parseFloat(safeParse(item.cargoUnitario).toFixed(3)),
-            Costo_Ficha: parseFloat(safeParse(item.costo_final).toFixed(3)),
-            Subtotal_Linea: parseFloat(safeParse(item.itemSubtotal).toFixed(2))
-          };
-        }),
-
-        detalle_lotes: processedItems.flatMap(item => 
-          (item.lotes_compra || []).map(l => ({
+        items: processedItems.map((item) => ({
+          id_producto: item.id_producto || item.id,
+          Producto: item.descripcion || item.nombre,
+          Cant: parseFloat(safeParse(item.cantidad).toFixed(2)),
+          Costo_Base: parseFloat(safeParse(item.costo_unitario).toFixed(3)),
+          Descuento_Unitario: parseFloat(safeParse(item.descuentoUnitario).toFixed(4)),
+          Cargo_Unitario: parseFloat(safeParse(item.cargoUnitario).toFixed(4)),
+          Costo_Ficha: parseFloat(safeParse(item.costo_final).toFixed(4)),
+          Subtotal_Linea: parseFloat(safeParse(item.itemSubtotal).toFixed(2)),
+        })),
+        detalle_lotes: processedItems.flatMap((item) =>
+          (item.lotes_compra || []).map((l) => ({
             id_producto: item.id_producto || item.id,
             Producto: item.descripcion || item.nombre,
             nro_lote: l.nro_lote,
+            id_deposito: l.id_deposito || formData.id_deposito, 
             fecha_vencimiento: l.fecha_vencimiento,
-            // Aseguramos decimales también en el desglose de lotes
             cantidad: parseFloat(safeParse(l.cantidad).toFixed(2)),
-            costo_lote: parseFloat(safeParse(l.costo_lote || item.costo_final).toFixed(3))
+            costo_lote: parseFloat(safeParse(item.costo_final).toFixed(4)),
           }))
-        )
+        ),
       };
-
-      // Log para auditoría en consola antes de enviar
-      console.log("Payload Final a enviar:", shoppingPayload);
 
       const res = await createNewShopping(shoppingPayload);
 
-      if (res.status || res.success) {
-        alert("Factura de compra registrada exitosamente.");
-        if (getAllProducts) await getAllProducts();
+      if (res.status || res.success) {        
+        // ACTUALIZACIÓN DE DATOS GLOBALES
+        if (getAllProducts) await getAllProducts(); 
+        if (getAllShoppings) await getAllShoppings(); // Refresca ListPurchases
+        
         handleClose();
       } else {
         alert("Error al registrar: " + (res.error || res.msg || "Error desconocido"));
       }
+      
     } catch (error) {
-      console.error("Error crítico al finalizar el registro:", error);
-      alert("Hubo un error al procesar la compra. Revisa la consola para más detalles.");
+      console.error("Error crítico:", error);
+      alert("Hubo un error al procesar la compra.");
     } finally {
       setIsSubmitting(false);
     }
@@ -270,7 +327,6 @@ const handleFinalSubmit = async () => {
   const handleSelectProduct = (product) => {
     const exists = items.some((item) => item.id === product.id);
     if (exists) return alert(`El producto ya ha sido agregado.`);
-    // Inicializamos con cantidad 1 para facilitar el avance de paso
     setItems([
       ...items,
       {
@@ -298,7 +354,17 @@ const handleFinalSubmit = async () => {
   const renderStep = () => {
     switch (step) {
       case 1:
-        return <StepInfo formData={formData} setFormData={setFormData} />;
+        return (
+          <div className="step-container-validation">
+            <StepInfo formData={formData} setFormData={setFormData} />
+            {isDuplicateInvoice() && (
+              <div className="duplicate-warning">
+                <AlertCircle size={16} />
+                <span>Esta factura ya está registrada en el sistema.</span>
+              </div>
+            )}
+          </div>
+        );
       case 2:
         return (
           <StepProducts
@@ -331,11 +397,7 @@ const handleFinalSubmit = async () => {
       <div className="pform-card">
         <header className="pform-header-main">
           <h1>Registrar Compra</h1>
-          <button
-            className="pform-close-x"
-            onClick={handleClose}
-            disabled={isSubmitting}
-          >
+          <button className="pform-close-x" onClick={handleClose} disabled={isSubmitting}>
             <X size={24} />
           </button>
         </header>
@@ -346,30 +408,19 @@ const handleFinalSubmit = async () => {
             <strong>{stepsMeta[step].title}</strong>
           </div>
           <div className="pform-progress-bar">
-            <div
-              className="progress-fill"
-              style={{ width: stepsMeta[step].pct }}
-            />
+            <div className="progress-fill" style={{ width: stepsMeta[step].pct }} />
           </div>
         </div>
 
         <div className="pform-body">{renderStep()}</div>
 
         <footer className="pform-footer-actions-alt">
-          <button
-            className="btn-cancel-flat"
-            onClick={handleClose}
-            disabled={isSubmitting}
-          >
+          <button className="btn-cancel-flat" onClick={handleClose} disabled={isSubmitting}>
             Cancelar
           </button>
           <div className="nav-buttons">
             {step > 1 && (
-              <button
-                className="btn-prev-outline"
-                onClick={() => setStep(step - 1)}
-                disabled={isSubmitting}
-              >
+              <button className="btn-prev-outline" onClick={() => setStep(step - 1)} disabled={isSubmitting}>
                 <ChevronLeft size={18} /> Anterior
               </button>
             )}
@@ -382,19 +433,11 @@ const handleFinalSubmit = async () => {
                 Siguiente <ChevronRight size={18} />
               </button>
             ) : (
-              <button
-                className="btn-finalizar-compra"
-                onClick={handleFinalSubmit}
-                disabled={isSubmitting}
-              >
+              <button className="btn-finalizar-compra" onClick={handleFinalSubmit} disabled={isSubmitting}>
                 {isSubmitting ? (
-                  <>
-                    <Loader2 size={18} className="animate-spin" /> Procesando...
-                  </>
+                  <><Loader2 size={18} className="animate-spin" /> Procesando...</>
                 ) : (
-                  <>
-                    Finalizar Registro <CheckCircle size={18} />
-                  </>
+                  <><CheckCircle size={18} /> Finalizar Registro</>
                 )}
               </button>
             )}
@@ -402,22 +445,10 @@ const handleFinalSubmit = async () => {
         </footer>
       </div>
 
-      {isSearchModalOpen && (
-        <SearchProductModal
-          onClose={() => setIsSearchModalOpen(false)}
-          onSelect={handleSelectProduct}
-        />
-      )}
-
+      {isSearchModalOpen && <SearchProductModal onClose={() => setIsSearchModalOpen(false)} onSelect={handleSelectProduct} />}
       {isBatchModalOpen && selectedProductForBatch && (
-        <BatchModal
-          product={selectedProductForBatch}
-          onClose={() => setIsBatchModalOpen(false)}
-          items={items}
-          setItems={setItems}
-        />
+        <BatchModal product={selectedProductForBatch} onClose={() => setIsBatchModalOpen(false)} items={items} setItems={setItems} />
       )}
-
       <ProductFormModal
         isOpen={isCreateProductOpen}
         onClose={() => setIsCreateProductOpen(false)}

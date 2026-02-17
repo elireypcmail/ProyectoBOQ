@@ -9,7 +9,8 @@ import {
   Plus,
   Warehouse,
   Calendar,
-  Tag
+  Tag,
+  Lock // 1. Importamos el ícono de candado
 } from "lucide-react";
 import "../../styles/components/ListLots.css";
 
@@ -111,13 +112,10 @@ const ListLots = ({ id_producto, onRefreshProducts }) => {
       return;
     }
 
-    // --- NOTA: Se ha eliminado la restricción de "isDepositoOcupado" 
-    // para permitir múltiples lotes en el mismo depósito. ---
-
     const payload = { 
       ...formData, 
       id_producto,
-      id_deposito: Number(id_deposito) // Aseguramos que sea numérico
+      id_deposito: Number(id_deposito)
     };
 
     if (selectedLote) {
@@ -262,17 +260,30 @@ const ListLots = ({ id_producto, onRefreshProducts }) => {
               </div>
 
               <div className="input-group">
-                <label>Cantidad</label>
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  Cantidad
+                  {/* Visualmente mostramos un candado si está bloqueado */}
+                  {selectedLote && <Lock size={14} color="#94a3b8" />}
+                </label>
                 <input
                   type="number"
                   min="0"
                   value={formData.cantidad}
+                  // 2. Deshabilitamos si hay un lote seleccionado (Modo Edición)
+                  disabled={!!selectedLote}
+                  // Estilo opcional para indicar que está deshabilitado si tu CSS no lo maneja
+                  style={selectedLote ? { backgroundColor: "#f1f5f9", color: "#64748b", cursor: "not-allowed" } : {}}
                   onChange={(e) => {
                     let value = e.target.value.replace(/\D/g, "").replace(/^0+(?!$)/, "");
                     setFormData({ ...formData, cantidad: value });
                   }}
                   placeholder="Ej: 150"
                 />
+                {selectedLote && (
+                  <small style={{ color: "#64748b", fontSize: "0.75rem", marginTop: "4px" }}>
+                    La cantidad no se puede editar una vez creado el lote.
+                  </small>
+                )}
               </div>
 
               <div className="input-group">

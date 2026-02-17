@@ -8,28 +8,37 @@ const StepConfirm = ({ formData, items, totals }) => {
     if (val === null || val === undefined || val === "" || val === false) return 0;
     if (typeof val === "number") return val;
     let sVal = String(val);
-    // Elimina puntos de miles y cambia coma decimal por punto
     const cleanVal = sVal.replace(/\./g, "").replace(",", ".");
     return parseFloat(cleanVal) || 0;
   };
 
-  // 2. Helper para formatear fechas a dd/mm/yyyy
+  // 2. Helper para formatear fechas
   const formatDate = (dateStr) => {
     if (!dateStr) return "-";
     const [year, month, day] = dateStr.split("-");
     return `${day}/${month}/${year}`;
   };
 
-  // 3. Formateador de Moneda para VISTA (Puntos para miles, Comas para decimales)
-  const formatNum = (val) => 
-    Number(val || 0).toLocaleString('es-ES', { 
+  // 3. Formateador de Moneda (Mantiene la coma decimal)
+  const formatNum = (val) => {
+    const num = safeParse(val);
+    return num.toLocaleString('de-DE', { 
       minimumFractionDigits: 2, 
       maximumFractionDigits: 2 
     });
+  };
 
-  // Cálculo del subtotal bruto real para el prorrateo
-  const subtotalBrutoReal = items.reduce((acc, item) => 
-    acc + (safeParse(item.cantidad) * safeParse(item.costo_unitario)), 0);
+  // Cálculos base para el resumen
+  const subtotalBruto = safeParse(totals.subtotal);
+  const descuento = safeParse(totals.monto_descuento_fijo);
+  const cargos = safeParse(totals.cargos_monto);
+  const abono = safeParse(totals.monto_abonado);
+  
+  // Total Factura (Neto abonable)
+  const totalFacturaNeto = subtotalBruto - descuento;
+  
+  // Saldo Pendiente (Total Factura - Abono + Cargos)
+  const saldoPendiente = totalFacturaNeto - abono + cargos;
 
   return (
     <div className="pconf-step-container">
@@ -68,9 +77,10 @@ const StepConfirm = ({ formData, items, totals }) => {
             <tr>
               <th>Descripción</th>
               <th className="pconf-center">Cantidad</th>
-              <th className="pconf-center">Precio Base</th>
-              <th className="pconf-center">Costo Ficha</th>
-              <th className="pconf-center">Subtotal</th>
+              {/* <th className="pconf-center">Precio Base</th> */}
+              <th className="pconf-center">Costo</th>
+              {/* <th className="pconf-center">Costo Ficha</th> */}
+              <th className="pconf-center">Total</th>
             </tr>
           </thead>
           <tbody>
@@ -78,20 +88,18 @@ const StepConfirm = ({ formData, items, totals }) => {
               const qty = safeParse(item.cantidad);
               const price = safeParse(item.costo_unitario);
               const itemSubtotal = qty * price;
-
-              // Usamos el costo_final que ya viene calculado de processedItems en el padre
               const costoFicha = safeParse(item.costo_final);
               
               return (
                 <tr key={index}>
                   <td className="pconf-desc">{item.descripcion || item.nombre}</td>
-                  <td className="pconf-center">{qty.toFixed(2)}</td>
-                  <td className="pconf-center">$ {formatNum(price)}</td>
-                  <td className="pconf-center" style={{ fontWeight: '600', color: '#1e293b' }}>
-                    $ {formatNum(costoFicha)}
-                  </td>
+                  <td className="pconf-center">{qty.toFixed(2).replace('.', ',')}</td>
+                  <td className="pconf-center">{formatNum(price)}</td>
+                  {/* <td className="pconf-center" style={{ fontWeight: '600', color: '#1e293b' }}>
+                    {formatNum(costoFicha)}
+                  </td> */}
                   <td className="pconf-center">
-                    $ {formatNum(itemSubtotal)}
+                    {formatNum(itemSubtotal)}
                   </td>
                 </tr>
               );
@@ -102,34 +110,34 @@ const StepConfirm = ({ formData, items, totals }) => {
 
       <div className="pconf-totals-pane">
         <div className="pconf-final-row">
-          <span>Subtotal Bruto</span>
-          <span>$ {formatNum(totals.subtotal)}</span>
+          <span>Subtotal</span>
+          <span>{formatNum(subtotalBruto)}</span>
         </div>
         
         <div className="pconf-final-row" style={{ color: '#dc2626' }}>
-          <span>Descuento Global ({safeParse(totals.descuento_global_extra).toFixed(2)}%)</span>
-          <span>- $ {formatNum(safeParse(totals.monto_descuento_extra) + safeParse(totals.monto_descuento_fijo))}</span>
+          <span>Descuento</span>
+          <span>- {formatNum(descuento)}</span>
         </div>
 
-        <div className="pconf-final-row" style={{ color: '#2563eb' }}>
-          <span>Cargos / Flete</span>
-          <span>+ $ {formatNum(totals.cargos_monto)}</span>
-        </div>
-        
         <div className="pconf-final-row pconf-grand-total">
           <span className="pconf-total-label">TOTAL FACTURA</span>
-          <span className="pconf-total-amount">$ {formatNum(totals.total)}</span>
+          <span className="pconf-total-amount">{formatNum(totalFacturaNeto)}</span>
         </div>
 
         <div className="pconf-final-row" style={{ marginTop: '10px', borderTop: '1px solid #eee', paddingTop: '10px' }}>
           <span>Monto Abonado</span>
-          <span style={{ color: '#10b981', fontWeight: '600' }}>- $ {formatNum(totals.monto_abonado)}</span>
+          <span style={{ color: '#10b981', fontWeight: '600' }}>- {formatNum(abono)}</span>
         </div>
 
-        <div className="pconf-final-row" style={{ fontSize: '1.2rem', fontWeight: '800' }}>
-          <span>Saldo Pendiente</span>
-          <span style={{ color: (safeParse(totals.total) - safeParse(totals.monto_abonado)) > 0.01 ? '#ef4444' : '#1e293b' }}>
-            $ {formatNum(safeParse(totals.total) - safeParse(totals.monto_abonado))}
+        <div className="pconf-final-row" style={{ color: '#2563eb' }}>
+          <span>Cargos</span>
+          <span>+ {formatNum(cargos)}</span>
+        </div>
+
+        <div className="pconf-final-row" style={{ fontSize: '1.2rem', fontWeight: '800', marginTop: '5px' }}>
+          <span>Total Factura + Cargos</span>
+          <span style={{ color: saldoPendiente > 0.01 ? '#ef4444' : '#1e293b' }}>
+            {formatNum(saldoPendiente)}
           </span>
         </div>
       </div>

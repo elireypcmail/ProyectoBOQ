@@ -1,13 +1,12 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Search, Plus, Loader2 } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
-import { useIncExp } from "../../context/IncExpContext"; // Importación del contexto de Egresos
+import { useIncExp } from "../../context/IncExpContext"; 
 import PurchaseFormModal from "./Ui/PurchaseFormModal";
 import PurchaseDetailModal from "./Ui/PurchaseDetailModal";
 import "../../styles/components/ListZone.css";
 
 const ListPurchases = () => {
-  // Consumimos el estado global del contexto de Egresos
   const { shoppings, getAllShoppings, loading } = useIncExp();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -15,19 +14,25 @@ const ListPurchases = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
-  // Cargar las compras al montar el componente
   useEffect(() => {
     getAllShoppings();
   }, []);
 
-  // Filtro de búsqueda optimizado
   const filteredPurchases = useMemo(() => {
     if (!shoppings) return [];
     return shoppings.filter(p =>
       p.nro_factura?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.proveedor_nombre?.toLowerCase().includes(searchTerm.toLowerCase())
+      p.proveedor?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [shoppings, searchTerm]);
+
+  // Función auxiliar para formatear moneda según tus preferencias
+  const formatCurrency = (value) => {
+    return parseFloat(value).toLocaleString("es-ES", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
 
   return (
     <div className="orders-container">
@@ -73,8 +78,6 @@ const ListPurchases = () => {
               <th>ID</th>
               <th>Factura</th>
               <th>Proveedor</th>
-              <th>Emisión</th>
-              <th>Vencimiento</th>
               <th className="right">Total</th>
               <th className="center">Acciones</th>
             </tr>
@@ -85,15 +88,10 @@ const ListPurchases = () => {
                 <tr key={p.id}>
                   <td className="id">#{p.id}</td>
                   <td className="bold">{p.nro_factura}</td>
-                  <td>{p.proveedor_nombre || "N/A"}</td>
-                  <td>{p.fecha_emision}</td>
-                  <td>
-                    <span className={new Date(p.fecha_vencimiento) < new Date() ? "text-danger" : ""}>
-                      {p.fecha_vencimiento}
-                    </span>
-                  </td>
+                  <td>{p.proveedor}</td>
                   <td className="right bold">
-                    ${parseFloat(p.total).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    {/* Formato: $ 1.234,56 */}
+                    $ {formatCurrency(p.total)}
                   </td>
                   <td className="center">
                     <button 
@@ -110,7 +108,7 @@ const ListPurchases = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="7" className="center py-10">
+                <td colSpan="5" className="center py-10">
                   {loading ? "Cargando..." : "No se encontraron registros de compras."}
                 </td>
               </tr>
@@ -119,7 +117,6 @@ const ListPurchases = () => {
         </table>
       </div>
 
-      {/* Modales de Interacción */}
       <PurchaseFormModal 
         isOpen={isFormOpen} 
         onClose={() => setIsFormOpen(false)} 

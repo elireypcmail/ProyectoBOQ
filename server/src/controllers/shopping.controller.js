@@ -34,17 +34,16 @@ controller.createShopping = async (req, res) => {
 
     console.log(data)
 
-    // // Validaciones de datos obligatorios para el flujo de compra (Punto 2.2 - 2)
-    // if (!data.id_proveedor || !data.nro_factura || !data.id_deposito_destino || !data.items) {
-    //   return res.status(400).json({ 
-    //     status: false, 
-    //     msg: "Proveedor, Número de factura, Depósito y Productos son obligatorios." 
-    //   });
-    // }
+    // Validaciones de datos obligatorios para el flujo de compra (Punto 2.2 - 2)
+    if (!data.id_proveedor || !data.nro_factura || !data.items) {
+      return res.status(400).json({ 
+        status: false, 
+        msg: "Proveedor, Número de factura, Depósito y Productos son obligatorios." 
+      });
+    }
 
-    // const result = await ShoppingModel.createShopping(data);
-    
-    // return res.status(result.code).json(result);
+    const result = await ShoppingModel.createShopping(data);
+    return res.status(result.code).json(result);
 
   } catch (error) {
     console.error("Error en controller.createShopping:", error);
