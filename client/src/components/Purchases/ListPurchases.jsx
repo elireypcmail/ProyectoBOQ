@@ -7,16 +7,35 @@ import PurchaseDetailModal from "./Ui/PurchaseDetailModal";
 import "../../styles/components/ListZone.css";
 
 const ListPurchases = () => {
-  const { shoppings, getAllShoppings, loading } = useIncExp();
+  const { shoppings, getAllShoppings, getShoppingById, loading } = useIncExp();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPurchase, setSelectedPurchase] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  
+  // Estado local para manejar la carga individual de un detalle
+  const [fetchingId, setFetchingId] = useState(null);
 
   useEffect(() => {
     getAllShoppings();
   }, []);
+
+  // Función para obtener el detalle por ID antes de abrir el modal
+  const handleOpenDetail = async (id) => {
+    try {
+      setFetchingId(id);
+      const detailedData = await getShoppingById(id);
+      if (detailedData) {
+        setSelectedPurchase(detailedData);
+        setIsDetailOpen(true);
+      }
+    } catch (error) {
+      console.error("Error al cargar el detalle de la compra:", error);
+    } finally {
+      setFetchingId(null);
+    }
+  };
 
   const filteredPurchases = useMemo(() => {
     if (!shoppings) return [];
@@ -26,7 +45,7 @@ const ListPurchases = () => {
     );
   }, [shoppings, searchTerm]);
 
-  // Función auxiliar para formatear moneda según tus preferencias
+  // Formato: 1.250,50
   const formatCurrency = (value) => {
     return parseFloat(value).toLocaleString("es-ES", {
       minimumFractionDigits: 2,
@@ -90,18 +109,19 @@ const ListPurchases = () => {
                   <td className="bold">{p.nro_factura}</td>
                   <td>{p.proveedor}</td>
                   <td className="right bold">
-                    {/* Formato: $ 1.234,56 */}
                     $ {formatCurrency(p.total)}
                   </td>
                   <td className="center">
                     <button 
                       className="icon-btn" 
-                      onClick={() => { 
-                        setSelectedPurchase(p); 
-                        setIsDetailOpen(true); 
-                      }}
+                      disabled={fetchingId === p.id}
+                      onClick={() => handleOpenDetail(p.id)}
                     >
-                      <SlOptionsVertical size={16} />
+                      {fetchingId === p.id ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : (
+                        <SlOptionsVertical size={16} />
+                      )}
                     </button>
                   </td>
                 </tr>
@@ -126,7 +146,10 @@ const ListPurchases = () => {
       <PurchaseDetailModal 
         isOpen={isDetailOpen} 
         purchase={selectedPurchase} 
-        onClose={() => setIsDetailOpen(false)}
+        onClose={() => {
+          setIsDetailOpen(false);
+          setSelectedPurchase(null);
+        }}
         onEdit={() => { 
           setIsDetailOpen(false); 
           setIsFormOpen(true); 

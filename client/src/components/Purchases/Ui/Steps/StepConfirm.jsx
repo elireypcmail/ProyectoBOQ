@@ -129,7 +129,7 @@ const StepConfirm = ({ formData, items, totals }) => {
           <span style={{ color: '#10b981', fontWeight: '600' }}>- {formatNum(abono)}</span>
         </div>
 
-        <div className="pconf-final-row" style={{ color: '#2563eb' }}>
+        <div className="pconf-final-row" style={{ color: '#ec3137' }}>
           <span>Cargos</span>
           <span>+ {formatNum(cargos)}</span>
         </div>

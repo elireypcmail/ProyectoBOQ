@@ -65,7 +65,7 @@
     left: 14px;
     top: 50%;
     transform: translateY(-50%);
-    color: #3a86ff;
+    color: #ec3137;
     pointer-events: none;
 }
 
@@ -80,7 +80,7 @@
 }
 
 .spm-input:focus {
-    border-color: #3a86ff;
+    border-color: #ec3137;
     box-shadow: 0 0 0 4px rgba(58, 134, 255, 0.1);
 }
 
@@ -105,7 +105,7 @@
 
 .spm-product-item:hover:not(.spm-item-disabled) {
     background: #f8faff;
-    border-color: #3a86ff;
+    border-color: #ec3137;
     transform: translateY(-1px);
 }
 
@@ -126,7 +126,7 @@
 .spm-item-sku {
     font-size: 0.75rem;
     font-weight: 800;
-    color: #3a86ff;
+    color: #ec3137;
 }
 
 .spm-badge-selected {

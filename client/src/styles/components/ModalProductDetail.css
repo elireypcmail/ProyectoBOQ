@@ -102,8 +102,8 @@
 }
 
 .product-modal-tabs button.active {
-  color: #2563eb;
-  border-bottom: 3px solid #2563eb;
+  color: #ec3137;
+  border-bottom: 3px solid #ec3137;
 }
 
 .product-modal-table {
@@ -128,7 +128,7 @@
 }
 
 .btn-primary {
-  background: #2563eb;
+  background: #ec3137;
   color: #fff;
   border: none;
   padding: 0.5rem 1rem;

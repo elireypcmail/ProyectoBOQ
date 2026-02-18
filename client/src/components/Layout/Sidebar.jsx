@@ -1,10 +1,9 @@
 import React, { useState } from "react";
 import {
   Menu, X, ChevronLeft, ChevronRight, ChevronDown,
-  Package, Tags, BadgeCheck, Box, Stethoscope,
+  Package, Tags, BadgeCheck, Stethoscope,
   HeartPulse, Map, Building2, Warehouse, Users,
-  LogOut, UserPlus, FileText, Shield, UserCheck,
-  ShoppingCart, Truck, Briefcase // Nuevos iconos para administración
+  LogOut, UserPlus, Shield, ShoppingCart, Truck, Briefcase
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext"; 
 import "../../styles/layout/Sidebar.css";
@@ -18,7 +17,6 @@ const Sidebar = ({ setActiveComponent, activeComponent }) => {
   const navigate = useNavigate();
   const { logout } = useAuth();
 
-  // -------------------- MENU ITEMS ACTUALIZADO --------------------
   const menuItems = [
     { 
       name: "Gestión Productos", 
@@ -30,17 +28,15 @@ const Sidebar = ({ setActiveComponent, activeComponent }) => {
         { name: "Marcas", key: "brands", icon: <BadgeCheck size={18} /> },
       ]
     },
-
     { 
       name: "Gestión Administrativa", 
       key: "admin-group", 
-      icon: <Briefcase size={22} />, // Icono de maletín/administración
+      icon: <Briefcase size={22} />,
       children: [
         { name: "Proveedores", key: "suppliers", icon: <Truck size={18} /> },
         { name: "Compras", key: "purchases", icon: <ShoppingCart size={18} /> },
       ]
     },
-
     { 
       name: "Gestión Médica", 
       key: "medicos-group", 
@@ -50,7 +46,6 @@ const Sidebar = ({ setActiveComponent, activeComponent }) => {
         { name: "Tipos de Médico", key: "types-doctors", icon: <Tags size={18} /> }
       ]
     },
-
     { 
       name: "Gestión Clientes", 
       key: "pacientes-group", 
@@ -60,7 +55,6 @@ const Sidebar = ({ setActiveComponent, activeComponent }) => {
         { name: "Seguros", key: "insurances", icon: <Shield size={18} /> }
       ]
     },
-
     { 
       name: "Gestión Operativa", 
       key: "operativa-group", 
@@ -73,8 +67,6 @@ const Sidebar = ({ setActiveComponent, activeComponent }) => {
       ]
     },
   ];
-
-  // ... (Toda la lógica handleNavigation, toggleSubmenu, etc., se mantiene igual)
 
   const handleNavigation = (key) => {
     setActiveComponent(key);
@@ -101,32 +93,39 @@ const Sidebar = ({ setActiveComponent, activeComponent }) => {
 
   return (
     <>
+      {/* Header móvil simplificado */}
       <header className="mobile-header">
         <button className="menu-toggle" onClick={() => setIsOpen(true)}>
           <Menu size={28} />
         </button>
+        <span className="mobile-logo-text">Panel de Operaciones</span>
       </header>
 
-      <div
-        className={`sidebar-overlay ${isOpen ? "active" : ""}`}
-        onClick={() => setIsOpen(false)}
+      {/* Overlay con blur para móvil */}
+      <div 
+        className={`sidebar-overlay ${isOpen ? "active" : ""}`} 
+        onClick={() => setIsOpen(false)} 
       />
 
       <aside className={`sidebar ${isOpen ? "open" : ""} ${isCollapsed ? "collapsed" : ""}`}>
         <div className="sidebar-header">
           {showText && (
             <div className="logo-container">
-              <span style={{fontWeight: 'bold', color: '#2563eb'}}>Panel de Operaciones</span>
+              <span className="logo-text">Panel de Operaciones</span>
             </div>
           )}
 
-          <button className="collapse-btn" onClick={() => setIsCollapsed(prev => !prev)}>
-            {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+          {/* Botón de cerrar (X) estilo imagen: rojo y cuadrado */}
+          <button className="close-btn-mobile" onClick={() => setIsOpen(false)}>
+            <X size={20} />
           </button>
 
-          <button className="close-btn-mobile" onClick={() => setIsOpen(false)}>
-            <X size={24} />
-          </button>
+          {/* Botón de colapso para escritorio */}
+          {!isOpen && (
+            <button className="collapse-btn" onClick={() => setIsCollapsed(prev => !prev)}>
+              {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+            </button>
+          )}
         </div>
 
         <nav className="sidebar-nav">
@@ -140,13 +139,12 @@ const Sidebar = ({ setActiveComponent, activeComponent }) => {
                   <button
                     className={`nav-link ${activeComponent === item.key ? "active" : ""} ${hasChildren && isExpanded ? "group-open" : ""}`}
                     onClick={() => hasChildren ? toggleSubmenu(item.key) : handleNavigation(item.key)}
-                    title={isCollapsed && !isOpen ? item.name : ""}
                   >
                     <span className="nav-icon">{item.icon}</span>
                     {showText && (
                       <>
                         <span className="nav-text">{item.name}</span>
-                        {hasChildren && <span className={`chevron-icon ${isExpanded ? "rotate" : ""}`}><ChevronDown size={16} /></span>}
+                        {hasChildren && <ChevronDown size={16} className={`chevron-icon ${isExpanded ? "rotate" : ""}`} />}
                       </>
                     )}
                   </button>

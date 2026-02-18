@@ -13,7 +13,8 @@ import ProductFormModal from "../Ui/ProductFormModal";
 import ModalDetailed from "../Ui/ModalDetailed";
 import ListPrices from "./ListPrices";
 import ListLots from "./ListLots";
-import "../../styles/components/ListZone.css";
+
+import "../../styles/components/ListProd.css";
 
 const ListProducts = () => {
   const {
@@ -80,8 +81,8 @@ const ListProducts = () => {
   };
 
   return (
-    <div className="orders-container">
-      <div className="orders-header">
+    <div className="prod-container">
+      <div className="prod-header">
         <div>
           <h2>Gestión de Productos</h2>
           <p>{filteredProducts.length} productos registrados</p>
@@ -91,7 +92,7 @@ const ListProducts = () => {
         </button>
       </div>
 
-      <div className="orders-toolbar">
+      <div className="prod-toolbar">
         <div className="search-box">
           <Search size={16} />
           <input
@@ -102,8 +103,8 @@ const ListProducts = () => {
         </div>
       </div>
 
-      <div className="orders-table-wrapper">
-        <table className="orders-table">
+      <div className="prod-table-wrapper">
+        <table className="prod-table">
           <thead>
             <tr>
               <th>ID</th>
@@ -167,14 +168,14 @@ const ListProducts = () => {
 
       {/* MODAL ELIMINAR */}
       {isDeleteModalOpen && selectedProduct && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header-danger">
+        <div className="modalProd-overlay">
+          <div className="modalProd-content">
+            <div className="modalProd-header-danger">
               <AlertTriangle size={28} />
               <h3>¿Eliminar producto?</h3>
             </div>
             <p>Confirma que deseas eliminar <strong>{selectedProduct.descripcion}</strong></p>
-            <div className="modal-footer">
+            <div className="modalProd-footer">
               <button className="btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
               <button className="btn-danger" onClick={async () => {
                 await deleteProductById(selectedProduct.id);

@@ -1,144 +1,158 @@
-/* --- Root / Paleta de colores --- */
 :root {
-  --bg-main: #f0f2f5;
-  --card-bg: #ffffff;
-  --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --text-main: #1e293b;
-  --text-muted: #64748b;
-  --accent-color: #2563eb;
-  --accent-hover: #1e40af;
-  --success-color: #27ae60;
-  --error-color: #e74c3c;
+  --glass-bg: rgba(255, 255, 255, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --accent-red: #f43f5e;
+  --text-white: #ffffff;
+  --text-dark: #1a1a1a;
   --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --radius: 12px;
-  --sidebar-width: 280px;
-  --sidebar-collapsed: 88px;
-  --font-main: "Inter", sans-serif;
 }
 
-/* --- Home Page Base --- */
-.home-page {
+/* --- Layout Base --- */
+.home-layout {
+  position: relative;
   display: flex;
-  min-height: 100vh;
   width: 100vw;
-  background: var(--bg-main);
-  font-family: var(--font-main);
+  height: 100vh;
+  overflow: hidden;
 }
 
-/* --- Contenedor principal --- */
-.main-content {
+/* --- Fondos (Igual al Login) --- */
+.home-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  z-index: 1;
+  transform: scale(1.1);
+  filter: blur(8px);
+  background-image: var(--bg-desktop);
+  transition: background-image 0.5s ease-in-out;
+}
+
+.home-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 2;
+}
+
+/* --- Sidebar Container --- */
+.sidebar-container {
+  position: relative;
+  z-index: 10;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8); /* Sidebar oscuro sólido o semi */
+  backdrop-filter: blur(10px);
+  transition: var(--transition);
+}
+
+/* --- Main Viewport --- */
+.main-viewport {
+  position: relative;
+  z-index: 5;
   flex: 1;
-  padding: 2rem;
-  transition: margin-left var(--transition);
-}
-
-.content-wrapper {
-  max-width: 1280px;
-  margin: 0 auto;
-}
-
-/* --- Secciones --- */
-.section {
-  margin-bottom: 2rem;
-}
-
-.section-header {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--text-main);
-  margin-bottom: 1.5rem;
-}
-
-/* --- Grid / Tarjetas --- */
-.section-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.5rem;
-}
-
-.card {
-  background: var(--card-bg);
-  border-radius: var(--radius);
-  box-shadow: var(--card-shadow);
-  padding: 1.5rem;
-  transition: transform var(--transition), box-shadow var(--transition);
-  cursor: pointer;
-}
-
-.card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-}
-
-.card-title {
-  font-weight: 600;
-  font-size: 1.15rem;
-  color: var(--text-main);
-  margin-bottom: 0.5rem;
-}
-
-.card-text {
-  font-size: 0.95rem;
-  color: var(--text-muted);
-}
-
-/* --- Estadísticas / Widgets --- */
-.stats-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.stat-card {
-  flex: 1 1 200px;
-  background: var(--accent-color);
-  color: #fff;
-  border-radius: var(--radius);
-  padding: 1.25rem 1.5rem;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  transition: transform var(--transition);
+  overflow: hidden;
 }
 
-.stat-card:hover {
-  transform: translateY(-4px);
-  background: var(--accent-hover);
+/* --- Top Bar --- */
+.top-bar {
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  background: var(--accent-red);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  box-shadow: 0 0 10px rgba(244, 63, 94, 0.4);
+}
+
+/* --- Content Area --- */
+.content-area {
+  flex: 1;
+  padding: 1rem 2rem 2rem;
+  overflow-y: auto;
+}
+
+/* El contenedor tipo cristal para las listas */
+.glass-container {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  min-height: 80vh;
+  padding: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  color: var(--text-dark); /* Texto oscuro para legibilidad sobre el cristal claro */
+}
+
+/* --- Botón Móvil --- */
+.mobile-toggle {
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: 100;
+  background: var(--accent-red);
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: none; /* Se activa en media query */
 }
 
 /* --- Responsive --- */
-@media (max-width: 1023px) {
-  .main-content {
-    padding: 1.5rem;
+@media (max-width: 768px) {
+  .home-background {
+    background-image: var(--bg-mobile);
   }
 
-  .stats-container {
-    flex-direction: column;
+  .mobile-toggle {
+    display: flex;
   }
 
-  .section-grid {
-    grid-template-columns: 1fr;
+  .sidebar-container {
+    position: fixed;
+    left: -280px; /* Ancho del sidebar */
+  }
+
+  .sidebar-container.open {
+    left: 0;
+  }
+
+  .content-area {
+    padding: 1rem;
+    margin-top: 40px;
+  }
+
+  .top-bar {
+    padding: 1rem;
+    justify-content: flex-end;
   }
 }
 
-/* --- Scroll suave para listas largas --- */
-.main-content {
-  overflow-y: auto;
-  max-height: 100vh;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0,0,0,0.2) transparent;
+/* Personalización de Scrollbar para que se vea moderno */
+.content-area::-webkit-scrollbar {
+  width: 6px;
 }
-
-.main-content::-webkit-scrollbar {
-  width: 8px;
-}
-
-.main-content::-webkit-scrollbar-thumb {
-  background-color: rgba(0,0,0,0.2);
-  border-radius: 4px;
-}
-
-.main-content::-webkit-scrollbar-track {
-  background: transparent;
+.content-area::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
 }

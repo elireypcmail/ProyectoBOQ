@@ -16,8 +16,9 @@
 
 .pform-card {
   background: #fdfdfd;
-  width: 100%;
+  width: 80vh;
   max-width: 1300px;
+  max-height: 90vh;
   border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.1);
   overflow: hidden;
@@ -134,7 +135,7 @@
 }
 
 .center { text-align: center !important; }
-.sku-cell { font-weight: 700; color: #3a86ff; }
+.sku-cell { font-weight: 700; color: #ec3137; }
 .desc-cell { font-weight: 500; }
 
 /* --- INPUTS DINÁMICOS OPTIMIZADOS --- */
@@ -156,7 +157,7 @@
 }
 
 .table-input-dynamic:focus { 
-  border-color: #3a86ff !important; 
+  border-color: #ec3137 !important; 
   box-shadow: 0 0 0 3px rgba(58, 134, 255, 0.1); 
   background-color: #fff;
 }
@@ -193,7 +194,7 @@
 }
 
 .input-with-symbol:focus-within {
-  border-color: #3a86ff;
+  border-color: #ec3137;
   box-shadow: 0 0 0 3px rgba(58, 134, 255, 0.1);
 }
 
@@ -231,7 +232,7 @@
 }
 
 .btn-batch-row { background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; }
-.btn-edit-row { background: #f0f7ff; color: #3a86ff; border: 1px solid #cce5ff; }
+.btn-edit-row { background: #f0f7ff; color: #ec3137; border: 1px solid #cce5ff; }
 .btn-delete-row { background: #fff5f5; color: #e03131; border: 1px solid #ffc9c9; }
 
 .btn-batch-row:hover { background: #e0f2fe; }

@@ -127,7 +127,7 @@ const StepTotals = ({ totals, setTotals }) => {
                 value={displayValue(totals.monto_abonado)}
                 onChange={handleInputChange}
                 className="ptotals-input"
-                style={{ border: '1px solid #3b82f6' }}
+                style={{ border: '1px solid #ec3137' }}
               />
               <small style={{ color: "#64748b", fontSize: "0.7rem" }}>
                 * Máximo permitido (sin cargos): {formatCurrency(subtotalNetoAbonable)}
@@ -184,7 +184,7 @@ const StepTotals = ({ totals, setTotals }) => {
                  textAlign: 'right', 
                  fontSize: '2.6rem', 
                  fontWeight: '800', 
-                 color: '#3b82f6', 
+                 color: '#ec3137', 
                  lineHeight: '1',
                  marginTop: '4px'
                }}>
@@ -206,7 +206,7 @@ const StepTotals = ({ totals, setTotals }) => {
               </div>
               <div className="ptotals-summary-row">
                 <span style={{ color: '#475569' }}>Cargos ( {calculateCargoPercentage()}% )</span>
-                <span style={{ color: '#3b82f6', fontWeight: '700' }}>+ {formatCurrency(cargosAdicionales)}</span>
+                <span style={{ color: '#ec3137', fontWeight: '700' }}>+ {formatCurrency(cargosAdicionales)}</span>
               </div>
             </div>
 

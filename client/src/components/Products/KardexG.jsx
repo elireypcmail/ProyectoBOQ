@@ -4,6 +4,9 @@ import "../../styles/components/ListLots.css";
 
 const KardexG = ({ id_producto, data, onClose, isInline = false }) => {
   
+  console.log("data")
+  console.log(data)
+
   const movimientos = Array.isArray(data) ? data : (data?.data || []);
 
   // Ajustado a Dólares (USD)
@@ -42,7 +45,7 @@ const KardexG = ({ id_producto, data, onClose, isInline = false }) => {
                     {new Date(m.fecha).toLocaleDateString()}
                   </div>
                   <small style={{ color: '#94a3b8', fontSize: '0.7rem' }}>
-                    {new Date(m.fecha_creacion).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {new Date(m.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </small>
                 </td>
                 <td>

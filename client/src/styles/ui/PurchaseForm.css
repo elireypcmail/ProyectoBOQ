@@ -1,227 +1,238 @@
-/* PurchaseForm.css - Estilos del Módulo de Compras */
+/* --- Variables de Diseño --- */
+:root {
+    --pform-primary: #ec3137;
+    --pform-success: #10b981;
+    --pform-info: #6da3c7;
+    --pform-slate-900: #0f172a;
+    --pform-slate-600: #475569;
+    --pform-slate-200: #e2e8f0;
+    --pform-slate-50: #f8fafc;
+    --pform-bg-overlay: rgba(15, 23, 42, 0.6);
+}
 
-/* --- Contenedores Principales --- */
+/* --- Contenedor Principal (Modal) --- */
 .pform-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  z-index: 1000;
-  padding: 40px 20px;
-  overflow-y: auto;
+    position: fixed;
+    inset: 0;
+    background: var(--pform-bg-overlay);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center; /* Centrado vertical */
+    justify-content: center;
+    z-index: 2000;
+    padding: 20px;
 }
 
 .pform-card {
-  background: #fdfdfd;
-  width: 100%;
-  max-width: 1300px;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-  overflow: hidden;
-  animation: pform-slideIn 0.3s ease-out;
+    background: #ffffff;
+    width: 100%;
+    max-width: 1300px;
+    height: 95vh; /* Ocupa casi todo el alto */
+    max-height: 900px;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column; /* Estructura vertical fija */
+    overflow: hidden;
+    animation: pform-slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.duplicate-warning {
-  color: #dc3545;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
-  margin-top: 10px;
-  justify-content: center;
-}
-
-/* --- Cabecera --- */
+/* --- Cabecera Fija --- */
 .pform-header-main {
-  padding: 30px 40px 10px 40px;
-  position: relative;
+    padding: 25px 40px;
+    background: #fff;
+    border-bottom: 1px solid var(--pform-slate-200);
+    flex-shrink: 0;
 }
 
 .pform-header-main h1 {
-  font-size: 2.2rem;
-  font-weight: 800;
-  color: #000;
-  margin: 0;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--pform-slate-900);
+    margin: 0;
 }
 
 .pform-header-main p {
-  color: #777;
-  font-size: 1.1rem;
-  margin-top: 5px;
+    color: var(--pform-slate-600);
+    font-size: 1rem;
+    margin: 4px 0 0 0;
 }
 
 .pform-close-x {
-  position: absolute;
-  top: 30px;
-  right: 40px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #999;
-  transition: color 0.2s;
+    position: absolute;
+    top: 25px;
+    right: 25px;
+    background: var(--pform-slate-50);
+    border: none;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    cursor: pointer;
+    color: var(--pform-slate-600);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
 }
+.pform-close-x:hover { background: #fee2e2; color: var(--pform-primary); }
 
-.pform-close-x:hover { color: #333; }
+/* --- Cuerpo con Scroll --- */
+.pform-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 40px;
+    background: #fff;
+    scrollbar-width: thin;
+    scrollbar-color: var(--pform-slate-200) transparent;
+}
 
 /* --- Stepper (Barra de Progreso) --- */
 .pform-stepper-container {
-  margin: 20px 40px;
-  padding: 20px;
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  background: #fff;
+    margin-bottom: 30px;
+    padding: 20px;
+    border: 1px solid var(--pform-slate-200);
+    border-radius: 12px;
+    background: var(--pform-slate-50);
 }
 
 .pform-stepper-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
 }
 
 .step-badge {
-  background: #3a86ff;
-  color: white;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.85rem;
-  font-weight: bold;
+    background: var(--pform-primary);
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
 }
 
-.step-percentage {
-  margin-left: auto;
-  color: #3a86ff;
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.pform-progress-bar {
-  height: 6px;
-  background: #eee;
-  border-radius: 3px;
-}
-
-.progress-fill {
-  height: 100%;
-  background: #3a86ff;
-  border-radius: 3px;
-  transition: width 0.4s ease;
-}
-
-/* --- Cuerpo y Formularios --- */
-.pform-body { padding: 0 40px 30px 40px; }
-
+/* --- Grid de Formulario Responsive --- */
 .pform-form-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+    display: grid;
+    /* 4 columnas en desktop, 2 en tablets, 1 en móvil */
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
 }
 
 .pform-group { display: flex; flex-direction: column; gap: 8px; }
-.pform-group label { font-size: 0.9rem; font-weight: 700; color: #000; }
 
-.pform-group input, .pform-group select {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 0.95rem;
+.pform-group label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--pform-slate-900);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-/* --- Tablas y Acciones --- */
-.table-responsive-wrapper { width: 100%; overflow-x: auto; }
+.pform-group input, 
+.pform-group select {
+    padding: 12px;
+    border: 1.5px solid var(--pform-slate-200);
+    border-radius: 10px;
+    font-size: 1rem; /* Evita zoom en iOS */
+    transition: all 0.2s;
+}
+
+.pform-group input:focus {
+    border-color: var(--pform-primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(236, 49, 55, 0.1);
+}
+
+/* --- Tabla de Items --- */
+.table-responsive-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--pform-slate-200);
+    border-radius: 12px;
+    margin-top: 20px;
+}
 
 .pform-items-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
+    width: 100%;
+    min-width: 800px; /* Asegura que no se colapse la info */
+    border-collapse: collapse;
 }
 
 .pform-items-table th {
-  text-align: left;
-  padding: 12px;
-  border-bottom: 2px solid #eee;
-  color: #666;
-  font-size: 0.85rem;
+    background: var(--pform-slate-50);
+    padding: 15px;
+    text-align: left;
+    color: var(--pform-slate-600);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--pform-slate-200);
 }
 
 .pform-items-table td {
-  padding: 15px 12px;
-  border-bottom: 1px solid #f0f0f0;
+    padding: 15px;
+    border-bottom: 1px solid var(--pform-slate-100);
 }
 
-.btn-add-new-product {
-  background-color: #6da3c7;
-  color: white;
-  border: none;
-  padding: 12px 25px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* --- Footer --- */
+/* --- Footer Fijo --- */
 .pform-footer-actions-alt {
-  padding: 25px 40px;
-  background: #fff;
-  border-top: 1px solid #eee;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+    padding: 20px 40px;
+    background: #fff;
+    border-top: 1px solid var(--pform-slate-200);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
 }
 
 .nav-buttons { display: flex; gap: 12px; }
 
-.btn-next-step {
-  padding: 12px 35px;
-  background-color: #3a86ff;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
+/* Botones con estilo moderno */
+.btn-next-step, .btn-finalizar-compra, .btn-add-new-product {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s;
 }
 
-.btn-next-step.disabled {
-  background-color: #b3d1e4;
-  cursor: not-allowed;
-}
+.btn-add-new-product { background: var(--pform-info); color: white; }
+.btn-next-step { background: var(--pform-primary); color: white; }
+.btn-finalizar-compra { background: var(--pform-success); color: white; }
 
-.btn-finalizar-compra {
-  padding: 12px 40px;
-  background-color: #10b981;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
+.btn-next-step:hover:not(.disabled) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(236, 49, 55, 0.2); }
 
-/* Animaciones */
-@keyframes pform-slideIn { 
-  from { opacity: 0; transform: translateY(20px); } 
-  to { opacity: 1; transform: translateY(0); } 
-}
-
-/* Media Queries */
+/* --- Media Queries (Móvil) --- */
 @media (max-width: 768px) {
-  .pform-form-grid { grid-template-columns: 1fr; }
-  .pform-footer-actions-alt { flex-direction: column-reverse; gap: 15px; }
-  .nav-buttons { width: 100%; flex-direction: column; }
+    .pform-card { height: 100vh; max-height: 100vh; border-radius: 0; }
+    .pform-header-main, .pform-body, .pform-footer-actions-alt { padding: 15px 20px; }
+    
+    .pform-header-main h1 { font-size: 1.4rem; }
+    
+    .pform-footer-actions-alt {
+        flex-direction: column-reverse;
+        gap: 15px;
+    }
+    
+    .nav-buttons, .btn-next-step, .btn-finalizar-compra {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .pform-form-grid {
+        grid-template-columns: 1fr; /* Forzar una sola columna */
+    }
+}
+
+@keyframes pform-slideIn { 
+    from { opacity: 0; transform: translateY(30px); } 
+    to { opacity: 1; transform: translateY(0); } 
 }
