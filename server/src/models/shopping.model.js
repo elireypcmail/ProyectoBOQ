@@ -76,19 +76,25 @@ static async getShoppingById(id) {
         c.fecha_emision,
         c.dias_plazo,
         c.fecha_vencimiento,
-        -- Estructura de totales_cargos
+
+        -- ==============================
+        -- Totales y cargos
+        -- ==============================
         json_build_object(
           'subtotal', c.subtotal1,
           'porcentaje_descuento_global', c.descuentoPor,
           'monto_descuento_fijo', c.descuento,
-          'monto_descuento_extra', 0, -- O el campo correspondiente si existe
+          'monto_descuento_extra', 0,
           'cargos_monto', c.cargo,
           'monto_abonado', c.abonado,
           'total', c.total,
           'saldo_pendiente', (c.total - c.abonado)
         ) AS totales_cargos,
-        -- Estructura de items (Array)
-        (
+
+        -- ==============================
+        -- Items de la compra
+        -- ==============================
+        COALESCE((
           SELECT json_agg(
             json_build_object(
               'id_producto', i.id_producto,
@@ -104,35 +110,49 @@ static async getShoppingById(id) {
           FROM compras_detalle cd
           INNER JOIN inventario i ON cd.id_inventario = i.id
           WHERE cd.id_compra = c.id
-        ) AS items,
-        -- Estructura de detalle_lotes (Array plano de todos los lotes de la compra)
-        (
+        ), '[]') AS items,
+
+        -- ==============================
+        -- Lotes de la compra
+        -- ==============================
+        COALESCE((
           SELECT json_agg(
             json_build_object(
               'id_producto', l.id_producto,
               'Producto', cd.descripcion,
               'nro_lote', l.nro_lote,
               'id_deposito', l.id_deposito,
+              'Deposito', d.nombre,
               'fecha_vencimiento', l.fecha_vencimiento,
               'cantidad', cdl.cantidad,
               'costo_lote', cd.costo_unitario_final
             )
+            ORDER BY l.id_producto, l.nro_lote
           )
           FROM compras_detalle cd
           INNER JOIN compras_detalle_lote cdl ON cd.id = cdl.id_detalle
           INNER JOIN lotes l ON cdl.id_lote = l.id
+          INNER JOIN depositos d ON l.id_deposito = d.id
           WHERE cd.id_compra = c.id
-        ) AS detalle_lotes
+        ), '[]') AS detalle_lotes
+
       FROM compras c
       WHERE c.id = $1
     `, [id]);
 
     if (result.rows.length === 0) {
-      return { status: false, code: 404, msg: "Compra no encontrada" };
+      return { 
+        status: false, 
+        code: 404, 
+        msg: "Compra no encontrada" 
+      };
     }
 
-    // Retornamos el primer registro con el formato exacto solicitado
-    return { status: true, code: 200, data: result.rows[0] };
+    return { 
+      status: true, 
+      code: 200, 
+      data: result.rows[0] 
+    };
 
   } catch (error) {
     console.error("Error en getShoppingById:", error);

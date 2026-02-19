@@ -5,6 +5,8 @@ import "../../../styles/ui/PurchaseDetailModal.css";
 const PurchaseDetailModal = ({ isOpen, purchase, onClose }) => {
   if (!isOpen || !purchase) return null;
 
+  console.log(purchase)
+
   // --- 1. HELPERS DE FORMATEO ---
   const safeParse = (val) => {
     if (val === null || val === undefined || val === "" || val === false) return 0;
@@ -149,7 +151,7 @@ const PurchaseDetailModal = ({ isOpen, purchase, onClose }) => {
                             </span>
                           </td>
                           <td className="pdm-lote-text">
-                            Depósito {lote.id_deposito}
+                            {lote.Deposito}
                           </td>
                           <td className="pdm-text-center pdm-lote-text">
                             {formatNum(lote.cantidad)}
