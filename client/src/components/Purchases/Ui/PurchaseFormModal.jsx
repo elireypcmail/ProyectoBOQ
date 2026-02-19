@@ -14,6 +14,7 @@ import StepInfo from "./Steps/StepInfo";
 import StepProducts from "./Steps/StepProducts";
 import StepTotals from "./Steps/StepTotals";
 import StepConfirm from "./Steps/StepConfirm";
+import ModalConfirm from "./ModalConfirm";
 
 import ProductFormModal from "../../Ui/ProductFormModal";
 import BatchModal from "./SubModals/BatchModal";
@@ -67,6 +68,9 @@ const PurchaseFormModal = ({ isOpen, onClose, initialData }) => {
   const [totals, setTotals] = useState(initialTotalsState);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Estado para controlar el nuevo modal de éxito
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isCreateProductOpen, setIsCreateProductOpen] = useState(false);
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
@@ -95,114 +99,67 @@ const PurchaseFormModal = ({ isOpen, onClose, initialData }) => {
     return parseFloat(cleanVal) || 0;
   };
 
-  // useEffect(() => {
-  //   const round = (num, dec = 2) => {
-  //     const factor = Math.pow(10, dec);
-  //     return Math.round((num + Number.EPSILON) * factor) / factor;
-  //   };
-
-  //   const montoCargosTotales = safeParse(totals.cargos_monto);
-  //   const montoDescFijo = safeParse(totals.monto_descuento_fijo);
-
-  //   const subtotalBruto = items.reduce(
-  //     (acc, item) => acc + safeParse(item.cantidad) * safeParse(item.costo_unitario),
-  //     0
-  //   );
-
-  //   const finalTotal = round(subtotalBruto + montoCargosTotales - montoDescFijo);
-
-  //   setTotals((prev) => ({
-  //     ...prev,
-  //     subtotal: round(subtotalBruto),
-  //     total: finalTotal,
-  //     porcentaje_cargo_etiqueta: subtotalBruto > 0 ? (montoCargosTotales / subtotalBruto) * 100 : 0,
-  //     porcentaje_desc_etiqueta: subtotalBruto > 0 ? (montoDescFijo / subtotalBruto) * 100 : 0,
-  //   }));
-
-  //   const calculatedItems = items.map((item) => {
-  //     const qty = safeParse(item.cantidad);
-  //     const price = safeParse(item.costo_unitario);
-  //     const itemSubtotal = qty * price;
-  //     const proporcion = subtotalBruto > 0 ? itemSubtotal / subtotalBruto : 0;
-  //     const descUnitario = qty > 0 ? (montoDescFijo * proporcion) / qty : 0;
-  //     const cargoUnitario = qty > 0 ? (montoCargosTotales * proporcion) / qty : 0;
-  //     const precioConDescuento = price - descUnitario;
-  //     const costoFinal = precioConDescuento + cargoUnitario;
-
-  //     return {
-  //       ...item,
-  //       itemSubtotal: round(itemSubtotal),
-  //       descuentoUnitario: round(descUnitario, 4),
-  //       cargoUnitario: round(cargoUnitario, 4),
-  //       precioConDescuento: round(precioConDescuento, 4),
-  //       costo_final: round(costoFinal, 4),
-  //     };
-  //   });
-
-  //   setProcessedItems(calculatedItems);
-  // }, [items, totals.cargos_monto, totals.monto_descuento_fijo]);
-
-useEffect(() => {
-  const round = (num, dec = 2) => {
-    const factor = Math.pow(10, dec);
-    return Math.round((num + Number.EPSILON) * factor) / factor;
-  };
-
-  // 1️⃣ Obtener valores de entrada limpios
-  const montoCargosTotales = safeParse(totals.cargos_monto);
-  const montoDescFijo = safeParse(totals.monto_descuento_fijo);
-
-  // 2️⃣ Calcular Subtotal Bruto (Suma de items sin nada extra)
-  const subtotalBruto = items.reduce(
-    (acc, item) => acc + (safeParse(item.cantidad) * safeParse(item.costo_unitario)),
-    0
-  );
-
-  // 3️⃣ Definir la base abonable (Subtotal - Descuento) y el Total Final
-  const subtotalNeto = round(subtotalBruto - montoDescFijo);
-  const finalTotal = round(subtotalNeto + montoCargosTotales);
-
-  // 4️⃣ Actualizar el estado global de totales
-  setTotals((prev) => ({
-    ...prev,
-    subtotal: round(subtotalBruto),
-    subtotal_neto: subtotalNeto, // <--- Importante: Base para limitar el abono
-    total: finalTotal,           // Total final de la operación (Saldo inicial)
-    porcentaje_cargo_etiqueta: subtotalBruto > 0 ? (montoCargosTotales / subtotalBruto) * 100 : 0,
-    porcentaje_desc_etiqueta: subtotalBruto > 0 ? (montoDescFijo / subtotalBruto) * 100 : 0,
-  }));
-
-  // 5️⃣ Prorratear descuentos y cargos a cada producto
-  const calculatedItems = items.map((item) => {
-    const qty = safeParse(item.cantidad);
-    const price = safeParse(item.costo_unitario);
-    const itemSubtotal = qty * price;
-
-    // Calculamos la proporción de este item sobre el total para distribuir valores
-    const proporcion = subtotalBruto > 0 ? itemSubtotal / subtotalBruto : 0;
-
-    // Distribución proporcional
-    const descUnitario = qty > 0 ? (montoDescFijo * proporcion) / qty : 0;
-    const cargoUnitario = qty > 0 ? (montoCargosTotales * proporcion) / qty : 0;
-
-    // Cálculos de costo por unidad
-    const precioConDescuento = price - descUnitario;
-    const costoFinal = precioConDescuento + cargoUnitario; // El costo real que va al inventario
-
-    return {
-      ...item,
-      itemSubtotal: round(itemSubtotal),
-      descuentoUnitario: round(descUnitario, 4),
-      cargoUnitario: round(cargoUnitario, 4),
-      precioConDescuento: round(precioConDescuento, 4),
-      costo_final: round(costoFinal, 4),
+  useEffect(() => {
+    const round = (num, dec = 2) => {
+      const factor = Math.pow(10, dec);
+      return Math.round((num + Number.EPSILON) * factor) / factor;
     };
-  });
 
-  setProcessedItems(calculatedItems);
+    // 1️⃣ Obtener valores de entrada limpios
+    const montoCargosTotales = safeParse(totals.cargos_monto);
+    const montoDescFijo = safeParse(totals.monto_descuento_fijo);
 
-  // Dependencias: Se dispara cuando cambian items, cargos o el descuento manual
-}, [items, totals.cargos_monto, totals.monto_descuento_fijo]);
+    // 2️⃣ Calcular Subtotal Bruto (Suma de items sin nada extra)
+    const subtotalBruto = items.reduce(
+      (acc, item) => acc + (safeParse(item.cantidad) * safeParse(item.costo_unitario)),
+      0
+    );
+
+    // 3️⃣ Definir la base abonable (Subtotal - Descuento) y el Total Final
+    const subtotalNeto = round(subtotalBruto - montoDescFijo);
+    const finalTotal = round(subtotalNeto + montoCargosTotales);
+
+    // 4️⃣ Actualizar el estado global de totales
+    setTotals((prev) => ({
+      ...prev,
+      subtotal: round(subtotalBruto),
+      subtotal_neto: subtotalNeto, // <--- Importante: Base para limitar el abono
+      total: finalTotal,           // Total final de la operación (Saldo inicial)
+      porcentaje_cargo_etiqueta: subtotalBruto > 0 ? (montoCargosTotales / subtotalBruto) * 100 : 0,
+      porcentaje_desc_etiqueta: subtotalBruto > 0 ? (montoDescFijo / subtotalBruto) * 100 : 0,
+    }));
+
+    // 5️⃣ Prorratear descuentos y cargos a cada producto
+    const calculatedItems = items.map((item) => {
+      const qty = safeParse(item.cantidad);
+      const price = safeParse(item.costo_unitario);
+      const itemSubtotal = qty * price;
+
+      // Calculamos la proporción de este item sobre el total para distribuir valores
+      const proporcion = subtotalBruto > 0 ? itemSubtotal / subtotalBruto : 0;
+
+      // Distribución proporcional
+      const descUnitario = qty > 0 ? (montoDescFijo * proporcion) / qty : 0;
+      const cargoUnitario = qty > 0 ? (montoCargosTotales * proporcion) / qty : 0;
+
+      // Cálculos de costo por unidad
+      const precioConDescuento = price - descUnitario;
+      const costoFinal = precioConDescuento + cargoUnitario; // El costo real que va al inventario
+
+      return {
+        ...item,
+        itemSubtotal: round(itemSubtotal),
+        descuentoUnitario: round(descUnitario, 4),
+        cargoUnitario: round(cargoUnitario, 4),
+        precioConDescuento: round(precioConDescuento, 4),
+        costo_final: round(costoFinal, 4),
+      };
+    });
+
+    setProcessedItems(calculatedItems);
+
+    // Dependencias: Se dispara cuando cambian items, cargos o el descuento manual
+  }, [items, totals.cargos_monto, totals.monto_descuento_fijo]);
 
   /* ===============================
       VALIDACIONES Y HANDLERS
@@ -298,7 +255,8 @@ useEffect(() => {
         if (getAllProducts) await getAllProducts(); 
         if (getAllShoppings) await getAllShoppings(); // Refresca ListPurchases
         
-        handleClose();
+        // Disparamos el modal de éxito en lugar de cerrar el formulario abruptamente
+        setShowSuccessModal(true);
       } else {
         alert("Error al registrar: " + (res.error || res.msg || "Error desconocido"));
       }
@@ -459,6 +417,17 @@ useEffect(() => {
         }}
         categories={categories}
         brands={brands}
+      />
+      
+      {/* Nuevo Modal de Éxito Integrado */}
+      <ModalConfirm
+        isOpen={showSuccessModal}
+        onClose={() => {
+          setShowSuccessModal(false);
+          handleClose(); // Cierra todo el modal de compras tras aceptar
+        }}
+        title="Compra Registrada"
+        message="La compra ha sido cargada al sistema y el inventario actualizado exitosamente."
       />
     </div>
   );
