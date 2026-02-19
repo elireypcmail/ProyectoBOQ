@@ -65,12 +65,12 @@
     color: #ec4e53;
 }
 
-/* --- Body (Ajustado para corregir visibilidad) --- */
+/* --- Body --- */
 .pdm-modal-body {
     padding: 25px;
     max-height: 65vh;
     overflow-y: auto;
-    display: block; /* Cambiado a block para asegurar flujo de tablas */
+    display: block;
 }
 
 /* --- Grid de Información --- */
@@ -112,7 +112,7 @@
     text-overflow: ellipsis;
 }
 
-/* --- Tablas (Corrección Detalle de Mercancía) --- */
+/* --- Tablas (General) --- */
 .pdm-section-title {
     display: flex;
     align-items: center;
@@ -137,6 +137,7 @@
     margin-bottom: 25px;
 }
 
+/* --- Tabla principal productos --- */
 .pdm-main-table {
     width: 100%;
     border-collapse: collapse;
@@ -161,11 +162,6 @@
     vertical-align: middle;
 }
 
-.pdm-row-product {
-    background-color: #ffffff;
-    transition: background 0.2s;
-}
-
 .pdm-row-product:hover {
     background-color: #f8fafc;
 }
@@ -176,55 +172,73 @@
     max-width: 300px;
 }
 
-.pdm-text-center { text-align: center; }
-
-/* --- Sub-tabla de Lotes (Indentada y Clara) --- */
-.pdm-row-subtable td {
-    background-color: #f8fafc;
-    padding: 0 !important;
+.pdm-text-center {
+    text-align: center;
 }
 
-.pdm-subtable-wrapper {
-    padding: 10px 15px 15px 50px;
-}
+/* ==========================================================
+   NUEVA TABLA INDEPENDIENTE DE LOTES
+   ========================================================== */
 
-.pdm-lotes-table {
+.pdm-lotes-main-table {
     width: 100%;
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    border-spacing: 0;
-    overflow: hidden;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    min-width: 750px;
 }
 
-.pdm-lotes-table th {
-    background: #ffffff;
-    color: #94a3b8;
-    font-size: 0.65rem;
-    padding: 8px;
+.pdm-lotes-main-table th {
+    padding: 12px 15px;
+    background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+    text-align: left;
+    font-weight: 700;
+    color: #64748b;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    border-bottom: 2px solid #e2e8f0;
+    letter-spacing: 0.5px;
+}
+
+.pdm-lotes-main-table td {
+    padding: 12px 15px;
     border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+    color: #475569;
 }
 
-.pdm-lotes-table td {
-    padding: 8px 12px;
-    font-size: 0.8rem;
-    border-bottom: 1px solid #f8fafc;
+.pdm-lote-row-main:hover {
+    background-color: #f8fafc;
 }
 
 .pdm-lote-tag {
     font-family: 'JetBrains Mono', monospace;
     font-weight: 700;
     color: #ec4e53;
+    background: #fff1f2;
+    border: 1px solid #ffe4e6;
+    padding: 4px 8px;
+    border-radius: 6px;
+    display: inline-block;
+    font-size: 0.8rem;
+}
+
+.pdm-lote-text {
+    font-weight: 500;
+    color: #475569;
 }
 
 .pdm-status-pill {
     background: #ecfdf5;
     color: #10b981;
-    padding: 2px 8px;
+    padding: 4px 10px;
     border-radius: 12px;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     font-weight: 700;
+    border: 1px solid #d1fae5;
 }
+
+/* ========================================================== */
+
 
 /* --- Panel de Totales --- */
 .pdm-footer-flex {
@@ -320,7 +334,7 @@
     .pdm-summary-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .pdm-modal-content {
         width: 100%;
         height: 100%;
@@ -331,10 +345,6 @@
     .pdm-modal-body {
         max-height: none;
         padding: 15px;
-    }
-
-    .pdm-subtable-wrapper {
-        padding: 10px 10px 15px 15px;
     }
 
     .pdm-totals-panel {

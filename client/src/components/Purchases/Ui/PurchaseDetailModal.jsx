@@ -1,5 +1,5 @@
 import React from "react";
-import { X, FileText, Trash2, Calendar, Package, Hash, Truck } from "lucide-react";
+import { X, FileText, Calendar, Package, Hash, Truck, Layers } from "lucide-react";
 import "../../../styles/ui/PurchaseDetailModal.css"; 
 
 const PurchaseDetailModal = ({ isOpen, purchase, onClose }) => {
@@ -23,10 +23,9 @@ const PurchaseDetailModal = ({ isOpen, purchase, onClose }) => {
 
   const formatNum = (val) => {
     const num = safeParse(val);
-    // Configuración para decimales con "," y miles con "."
-    return num.toLocaleString('de-DE', { 
-      minimumFractionDigits: 2, 
-      maximumFractionDigits: 2 
+    return num.toLocaleString("de-DE", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     });
   };
 
@@ -39,13 +38,13 @@ const PurchaseDetailModal = ({ isOpen, purchase, onClose }) => {
   const descuento = safeParse(totals.monto_descuento_fijo);
   const cargos = safeParse(totals.cargos_monto);
   const abono = safeParse(totals.monto_abonado);
-  
+
   const totalFacturaNeto = subtotalBruto - descuento;
   const saldoPendiente = totalFacturaNeto - abono + cargos;
 
   return (
     <div className="pdm-modal-overlay">
-      <div className="pdm-modal-content" style={{ maxWidth: '900px', width: '95%', padding: 0 }}>
+      <div className="pdm-modal-content" style={{ maxWidth: "900px", width: "95%", padding: 0 }}>
         
         {/* HEADER */}
         <div className="pdm-modal-header">
@@ -80,12 +79,14 @@ const PurchaseDetailModal = ({ isOpen, purchase, onClose }) => {
             </div>
           </div>
 
-          {/* TABLA DE PRODUCTOS Y LOTES */}
+          {/* ============================= */}
+          {/* TABLA DE PRODUCTOS */}
+          {/* ============================= */}
           <div className="pdm-section-title">
             <Package size={18} />
             <h4>Detalle de Mercancía</h4>
           </div>
-          
+
           <div className="pdm-table-container">
             <table className="pdm-main-table">
               <thead>
@@ -97,56 +98,76 @@ const PurchaseDetailModal = ({ isOpen, purchase, onClose }) => {
                 </tr>
               </thead>
               <tbody>
-                {items.map((item, index) => {
-                  const itemLotes = lotes.filter(l => l.id_producto === item.id_producto);
-
-                  return (
-                    <React.Fragment key={`prod-${index}`}>
-                      <tr className="pdm-row-product">
-                        <td className="pdm-cell-desc">{item.Producto}</td>
-                        <td className="pdm-text-center">{formatNum(item.Cant)}</td>
-                        <td className="pdm-text-center">$ {formatNum(item.Costo_Base)}</td>
-                        <td className="pdm-text-center">$ {formatNum(item.Subtotal_Linea)}</td>
-                      </tr>
-
-                      {itemLotes.length > 0 && (
-                        <tr className="pdm-row-subtable">
-                          <td colSpan="4">
-                            <div className="pdm-subtable-wrapper">
-                              <table className="pdm-lotes-table">
-                                <thead>
-                                  <tr>
-                                    <th>LOTE</th>
-                                    <th>DEPÓSITO</th>
-                                    <th className="pdm-text-center">CANT.</th>
-                                    <th className="pdm-text-center">VENC.</th>
-                                    <th className="pdm-text-center">ESTADO</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {itemLotes.map((lote, lIdx) => (
-                                    <tr key={`lote-${lIdx}`}>
-                                      <td className="pdm-lote-tag">#{lote.nro_lote}</td>
-                                      <td>Deposito {lote.id_deposito}</td>
-                                      <td className="pdm-text-center">{formatNum(lote.cantidad)}</td>
-                                      <td className="pdm-text-center">{formatDate(lote.fecha_vencimiento)}</td>
-                                      <td className="pdm-text-center">
-                                        <span className="pdm-status-pill">Cargado</span>
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  );
-                })}
+                {items.map((item, index) => (
+                  <tr key={`prod-${index}`} className="pdm-row-product">
+                    <td className="pdm-cell-desc">{item.Producto}</td>
+                    <td className="pdm-text-center">{formatNum(item.Cant)}</td>
+                    <td className="pdm-text-center">$ {formatNum(item.Costo_Base)}</td>
+                    <td className="pdm-text-center">$ {formatNum(item.Subtotal_Linea)}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
+
+          {/* ============================= */}
+          {/* SECCIÓN INDEPENDIENTE DE LOTES */}
+          {/* ============================= */}
+          {lotes.length > 0 && (
+            <>
+              <div className="pdm-section-title">
+                <Layers size={18} />
+                <h4>Listado de Lotes</h4>
+              </div>
+
+              <div className="pdm-table-container">
+                <table className="pdm-lotes-main-table">
+                  <thead>
+                    <tr>
+                      <th>PRODUCTO</th>
+                      <th>LOTE</th>
+                      <th>DEPÓSITO</th>
+                      <th className="pdm-text-center">CANTIDAD</th>
+                      <th className="pdm-text-center">VENCIMIENTO</th>
+                      <th className="pdm-text-center">ESTADO</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {lotes.map((lote, index) => {
+                      const producto = items.find(
+                        (p) => p.id_producto === lote.id_producto
+                      );
+
+                      return (
+                        <tr key={`lote-main-${index}`} className="pdm-lote-row-main">
+                          <td className="pdm-lote-text">
+                            {producto?.Producto || "-"}
+                          </td>
+                          <td>
+                            <span className="pdm-lote-tag">
+                              #{lote.nro_lote}
+                            </span>
+                          </td>
+                          <td className="pdm-lote-text">
+                            Depósito {lote.id_deposito}
+                          </td>
+                          <td className="pdm-text-center pdm-lote-text">
+                            {formatNum(lote.cantidad)}
+                          </td>
+                          <td className="pdm-text-center pdm-lote-text">
+                            {formatDate(lote.fecha_vencimiento)}
+                          </td>
+                          <td className="pdm-text-center">
+                            <span className="pdm-status-pill">Cargado</span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
 
           {/* PANEL DE TOTALES */}
           <div className="pdm-footer-flex">
@@ -155,7 +176,7 @@ const PurchaseDetailModal = ({ isOpen, purchase, onClose }) => {
                 <span>Subtotal</span>
                 <span>$ {formatNum(subtotalBruto)}</span>
               </div>
-              
+
               <div className="pdm-total-line pdm-text-danger">
                 <span>Descuento</span>
                 <span>- $ {formatNum(descuento)}</span>
@@ -165,7 +186,9 @@ const PurchaseDetailModal = ({ isOpen, purchase, onClose }) => {
 
               <div className="pdm-total-line pdm-main-total">
                 <span>TOTAL FACTURA</span>
-                <span className="pdm-price-large">$ {formatNum(totalFacturaNeto)}</span>
+                <span className="pdm-price-large">
+                  $ {formatNum(totalFacturaNeto)}
+                </span>
               </div>
 
               <div className="pdm-divider"></div>
@@ -191,9 +214,10 @@ const PurchaseDetailModal = ({ isOpen, purchase, onClose }) => {
         </div>
 
         <div className="pdm-modal-footer">
-          <button className="pdm-btn-close" onClick={onClose}>Cerrar Detalle</button>
+          <button className="pdm-btn-close" onClick={onClose}>
+            Cerrar Detalle
+          </button>
         </div>
-
       </div>
     </div>
   );
