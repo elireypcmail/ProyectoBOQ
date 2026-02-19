@@ -1,17 +1,22 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useHealth } from "../../context/HealtContext";
-// 1. Importar Select
 import Select from "react-select";
 import {
   Search,
+  ChevronLeft,
+  ChevronRight,
   Pencil,
   Trash2,
   Save,
   AlertTriangle,
-  Plus
+  Plus,
+  User,
+  Stethoscope,
+  FileText,
+  X,
+  Settings2
 } from "lucide-react";
-import { SlOptionsVertical } from "react-icons/sl";
-import "../../styles/components/ModalList.css";
+import "../../styles/components/ListStories.css";
 
 const ListStories = ({ pacienteId }) => {
   const {
@@ -35,7 +40,6 @@ const ListStories = ({ pacienteId }) => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   const [selectedPacienteId, setSelectedPacienteId] = useState(pacienteId || "");
   const [selectedMedicoId, setSelectedMedicoId] = useState("");
@@ -51,7 +55,7 @@ const ListStories = ({ pacienteId }) => {
     }
   }, [pacienteId]);
 
-  // 2. Mapear opciones para react-select
+  // Mapeo para react-select
   const pacienteOptions = useMemo(() => 
     pacientes.map(p => ({ value: p.id, label: p.nombre })), 
   [pacientes]);
@@ -60,14 +64,14 @@ const ListStories = ({ pacienteId }) => {
     medicos.map(m => ({ value: m.id, label: m.nombre })), 
   [medicos]);
 
-  // Estilos personalizados para que coincida con tu CSS (opcional)
   const customSelectStyles = {
-    control: (base) => ({
+    control: (base, state) => ({
       ...base,
-      marginBottom: '1rem',
-      borderRadius: '8px',
-      borderColor: '#e2e8f0',
-      minHeight: '45px'
+      borderRadius: '10px',
+      borderColor: state.isFocused ? 'var(--ins-primary)' : '#e2e8f0',
+      minHeight: '45px',
+      boxShadow: state.isFocused ? '0 0 0 3px rgba(236, 78, 83, 0.1)' : 'none',
+      '&:hover': { borderColor: 'var(--ins-primary)' }
     })
   };
 
@@ -77,7 +81,7 @@ const ListStories = ({ pacienteId }) => {
     setEditDetalle("");
   };
 
-  // -------------------- Filtrado --------------------
+  // Filtrado
   const filteredHistorias = useMemo(() => {
     const historiasArray = Array.isArray(historias) ? historias : historias ? [historias] : [];
     return historiasArray
@@ -85,23 +89,21 @@ const ListStories = ({ pacienteId }) => {
       .filter(h => h.detalle?.toUpperCase().includes(searchTerm.toUpperCase()));
   }, [historias, searchTerm, pacienteId]);
 
+  const totalPages = Math.ceil(filteredHistorias.length / itemsPerPage);
   const currentHistorias = filteredHistorias.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  // -------------------- Acciones --------------------
+  const getPacienteNombre = (id) => pacientes.find(p => p.id === id)?.nombre || "Paciente no encontrado";
+  const getMedicoNombre = (id) => medicos.find(m => m.id === id)?.nombre || "Médico no asignado";
+
   const openEditModal = (historia) => {
     setSelectedHistoria(historia);
     setSelectedPacienteId(historia.id_paciente);
     setSelectedMedicoId(historia.id_medico);
     setEditDetalle(historia.detalle);
     setIsEditModalOpen(true);
-  };
-
-  const openDeleteModal = (historia) => {
-    setSelectedHistoria(historia);
-    setIsDeleteModalOpen(true);
   };
 
   const handleCreate = async () => {
@@ -113,7 +115,6 @@ const ListStories = ({ pacienteId }) => {
     });
     setIsCreateModalOpen(false);
     resetForm();
-    pacienteId ? getHistoriasByPacientes(pacienteId) : getAllHistorias();
   };
 
   const handleUpdate = async () => {
@@ -126,91 +127,81 @@ const ListStories = ({ pacienteId }) => {
     setIsEditModalOpen(false);
     setSelectedHistoria(null);
     resetForm();
-    pacienteId ? getHistoriasByPacientes(pacienteId) : getAllHistorias();
   };
-
-  const handleDelete = async () => {
-    if (!selectedHistoria) return;
-    await deleteHistoriaById(selectedHistoria.id);
-    setIsDeleteModalOpen(false);
-    setSelectedHistoria(null);
-    pacienteId ? getHistoriasByPacientes(pacienteId) : getAllHistorias();
-  };
-
-  const getPacienteNombre = (id) => pacientes.find(p => p.id === id)?.nombre || "-";
-  const getMedicoNombre = (id) => medicos.find(m => m.id === id)?.nombre || "-";
 
   return (
-    <div className="story-layout">
-      {/* ... (Cabecera y toolbar se mantienen igual) ... */}
-      <div className="story-header">
+    <div className="stories-view-container">
+      {/* HEADER PRINCIPAL */}
+      <div className="stories-main-header">
         <div>
-          <h2>
-            Historias Clínicas{" "}
-            {pacienteId && `de ${getPacienteNombre(Number(pacienteId))}`}
-          </h2>
-          <p>Total historias: {filteredHistorias.length}</p>
+          <h2 className="stories-title">Historias Clínicas</h2>
+          <p className="stories-subtitle">
+            {pacienteId ? `Registros de ${getPacienteNombre(Number(pacienteId))}` : `${filteredHistorias.length} registros totales`}
+          </p>
         </div>
-      </div>
-
-      <div className="story-toolbar">
-        <div className="story-search-group">
-          <Search size={16} />
-          <input
-            placeholder="Buscar por detalle..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
-          />
-        </div>
-
-        <button
-          className="story-btn story-btn-primary"
-          onClick={() => {
-            resetForm();
-            setIsCreateModalOpen(true);
-          }}
-        >
-          <Plus size={16} /> Nueva Historia
+        <button className="stories-btn-primary" onClick={() => { resetForm(); setIsCreateModalOpen(true); }}>
+          <Plus size={18} /> <span>Nueva Historia</span>
         </button>
       </div>
 
-      <div className="story-table-container">
-        <table className="story-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Médico</th>
-              <th>Detalle</th>
-              <th className="story-align-center">Acciones</th>
-            </tr>
-          </thead>
+      {/* TOOLBAR BÚSQUEDA */}
+      <div className="stories-filter-toolbar">
+        <div className="stories-search-wrapper">
+          <Search size={18} color="var(--ins-muted)" />
+          <input
+            type="text"
+            className="stories-search-input"
+            placeholder="Buscar por detalle clínico..."
+            value={searchTerm}
+            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+          />
+        </div>
+      </div>
+
+      {/* LISTA DE REGISTROS */}
+      <div className="stories-table-responsive">
+        <table className="stories-data-table">
           <tbody>
-            {currentHistorias.length ? (
-              currentHistorias.map(h => (
-                <tr key={h.id}>
-                  <td>#{h.id}</td>
-                  <td>{getMedicoNombre(h.id_medico)}</td>
-                  <td>{h.detalle}</td>
-                  <td className="story-align-center">
-                    <button
-                      className="story-icon-action"
-                      onClick={() => {
-                        setSelectedHistoria(h);
-                        setIsDetailsModalOpen(true);
-                      }}
-                    >
-                      <SlOptionsVertical size={16} />
+            {currentHistorias.length > 0 ? currentHistorias.map(h => (
+              <tr key={h.id} className="stories-table-row">
+                <td className="stories-td-id">#{h.id}</td>
+                
+                <td>
+                  <div className="ins-main-info">
+                    <span className="ins-name" style={{fontSize: '0.95rem'}}>
+                      {h.detalle.length > 80 ? `${h.detalle.substring(0, 80)}...` : h.detalle}
+                    </span>
+                    <div style={{display: 'flex', gap: '15px', marginTop: '4px'}}>
+                        <span className="ins-subtext"><Stethoscope size={12}/> {getMedicoNombre(h.id_medico)}</span>
+                        {!pacienteId && <span className="ins-subtext"><User size={12}/> {getPacienteNombre(h.id_paciente)}</span>}
+                    </div>
+                  </div>
+                </td>
+
+                <td className="stories-hide-mobile" style={{textAlign: 'right'}}>
+                    <span className="ins-subtext">{new Date().toLocaleDateString()}</span>
+                </td>
+
+                <td>
+                  <div style={{display: 'flex', gap: '0.5rem', justifyContent: 'flex-end'}}>
+                    <button className="stories-action-pill" onClick={() => openEditModal(h)}>
+                      <Settings2 size={16} />
+                      <span className="stories-hide-mobile">Detalles</span>
                     </button>
-                  </td>
-                </tr>
-              ))
-            ) : (
+                    <button 
+                        className="stories-action-pill" 
+                        style={{color: 'var(--ins-danger)'}}
+                        onClick={() => { setSelectedHistoria(h); setIsDeleteModalOpen(true); }}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            )) : (
               <tr>
-                <td colSpan="4" className="story-no-results">
-                  No se encontraron historias
+                <td colSpan="4" style={{textAlign: 'center', padding: '3rem', color: 'var(--ins-muted)'}}>
+                  No hay historias clínicas registradas.
                 </td>
               </tr>
             )}
@@ -218,93 +209,97 @@ const ListStories = ({ pacienteId }) => {
         </table>
       </div>
 
-      {/* MODAL CREAR / EDITAR */}
-      {(isCreateModalOpen || isEditModalOpen) && (
-        <div className="story-modal-backdrop">
-          <div className="story-modal-panel">
-            <h3>
-              {isCreateModalOpen ? "Crear Historia Clínica" : "Editar Historia Clínica"}
-            </h3>
-
-            {/* 3. Reemplazo del selector de Paciente */}
-            {!pacienteId ? (
-              <Select
-                className="story-select-container"
-                placeholder="Selecciona un paciente..."
-                options={pacienteOptions}
-                value={pacienteOptions.find(opt => opt.value === selectedPacienteId)}
-                onChange={(option) => setSelectedPacienteId(option ? option.value : "")}
-                styles={customSelectStyles}
-                isSearchable
-              />
-            ) : (
-              <input
-                className="story-input-field"
-                value={getPacienteNombre(Number(pacienteId))}
-                disabled
-              />
-            )}
-
-            {/* 4. Reemplazo del selector de Médico */}
-            <Select
-              className="story-select-container"
-              placeholder="Selecciona el médico referido..."
-              options={medicoOptions}
-              value={medicoOptions.find(opt => opt.value === selectedMedicoId)}
-              onChange={(option) => setSelectedMedicoId(option ? option.value : "")}
-              styles={customSelectStyles}
-              isSearchable
-            />
-
-            <textarea
-              className="story-input-field story-textarea"
-              placeholder="Detalle clínico"
-              value={editDetalle}
-              onChange={(e) => setEditDetalle(e.target.value.toUpperCase())}
-            />
-
-            <div className="story-modal-actions">
-              <button
-                className="story-btn story-btn-secondary"
-                onClick={() => {
-                  setIsCreateModalOpen(false);
-                  setIsEditModalOpen(false);
-                  resetForm();
-                }}
-              >
-                Cancelar
-              </button>
-              <button
-                className="story-btn story-btn-primary"
-                onClick={isCreateModalOpen ? handleCreate : handleUpdate}
-              >
-                <Save size={16} /> {isCreateModalOpen ? "Crear" : "Guardar"}
-              </button>
-            </div>
-          </div>
+      {/* PAGINACIÓN */}
+      {totalPages > 1 && (
+        <div className="stories-pagination-bar">
+          <button className="stories-page-btn" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>
+            <ChevronLeft size={20} />
+          </button>
+          <span style={{fontWeight: 700}}>{currentPage} / {totalPages}</span>
+          <button className="stories-page-btn" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>
+            <ChevronRight size={20} />
+          </button>
         </div>
       )}
 
-      {/* ... (Resto de modales se mantienen igual) ... */}
-      {/* MODAL DETALLE */}
-      {isDetailsModalOpen && selectedHistoria && (
-        <div className="story-modal-backdrop">
-          <div className="story-modal-panel">
-            <h3>Historia #{selectedHistoria.id}</h3>
-            <div className="story-details-card">
-              <div><strong>Paciente:</strong> {getPacienteNombre(selectedHistoria.id_paciente)}</div>
-              <div><strong>Médico:</strong> {getMedicoNombre(selectedHistoria.id_medico)}</div>
-              <div><strong>Detalle:</strong> {selectedHistoria.detalle}</div>
+      {/* MODAL CREAR / EDITAR REFINADO */}
+      {(isCreateModalOpen || isEditModalOpen) && (
+        <div className="stories-modal-overlay">
+          <div className="stories-modal-card">
+            <div className="stories-modal-header">
+              <div className="stories-modal-title-group">
+                <div className="stories-modal-icon-bg">
+                  <FileText size={22} color="var(--ins-primary)" />
+                </div>
+                <div>
+                  <h3 className="stories-modal-title" style={{margin: 0}}>
+                    {isCreateModalOpen ? "Nueva Entrada Clínica" : "Editar Historia"}
+                  </h3>
+                  <p className="stories-modal-subtitle">Complete la información médica del paciente</p>
+                </div>
+              </div>
+              <button className="stories-close-btn" onClick={() => { setIsCreateModalOpen(false); setIsEditModalOpen(false); }}>
+                <X size={20} />
+              </button>
             </div>
-            <div className="story-modal-actions" style={{ flexDirection: "column" }}>
-              <button className="story-btn story-btn-primary" onClick={() => { setIsDetailsModalOpen(false); openEditModal(selectedHistoria); }}>
-                <Pencil size={16} /> Editar
+
+            <div className="stories-modal-grid">
+              {/* Selector de Paciente */}
+              <div className="ins-col-span-2">
+                <label className="lp-modal-label">
+                  <User size={14} /> Paciente
+                </label>
+                {!pacienteId ? (
+                  <Select
+                    options={pacienteOptions}
+                    value={pacienteOptions.find(opt => opt.value === selectedPacienteId)}
+                    onChange={(opt) => setSelectedPacienteId(opt?.value)}
+                    styles={customSelectStyles}
+                    placeholder="Buscar paciente..."
+                  />
+                ) : (
+                  <input 
+                    className="stories-modal-input stories-input-disabled" 
+                    value={getPacienteNombre(Number(pacienteId))} 
+                    disabled 
+                  />
+                )}
+              </div>
+
+              {/* Selector de Médico */}
+              <div className="ins-col-span-2">
+                <label className="lp-modal-label">
+                  <Stethoscope size={14} /> Médico Tratante
+                </label>
+                <Select
+                  options={medicoOptions}
+                  value={medicoOptions.find(opt => opt.value === selectedMedicoId)}
+                  onChange={(opt) => setSelectedMedicoId(opt?.value)}
+                  styles={customSelectStyles}
+                  placeholder="Seleccionar médico..."
+                />
+              </div>
+
+              {/* Detalle Clínico */}
+              <div className="ins-col-span-2">
+                <label className="lp-modal-label">
+                  <Pencil size={14} /> Detalle del Diagnóstico / Evolución
+                </label>
+                <textarea
+                  className="stories-modal-input stories-textarea-clinical"
+                  placeholder="Describa los hallazgos clínicos, síntomas y evolución..."
+                  value={editDetalle}
+                  onChange={(e) => setEditDetalle(e.target.value.toUpperCase())}
+                />
+              </div>
+            </div>
+
+            <div className="stories-modal-footer">
+              <button className="stories-btn-tertiary" onClick={() => { setIsCreateModalOpen(false); setIsEditModalOpen(false); }}>
+                Cancelar
               </button>
-              <button className="story-btn story-btn-danger" onClick={() => { setIsDetailsModalOpen(false); openDeleteModal(selectedHistoria); }}>
-                <Trash2 size={16} /> Eliminar
-              </button>
-              <button className="story-btn story-btn-secondary" onClick={() => setIsDetailsModalOpen(false)}>
-                Cerrar
+              <button className="stories-btn-primary stories-btn-wide" onClick={isCreateModalOpen ? handleCreate : handleUpdate}>
+                <Save size={18} /> {isCreateModalOpen ? "Registrar Historia" : "Guardar Cambios"}
               </button>
             </div>
           </div>
@@ -313,17 +308,20 @@ const ListStories = ({ pacienteId }) => {
 
       {/* MODAL ELIMINAR */}
       {isDeleteModalOpen && selectedHistoria && (
-        <div className="story-modal-backdrop">
-          <div className="story-modal-panel">
-            <div className="story-alert-header">
-              <AlertTriangle size={28} />
-              <h3>¿Eliminar historia clínica?</h3>
+        <div className="stories-modal-overlay">
+          <div className="stories-modal-card" style={{maxWidth: '400px', textAlign: 'center'}}>
+            <div style={{color: 'var(--ins-danger)', marginBottom: '1rem'}}>
+              <AlertTriangle size={48} style={{margin: '0 auto'}} />
             </div>
-            <p>Esta acción no se puede deshacer</p>
-            <div className="story-modal-actions">
-              <button className="story-btn story-btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
-              <button className="story-btn story-btn-danger" onClick={handleDelete}>
-                <Trash2 size={16} /> Eliminar
+            <h3 className="stories-modal-title">¿Eliminar registro?</h3>
+            <p>Se eliminará la historia <strong>#{selectedHistoria.id}</strong> de forma permanente.</p>
+            
+            <div style={{display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '2rem'}}>
+              <button className="stories-btn-danger" onClick={async () => { await deleteHistoriaById(selectedHistoria.id); setIsDeleteModalOpen(false); }}>
+                Confirmar Eliminación
+              </button>
+              <button className="stories-btn-tertiary" onClick={() => setIsDeleteModalOpen(false)}>
+                Cancelar
               </button>
             </div>
           </div>

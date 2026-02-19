@@ -8,15 +8,15 @@ import {
   Trash2,
   Save,
   AlertTriangle,
-  Plus
+  Plus,
+  Phone,
+  User,
+  Settings2,
+  X
 } from "lucide-react";
-import { SlOptionsVertical } from "react-icons/sl";
-
-// 1. Importar PhoneInput y sus estilos
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
-
-import "../../styles/components/ListZone.css";
+import "../../styles/components/ListInsurances.css";
 
 const ListInsurances = () => {
   const {
@@ -31,24 +31,19 @@ const ListInsurances = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  // Modales
   const [selectedSeguro, setSelectedSeguro] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
-  // Form
   const [editName, setEditName] = useState("");
   const [editContacto, setEditContacto] = useState("");
   const [editTelefono, setEditTelefono] = useState("");
   const [editEstatus, setEditEstatus] = useState(true);
 
-  useEffect(() => {
-    getAllSeguros();
-  }, []);
+  useEffect(() => { getAllSeguros(); }, []);
 
-  // Filtrado y paginación
   const filteredSeguros = useMemo(() => {
     return seguros.filter(s =>
       s.nombre.toUpperCase().includes(searchTerm.toUpperCase())
@@ -61,12 +56,10 @@ const ListInsurances = () => {
     currentPage * itemsPerPage
   );
 
-  // -------------------- FORMATOS ----------------
   const handleNameInput = (value, setter) => {
     setter(value.replace(/[^a-zA-ZÁÉÍÓÚÜÑáéíóúüñ\s]/g, "").toUpperCase());
   };
 
-  // -------------------- Acciones --------------------
   const openEditModal = (seguro) => {
     setSelectedSeguro(seguro);
     setEditName(seguro.nombre);
@@ -81,13 +74,20 @@ const ListInsurances = () => {
     setIsDeleteModalOpen(true);
   };
 
+  const resetForm = () => {
+    setEditName("");
+    setEditContacto("");
+    setEditTelefono("");
+    setEditEstatus(true);
+  };
+
   const handleCreate = async () => {
     if (!editName.trim()) return;
     await createNewSeguro({
       nombre: editName.trim(),
       contacto: editContacto.trim(),
-      telefono: editTelefono, // Valor capturado por PhoneInput
-      estatus: true 
+      telefono: editTelefono,
+      estatus: true
     });
     setIsCreateModalOpen(false);
     resetForm();
@@ -116,71 +116,93 @@ const ListInsurances = () => {
     getAllSeguros();
   };
 
-  const resetForm = () => {
-    setEditName("");
-    setEditContacto("");
-    setEditTelefono("");
-    setEditEstatus(true);
-  };
-
-  // -------------------- Render --------------------
   return (
-    <div className="orders-container">
+    <div className="insurances-view-container">
       {/* HEADER */}
-      <div className="orders-header">
+      <div className="insurances-main-header">
         <div>
-          <h2>Seguros</h2>
-          <p>Total seguros: {filteredSeguros.length}</p>
+          <h2 className="insurances-title">Seguros Médicos</h2>
+          <p className="insurances-subtitle">
+            {filteredSeguros.length} empresas registradas
+          </p>
         </div>
-        <button className="btn-primary" onClick={() => {
-          resetForm();
-          setIsCreateModalOpen(true);
-        }}>
-          <Plus size={16} /> Nuevo Seguro
+        <button
+          className="insurances-btn-primary"
+          onClick={() => { resetForm(); setIsCreateModalOpen(true); }}
+        >
+          <Plus size={18} /> <span>Nuevo Seguro</span>
         </button>
       </div>
 
       {/* TOOLBAR */}
-      <div className="orders-toolbar">
-        <div className="search-box">
-          <Search size={16} />
+      <div className="insurances-filter-toolbar">
+        <div className="insurances-search-wrapper">
+          <Search size={18} />
           <input
             type="text"
-            placeholder="Buscar seguro..."
+            className="insurances-search-input"
+            placeholder="Buscar por nombre..."
             value={searchTerm}
-            onChange={e => { setSearchTerm(e.target.value.toUpperCase()); setCurrentPage(1); }}
+            onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
           />
         </div>
       </div>
 
-      {/* TABLE */}
-      <div className="orders-table-wrapper">
-        <table className="orders-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Nombre</th>
-              <th className="hide-mobile">Contacto</th>
-              <th className="hide-mobile">Teléfono</th>
-              <th className="center">Acciones</th>
-            </tr>
-          </thead>
+      {/* TABLA ESTILO MODERNO */}
+      <div className="insurances-table-responsive">
+        <table className="insurances-data-table">
           <tbody>
             {currentSeguros.length > 0 ? currentSeguros.map(s => (
-              <tr key={s.id}>
-                <td>#{s.id}</td>
-                <td>{s.nombre}</td>
-                <td className="hide-mobile">{s.contacto || "-"}</td>
-                <td className="hide-mobile">{s.telefono ? `+${s.telefono}` : "-"}</td>
-                <td className="center">
-                  <button className="icon-btn" onClick={() => { setSelectedSeguro(s); setIsDetailsModalOpen(true); }}>
-                    <SlOptionsVertical size={16} />
-                  </button>
+              <tr key={s.id} className="insurances-table-row">
+                <td className="insurances-td-id">#{s.id}</td>
+
+                <td>
+                  <div className="ins-main-info">
+                    <span className="ins-name">{s.nombre}</span>
+                    <span className="ins-subtext">
+                      <User size={12} style={{marginRight: '4px'}}/>
+                      {s.contacto || "Sin contacto"}
+                    </span>
+                  </div>
+                </td>
+
+                <td className="insurances-hide-mobile">
+                  <div className="ins-main-info">
+                    <span className="ins-subtext" style={{fontWeight: 700}}>
+                      Soporte
+                    </span>
+                    <span className="ins-name" style={{fontSize: '0.9rem'}}>
+                      <Phone size={12} style={{marginRight: '4px'}}/>
+                      {s.telefono ? `+${s.telefono}` : "---"}
+                    </span>
+                  </div>
+                </td>
+
+                <td>
+                  <div style={{display: 'flex', gap: '0.5rem', justifyContent: 'flex-end'}}>
+                    <button
+                      className="insurances-action-pill"
+                      onClick={() => openEditModal(s)}
+                    >
+                      <Settings2 size={16} />
+                      <span className="insurances-hide-mobile">Gestionar</span>
+                    </button>
+
+                    <button
+                      className="insurances-action-pill"
+                      style={{color: 'var(--ins-danger)'}}
+                      onClick={() => openDeleteModal(s)}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             )) : (
               <tr>
-                <td colSpan="5" className="no-results">No se encontraron seguros</td>
+                <td colSpan="4" style={{textAlign: 'center', padding: '3rem'}}>
+                  No se encontraron resultados
+                </td>
               </tr>
             )}
           </tbody>
@@ -189,93 +211,86 @@ const ListInsurances = () => {
 
       {/* PAGINACIÓN */}
       {totalPages > 1 && (
-        <div className="orders-pagination">
-          <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}><ChevronLeft size={18} /></button>
-          <span>Página {currentPage} de {totalPages}</span>
-          <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}><ChevronRight size={18} /></button>
+        <div className="insurances-pagination-bar">
+          <button
+            className="insurances-page-btn"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(p => p - 1)}
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <span>{currentPage} / {totalPages}</span>
+          <button
+            className="insurances-page-btn"
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage(p => p + 1)}
+          >
+            <ChevronRight size={20} />
+          </button>
         </div>
       )}
 
       {/* MODAL CREAR / EDITAR */}
       {(isCreateModalOpen || isEditModalOpen) && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>{isCreateModalOpen ? "Crear Seguro" : "Editar Seguro"}</h3>
-            
-            <label className="modal-label">Nombre de la Aseguradora</label>
-            <input
-              className="modal-input"
-              placeholder="Ej: SEGUROS CARACAS"
-              value={editName}
-              onChange={e => handleNameInput(e.target.value, setEditName)}
-            />
-            
-            <label className="modal-label">Persona de Contacto</label>
-            <input
-              className="modal-input"
-              placeholder="Ej: JUAN PÉREZ"
-              value={editContacto}
-              onChange={e => handleNameInput(e.target.value, setEditContacto)}
-            />
-            
-            <label className="modal-label">Teléfono de Atención</label>
-            <div className="phone-input-container" style={{ marginBottom: '15px' }}>
-              <PhoneInput
-                country={'ve'}
-                value={editTelefono}
-                onChange={value => setEditTelefono(value)}
-                inputStyle={{
-                  width: '100%',
-                  height: '45px',
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0'
-                }}
-                buttonStyle={{
-                  borderRadius: '8px 0 0 8px',
-                  border: '1px solid #e2e8f0'
-                }}
-              />
-            </div>
-            
-            <div className="modal-footer">
+        <div className="insurances-modal-overlay">
+          <div className="insurances-modal-card">
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1.5rem'}}>
+              <h3 className="insurances-modal-title">
+                {isCreateModalOpen ? "Nuevo Seguro" : "Editar Seguro"}
+              </h3>
               <button
-                className="btn-secondary"
-                onClick={() => {
-                  setIsCreateModalOpen(false);
-                  setIsEditModalOpen(false);
-                  resetForm();
-                }}
+                onClick={() => { setIsCreateModalOpen(false); setIsEditModalOpen(false); }}
+                style={{background:'none',border:'none',cursor:'pointer'}}
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="insurances-modal-grid">
+              <div className="ins-col-span-2">
+                <label>Nombre de la Empresa</label>
+                <input
+                  className="insurances-modal-input"
+                  value={editName}
+                  onChange={e => handleNameInput(e.target.value, setEditName)}
+                />
+              </div>
+
+              <div>
+                <label>Persona de Contacto</label>
+                <input
+                  className="insurances-modal-input"
+                  value={editContacto}
+                  onChange={e => handleNameInput(e.target.value, setEditContacto)}
+                />
+              </div>
+
+              <div>
+                <label>Teléfono</label>
+                <PhoneInput
+                  country={'ve'}
+                  value={editTelefono}
+                  onChange={setEditTelefono}
+                  inputStyle={{ width:'100%',height:'45px',borderRadius:'10px' }}
+                />
+              </div>
+            </div>
+
+            <div style={{display:'flex',gap:'1rem',marginTop:'2rem'}}>
+              <button
+                className="insurances-btn-secondary"
+                style={{flex:1}}
+                onClick={() => { setIsCreateModalOpen(false); setIsEditModalOpen(false); }}
               >
                 Cancelar
               </button>
-              <button className="btn-primary" onClick={isCreateModalOpen ? handleCreate : handleUpdate}>
-                <Save size={16} /> {isCreateModalOpen ? "Crear" : "Guardar"}
+              <button
+                className="insurances-btn-primary"
+                style={{flex:1}}
+                onClick={isCreateModalOpen ? handleCreate : handleUpdate}
+              >
+                <Save size={18}/> Guardar
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-
-      {/* MODAL DETALLES */}
-      {isDetailsModalOpen && selectedSeguro && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Detalles de {selectedSeguro.nombre}</h3>
-            <div className="modal-info-body">
-              <div className="detail-card"><strong>ID:</strong> <span>#{selectedSeguro.id}</span></div>
-              <div className="detail-card"><strong>Nombre:</strong> <span>{selectedSeguro.nombre}</span></div>
-              <div className="detail-card"><strong>Contacto:</strong> <span>{selectedSeguro.contacto || "-"}</span></div>
-              <div className="detail-card"><strong>Teléfono:</strong> <span>{selectedSeguro.telefono ? `+${selectedSeguro.telefono}` : "-"}</span></div>
-            </div>
-            <div className="modal-footer" style={{ flexDirection: "column", gap: "0.75rem" }}>
-              <button className="btn-primary" onClick={() => { setIsDetailsModalOpen(false); openEditModal(selectedSeguro); }}>
-                <Pencil size={16} /> Editar
-              </button>
-              <button className="btn-danger" onClick={() => { setIsDetailsModalOpen(false); openDeleteModal(selectedSeguro); }}>
-                <Trash2 size={16} /> Eliminar
-              </button>
-              <button className="btn-secondary" onClick={() => setIsDetailsModalOpen(false)}>Cerrar</button>
             </div>
           </div>
         </div>
@@ -283,16 +298,21 @@ const ListInsurances = () => {
 
       {/* MODAL ELIMINAR */}
       {isDeleteModalOpen && selectedSeguro && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header-danger">
-              <AlertTriangle size={28} />
-              <h3>¿Eliminar seguro?</h3>
-            </div>
-            <p>Confirma que deseas eliminar <strong>{selectedSeguro.nombre}</strong></p>
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
-              <button className="btn-danger" onClick={handleDelete}><Trash2 size={16} /> Eliminar</button>
+        <div className="insurances-modal-overlay">
+          <div className="insurances-modal-card" style={{maxWidth:'400px',textAlign:'center'}}>
+            <AlertTriangle size={48} style={{margin:'0 auto 1rem'}} />
+            <h3 className="insurances-modal-title">¿Eliminar seguro?</h3>
+            <p>
+              Confirma que deseas eliminar <strong>{selectedSeguro.nombre}</strong>
+            </p>
+
+            <div style={{display:'flex',flexDirection:'column',gap:'0.75rem',marginTop:'1.5rem'}}>
+              <button className="insurances-btn-danger" onClick={handleDelete}>
+                Sí, eliminar
+              </button>
+              <button className="insurances-btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>
+                Cancelar
+              </button>
             </div>
           </div>
         </div>
