@@ -1,5 +1,5 @@
 import React from "react";
-import { X, FileText, Package } from "lucide-react";
+import { X, FileText, Trash2 } from "lucide-react";
 import "../../../styles/ui/steps/StepConfirm.css"; 
 
 const PurchaseDetailModal = ({ isOpen, purchase, onClose, onEdit }) => {
@@ -23,6 +23,7 @@ const PurchaseDetailModal = ({ isOpen, purchase, onClose, onEdit }) => {
 
   const formatNum = (val) => {
     const num = safeParse(val);
+    // Siguiendo tu instrucción: decimales con ","
     return num.toLocaleString('de-DE', { 
       minimumFractionDigits: 2, 
       maximumFractionDigits: 2 
@@ -32,6 +33,7 @@ const PurchaseDetailModal = ({ isOpen, purchase, onClose, onEdit }) => {
   // --- 2. EXTRACCIÓN DE DATOS ---
   const totals = purchase.totales_cargos || {};
   const items = purchase.items || [];
+  const lotes = purchase.detalle_lotes || []; // Extraemos los lotes del JSON
 
   const subtotalBruto = safeParse(totals.subtotal);
   const descuento = safeParse(totals.monto_descuento_fijo);
@@ -75,7 +77,7 @@ const PurchaseDetailModal = ({ isOpen, purchase, onClose, onEdit }) => {
             </div>
           </div>
 
-          {/* TABLA DE PRODUCTOS (Estilo de la imagen) */}
+          {/* TABLA DE PRODUCTOS Y LOTES */}
           <h3 style={{ fontSize: '1.2rem', color: '#1e293b', marginBottom: '15px' }}>Detalle de Mercancía</h3>
           <div className="pconf-table-wrapper">
             <table className="pconf-items-table">
@@ -88,19 +90,63 @@ const PurchaseDetailModal = ({ isOpen, purchase, onClose, onEdit }) => {
                 </tr>
               </thead>
               <tbody>
-                {items.map((item, index) => (
-                  <tr key={index}>
-                    <td className="pconf-desc" style={{ fontWeight: '500' }}>{item.Producto}</td>
-                    <td className="pconf-center">{safeParse(item.Cant).toFixed(2).replace('.', ',')}</td>
-                    <td className="pconf-center">{formatNum(item.Costo_Base)}</td>
-                    <td className="pconf-center">{formatNum(item.Subtotal_Linea)}</td>
-                  </tr>
-                ))}
+                {items.map((item, index) => {
+                  // Filtramos los lotes que pertenecen a este producto
+                  const itemLotes = lotes.filter(l => l.id_producto === item.id_producto);
+
+                  return (
+                    <React.Fragment key={index}>
+                      {/* Fila del Producto */}
+                      <tr>
+                        <td className="pconf-desc" style={{ fontWeight: '600', color: '#1e293b' }}>
+                          {item.Producto}
+                        </td>
+                        <td className="pconf-center">{formatNum(item.Cant)}</td>
+                        <td className="pconf-center">{formatNum(item.Costo_Base)}</td>
+                        <td className="pconf-center">{formatNum(item.Subtotal_Linea)}</td>
+                      </tr>
+
+                      {/* Fila de Detalles de Lote (Sub-tabla) */}
+                      {itemLotes.length > 0 && (
+                        <tr>
+                          <td colSpan="4" style={{ padding: '0 0 15px 40px', backgroundColor: '#ffffff' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '5px' }}>
+                              <thead>
+                                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                  <th style={{ textAlign: 'left', fontSize: '0.7rem', color: '#94a3b8', padding: '8px' }}>LOTE</th>
+                                  <th style={{ textAlign: 'left', fontSize: '0.7rem', color: '#94a3b8', padding: '8px' }}>DEPÓSITO</th>
+                                  <th style={{ textAlign: 'center', fontSize: '0.7rem', color: '#94a3b8', padding: '8px' }}>CANT.</th>
+                                  <th style={{ textAlign: 'center', fontSize: '0.7rem', color: '#94a3b8', padding: '8px' }}>VENC.</th>
+                                  <th style={{ textAlign: 'center', fontSize: '0.7rem', color: '#94a3b8', padding: '8px' }}>ACCIÓN</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {itemLotes.map((lote, lIdx) => (
+                                  <tr key={lIdx} style={{ borderBottom: '1px solid #f8fafc' }}>
+                                    <td style={{ fontSize: '0.85rem', fontWeight: 'bold', padding: '10px 8px' }}>#{lote.nro_lote}</td>
+                                    <td style={{ fontSize: '0.85rem', color: '#475569', padding: '10px 8px' }}>DEPOSITO {lote.id_deposito}</td>
+                                    <td style={{ fontSize: '0.85rem', textAlign: 'center', padding: '10px 8px' }}>{formatNum(lote.cantidad)}</td>
+                                    <td style={{ fontSize: '0.85rem', textAlign: 'center', padding: '10px 8px' }}>{formatDate(lote.fecha_vencimiento)}</td>
+                                    <td style={{ textAlign: 'center', padding: '10px 8px' }}>
+                                      <button className="icon-btn-sm" style={{ color: '#94a3b8', border: '1px solid #e2e8f0', padding: '4px', borderRadius: '6px' }}>
+                                        <Trash2 size={16} />
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>
 
-          {/* PANEL DE TOTALES (Réplica exacta de la imagen) */}
+          {/* PANEL DE TOTALES */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
             <div style={{ 
               width: '100%', 
@@ -125,7 +171,7 @@ const PurchaseDetailModal = ({ isOpen, purchase, onClose, onEdit }) => {
               <div className="pconf-final-row" style={{ alignItems: 'center' }}>
                 <span style={{ fontWeight: '600', color: '#334155', fontSize: '0.9rem' }}>TOTAL FACTURA</span>
                 <span style={{ color: '#dc2626', fontSize: '1.75rem', fontWeight: '800' }}>
-                  {formatNum(totalFacturaNeto)}
+                  $ {formatNum(totalFacturaNeto)}
                 </span>
               </div>
 
@@ -144,7 +190,7 @@ const PurchaseDetailModal = ({ isOpen, purchase, onClose, onEdit }) => {
               <div className="pconf-final-row" style={{ marginTop: '10px' }}>
                 <span style={{ fontWeight: '700', color: '#0f172a', fontSize: '1.1rem' }}>Total Factura + Cargos</span>
                 <span style={{ fontWeight: '800', color: saldoPendiente > 0 ? '#dc2626' : '#0f172a', fontSize: '1.2rem' }}>
-                  {formatNum(saldoPendiente)}
+                  $ {formatNum(saldoPendiente)}
                 </span>
               </div>
             </div>
@@ -152,7 +198,6 @@ const PurchaseDetailModal = ({ isOpen, purchase, onClose, onEdit }) => {
         </div>
 
         <div className="modal-footer" style={{ padding: '15px 25px', borderTop: '1px solid #eee', justifyContent: 'flex-end', gap: '10px' }}>
-          {/* <button className="btn-secondary" onClick={onEdit}>Editar Datos</button> */}
           <button className="btn-primary" onClick={onClose}>Cerrar</button>
         </div>
 

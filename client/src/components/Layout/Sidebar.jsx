@@ -68,9 +68,17 @@ const Sidebar = ({ setActiveComponent, activeComponent }) => {
     },
   ];
 
+  /* 🔥 MODIFICADO: ahora se oculta o colapsa automáticamente */
   const handleNavigation = (key) => {
     setActiveComponent(key);
-    if (window.innerWidth < 1024) setIsOpen(false);
+
+    if (window.innerWidth < 1024) {
+      setIsOpen(false);      // móvil → cerrar completamente
+    } else {
+      setIsCollapsed(true);  // escritorio → colapsar
+    }
+
+    setExpandedMenus({});    // cerrar submenús
   };
 
   const handleLogout = () => {
@@ -93,7 +101,7 @@ const Sidebar = ({ setActiveComponent, activeComponent }) => {
 
   return (
     <>
-      {/* Header móvil simplificado */}
+      {/* Header móvil */}
       <header className="mobile-header">
         <button className="menu-toggle" onClick={() => setIsOpen(true)}>
           <Menu size={28} />
@@ -101,7 +109,7 @@ const Sidebar = ({ setActiveComponent, activeComponent }) => {
         <span className="mobile-logo-text">Panel de Operaciones</span>
       </header>
 
-      {/* Overlay con blur para móvil */}
+      {/* Overlay móvil */}
       <div 
         className={`sidebar-overlay ${isOpen ? "active" : ""}`} 
         onClick={() => setIsOpen(false)} 
@@ -115,12 +123,10 @@ const Sidebar = ({ setActiveComponent, activeComponent }) => {
             </div>
           )}
 
-          {/* Botón de cerrar (X) estilo imagen: rojo y cuadrado */}
           <button className="close-btn-mobile" onClick={() => setIsOpen(false)}>
             <X size={20} />
           </button>
 
-          {/* Botón de colapso para escritorio */}
           {!isOpen && (
             <button className="collapse-btn" onClick={() => setIsCollapsed(prev => !prev)}>
               {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
@@ -144,7 +150,12 @@ const Sidebar = ({ setActiveComponent, activeComponent }) => {
                     {showText && (
                       <>
                         <span className="nav-text">{item.name}</span>
-                        {hasChildren && <ChevronDown size={16} className={`chevron-icon ${isExpanded ? "rotate" : ""}`} />}
+                        {hasChildren && (
+                          <ChevronDown 
+                            size={16} 
+                            className={`chevron-icon ${isExpanded ? "rotate" : ""}`} 
+                          />
+                        )}
                       </>
                     )}
                   </button>

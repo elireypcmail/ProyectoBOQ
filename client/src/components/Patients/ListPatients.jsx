@@ -8,7 +8,8 @@ import {
   Plus,
   Trash2,
   Pencil,
-  FileText
+  FileText,
+  X
 } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
 
@@ -17,7 +18,7 @@ import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 
 import ListStories from "./ListStories";
-import "../../styles/components/ListZone.css";
+import "../../styles/components/ListPatients.css";
 
 const ListPatients = () => {
   const {
@@ -45,10 +46,7 @@ const ListPatients = () => {
 
   // ---------------- FORMULARIOS PACIENTE ----------------
   const [nombre, setNombre] = useState("");
-  
-  // CAMBIO 1: Estado unificado para documento
   const [documentoField, setDocumentoField] = useState("");
-  
   const [telefono, setTelefono] = useState("");
   const [email, setEmail] = useState("");
   const [idSeguro, setIdSeguro] = useState("");
@@ -64,12 +62,8 @@ const ListPatients = () => {
     getAllSeguros();
   }, []);
 
-  // --- Lógica para React Select ---
   const seguroOptions = useMemo(() => {
-    return seguros.map(s => ({
-      value: s.id,
-      label: s.nombre
-    }));
+    return seguros.map(s => ({ value: s.id, label: s.nombre }));
   }, [seguros]);
 
   const currentSeguroValue = useMemo(() => {
@@ -82,42 +76,25 @@ const ListPatients = () => {
     );
   }, [pacientes, searchTerm]);
 
-  // ---------------- FORMATOS Y HELPERS ----------------
   const handleNameInput = (value, setter) => {
     setter(value.replace(/[^a-zA-ZÁÉÍÓÚÜÑáéíóúüñ\s]/g, "").toUpperCase());
   };
 
-  // CAMBIO 2: Lógica unificada de documento (Letra + Guion + 10 Números)
   const handleDocumentInput = (value) => {
     const upperValue = value.toUpperCase();
     const cleanValue = upperValue.replace(/[^A-Z0-9]/g, "");
-
-    if (!cleanValue) {
-      setDocumentoField("");
-      return;
-    }
-
+    if (!cleanValue) { setDocumentoField(""); return; }
     const firstChar = cleanValue.charAt(0);
     const rest = cleanValue.slice(1);
-
-    // Validar que primero sea Letra
-    if (!/^[A-Z]$/.test(firstChar)) {
-      return; 
-    }
-
-    // Validar resto Números (max 10)
+    if (!/^[A-Z]$/.test(firstChar)) return; 
     const numbersOnly = rest.replace(/[^0-9]/g, "").slice(0, 10);
-
-    const formatted = numbersOnly.length > 0 
-      ? `${firstChar}-${numbersOnly}` 
-      : firstChar;
-
+    const formatted = numbersOnly.length > 0 ? `${firstChar}-${numbersOnly}` : firstChar;
     setDocumentoField(formatted);
   };
 
   const resetForm = () => {
     setNombre("");
-    setDocumentoField(""); // Reset campo único
+    setDocumentoField("");
     setTelefono("");
     setEmail("");
     setIdSeguro("");
@@ -125,19 +102,13 @@ const ListPatients = () => {
     setIsEditing(false);
   };
 
-  // ---------------- CREAR / EDITAR PACIENTE ----------------
   const handleSavePaciente = async () => {
     if (!nombre || !documentoField) return alert("Nombre y documento son obligatorios");
-
-    // Validación simple de longitud mínima (Letra + Guion + al menos 1 número)
-    if (documentoField.length < 3) {
-        alert("El documento debe tener un formato válido (Ej: V-123456)");
-        return;
-    }
+    if (documentoField.length < 3) return alert("Formato inválido (Ej: V-123456)");
 
     const payload = {
       nombre,
-      documento: documentoField, // Se envía directo
+      documento: documentoField,
       telefono,
       email: email.toLowerCase().trim(),
       id_seguro: idSeguro || null,
@@ -153,23 +124,19 @@ const ListPatients = () => {
         setIsDetailsModalOpen(true);
       }
     }
-
     resetForm();
     setIsCreateModalOpen(false);
     getAllPacientes();
   };
 
-  // ---------------- CREAR SEGURO ----------------
   const handleCreateSeguro = async () => {
     if (!nuevoSeguroNombre || !nuevoSeguroTelefono) return;
-
     await createNewSeguro({
       nombre: nuevoSeguroNombre.toUpperCase(),
       contacto: nuevoSeguroContacto.toUpperCase(),
       telefono: nuevoSeguroTelefono,
       estatus: true
     });
-
     setNuevoSeguroNombre("");
     setNuevoSeguroContacto("");
     setNuevoSeguroTelefono("");
@@ -188,32 +155,31 @@ const ListPatients = () => {
   const customSelectStyles = {
     control: (base) => ({
       ...base,
-      borderRadius: "8px",
+      borderRadius: "10px",
       borderColor: "#e2e8f0",
       minHeight: "45px",
       boxShadow: "none",
       "&:hover": { borderColor: "#cbd5e1" }
     }),
-    menu: (base) => ({ ...base, borderRadius: "8px", zIndex: 9999 }),
-    placeholder: (base) => ({ ...base, color: "#94a3b8" })
+    menu: (base) => ({ ...base, borderRadius: "10px", zIndex: 9999 })
   };
 
   return (
-    <div className="orders-container">
+    <div className="lp-container">
       {/* HEADER */}
-      <div className="orders-header">
+      <div className="lp-header">
         <div>
           <h2>Pacientes</h2>
           <p>Total: {filteredPacientes.length}</p>
         </div>
-        <button className="btn-primary" onClick={() => { resetForm(); setIsCreateModalOpen(true); }}>
+        <button className="lp-btn-primary" onClick={() => { resetForm(); setIsCreateModalOpen(true); }}>
           <Plus size={16} /> Nuevo Paciente
         </button>
       </div>
 
       {/* BUSCADOR */}
-      <div className="orders-toolbar">
-        <div className="search-box">
+      <div className="lp-toolbar">
+        <div className="lp-search-box">
           <Search size={16} />
           <input
             placeholder="Buscar paciente..."
@@ -223,187 +189,240 @@ const ListPatients = () => {
         </div>
       </div>
 
-      {/* TABLA */}
-      <table className="orders-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Nombre</th>
-            <th className="hide-mobile">Documento</th>
-            <th className="center">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredPacientes.map(p => (
-            <tr key={p.id}>
-              <td>#{p.id}</td>
-              <td>{p.nombre}</td>
-              <td className="hide-mobile">{p.documento}</td>
-              <td className="center">
-                <button className="icon-btn" onClick={() => { setSelectedPaciente(p); setIsDetailsModalOpen(true); }}>
-                  <SlOptionsVertical size={16} />
-                </button>
-              </td>
+      {/* TABLA ESTILO LISTA */}
+      <div className="lp-table-wrapper" style={{ border: 'none' }}>
+        <table className="lp-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Paciente</th>
+              <th className="lp-hide-mobile">Info Adicional</th>
+              <th>Acciones</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {filteredPacientes.map(p => (
+              <tr key={p.id} className="lp-list-row">
+                <td className="lp-col-id">#{p.id}</td>
+                <td className="lp-col-main">
+                  <span className="lp-patient-name">{p.nombre}</span>
+                  <span className="lp-patient-subtext">{p.documento}</span>
+                </td>
+                <td className="lp-col-info lp-hide-mobile">
+                  <div className="lp-info-group">
+                    <span className="lp-info-label">Seguro Médico</span>
+                    <span className="lp-info-value">
+                      {seguros.find(s => s.id === p.id_seguro)?.nombre || "Particular"}
+                    </span>
+                  </div>
+                </td>
+                <td className="lp-col-actions">
+                  <button 
+                    className="lp-action-pill" 
+                    onClick={() => { setSelectedPaciente(p); setIsDetailsModalOpen(true); }}
+                  >
+                    <span className="lp-hide-mobile">Ver detalles</span>
+                    <SlOptionsVertical size={14} />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {filteredPacientes.length === 0 && (
+          <div className="lp-no-results">No se encontraron pacientes.</div>
+        )}
+      </div>
 
-      {/* MODAL CREAR / EDITAR PACIENTE */}
+      {/* MODAL CREAR / EDITAR (MEJORADO) */}
       {isCreateModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>{isEditing ? "Editar Paciente" : "Nuevo Paciente"}</h3>
-            
-            <label className="modal-label">Nombre Completo</label>
-            <input
-              className="modal-input"
-              placeholder="Ej: MARÍA PÉREZ"
-              value={nombre}
-              onChange={e => handleNameInput(e.target.value, setNombre)}
-            />
-
-            <label className="modal-label">Documento</label>
-            {/* CAMBIO 3: Input Único */}
-            <input
-                className="modal-input"
-                placeholder="Ej: V-12345678 (Letra + Números)"
-                value={documentoField}
-                onChange={(e) => handleDocumentInput(e.target.value)}
-            />
-
-            <label className="modal-label">Teléfono</label>
-            <div className="phone-input-container" style={{ marginBottom: '15px' }}>
-              <PhoneInput
-                country={'ve'}
-                value={telefono}
-                onChange={val => setTelefono(val)}
-                inputStyle={{ width: '100%', height: '45px', borderRadius: '8px' }}
-              />
+        <div className="lp-modal-overlay">
+          <div className="lp-modal-content lp-modal-large">
+            <div className="lp-modal-header">
+              <div>
+                <h3>{isEditing ? "Editar Paciente" : "Nuevo Paciente"}</h3>
+                <p>Complete los datos de identidad y contacto</p>
+              </div>
+              <button className="lp-btn-close-icon" onClick={() => setIsCreateModalOpen(false)}><X size={20}/></button>
             </div>
-
-            <label className="modal-label">Email</label>
-            <input
-              className="modal-input"
-              type="email"
-              placeholder="correo@ejemplo.com"
-              value={email}
-              onChange={e => setEmail(e.target.value.replace(/\s/g, ""))}
-            />
-
-            <label className="modal-label">Seguro Médico</label>
-            <div className="select-zone-container">
-              <div style={{ flex: 1 }}>
-                <Select
-                  options={seguroOptions}
-                  value={currentSeguroValue}
-                  onChange={(option) => setIdSeguro(option ? option.value : "")}
-                  placeholder="Seleccionar seguro..."
-                  isClearable
-                  isSearchable
-                  styles={customSelectStyles}
+            
+            <div className="lp-modal-grid">
+              <div className="lp-form-group">
+                <label className="lp-modal-label">Nombre Completo</label>
+                <input
+                  className="lp-modal-input"
+                  placeholder="Ej: MARÍA PÉREZ"
+                  value={nombre}
+                  onChange={e => handleNameInput(e.target.value, setNombre)}
                 />
               </div>
-              <button className="btn-add-zone-primary" onClick={() => setIsCreateSeguroModalOpen(true)}>
-                <Plus size={16} />
-              </button>
+
+              <div className="lp-form-group">
+                <label className="lp-modal-label">Documento</label>
+                <input
+                  className="lp-modal-input"
+                  placeholder="Ej: V-12345678"
+                  value={documentoField}
+                  onChange={(e) => handleDocumentInput(e.target.value)}
+                />
+              </div>
+
+              <div className="lp-form-group">
+                <label className="lp-modal-label">Teléfono</label>
+                <PhoneInput
+                  country={'ve'}
+                  value={telefono}
+                  onChange={val => setTelefono(val)}
+                  inputStyle={{ width: '100%', height: '45px', borderRadius: '10px' }}
+                />
+              </div>
+
+              <div className="lp-form-group">
+                <label className="lp-modal-label">Email</label>
+                <input
+                  className="lp-modal-input"
+                  type="email"
+                  placeholder="correo@ejemplo.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value.replace(/\s/g, ""))}
+                />
+              </div>
+
+              <div className="lp-form-group lp-col-span-2">
+                <label className="lp-modal-label">Seguro Médico</label>
+                <div className="lp-select-row">
+                  <div style={{ flex: 1 }}>
+                    <Select
+                      options={seguroOptions}
+                      value={currentSeguroValue}
+                      onChange={(option) => setIdSeguro(option ? option.value : "")}
+                      placeholder="Seleccionar seguro..."
+                      isClearable
+                      styles={customSelectStyles}
+                    />
+                  </div>
+                  <button className="lp-btn-icon-add" onClick={() => setIsCreateSeguroModalOpen(true)}>
+                    <Plus size={20} />
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setIsCreateModalOpen(false)}>Cancelar</button>
-              <button className="btn-primary" onClick={handleSavePaciente}>
-                <Save size={16} /> {isEditing ? "Actualizar" : "Crear"}
+            <div className="lp-modal-footer">
+              <button className="lp-btn-secondary" onClick={() => setIsCreateModalOpen(false)}>Cancelar</button>
+              <button className="lp-btn-primary lp-btn-wide" onClick={handleSavePaciente}>
+                <Save size={16} /> {isEditing ? "Actualizar" : "Crear Paciente"}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL DETALLES PACIENTE */}
+      {/* MODAL DETALLES (MEJORADO) */}
       {isDetailsModalOpen && selectedPaciente && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Detalles de {selectedPaciente.nombre}</h3>
-            <div className="modal-info-body">
-              <div className="detail-card"><strong>Documento:</strong> {selectedPaciente.documento}</div>
-              <div className="detail-card"><strong>Teléfono:</strong> {selectedPaciente.telefono ? `+${selectedPaciente.telefono}` : "-"}</div>
-              <div className="detail-card"><strong>Email:</strong> {selectedPaciente.email || "-"}</div>
-              <div className="detail-card"><strong>Seguro:</strong> {seguros.find(s => s.id === selectedPaciente.id_seguro)?.nombre || "-"}</div>
+        <div className="lp-modal-overlay">
+          <div className="lp-modal-content">
+            <div className="lp-details-header">
+              <div className="lp-avatar-circle">{selectedPaciente.nombre.charAt(0)}</div>
+              <h3>{selectedPaciente.nombre}</h3>
+              <span className="lp-badge-id">PACIENTE #{selectedPaciente.id}</span>
             </div>
-            <div className="modal-footer" style={{ flexDirection: "column", gap: "0.75rem" }}>
-              <button className="btn-primary" onClick={() => { setIsDetailsModalOpen(false); setIsStoriesModalOpen(true); }}>
-                <FileText size={16} /> Historias
+
+            <div className="lp-details-grid">
+              <div className="lp-detail-item">
+                <span className="lp-detail-icon">🪪</span>
+                <div>
+                  <label>Documento</label>
+                  <p>{selectedPaciente.documento}</p>
+                </div>
+              </div>
+              <div className="lp-detail-item">
+                <span className="lp-detail-icon">📞</span>
+                <div>
+                  <label>Teléfono</label>
+                  <p>{selectedPaciente.telefono ? `+${selectedPaciente.telefono}` : "-"}</p>
+                </div>
+              </div>
+              <div className="lp-detail-item">
+                <span className="lp-detail-icon">✉️</span>
+                <div>
+                  <label>Email</label>
+                  <p>{selectedPaciente.email || "-"}</p>
+                </div>
+              </div>
+              <div className="lp-detail-item">
+                <span className="lp-detail-icon">🏥</span>
+                <div>
+                  <label>Seguro</label>
+                  <p>{seguros.find(s => s.id === selectedPaciente.id_seguro)?.nombre || "Particular"}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="lp-details-actions">
+              <button className="lp-btn-action-outline" onClick={() => { setIsDetailsModalOpen(false); setIsStoriesModalOpen(true); }}>
+                <FileText size={18} /> Ver Historias Clínicas
               </button>
-              <button className="btn-primary" onClick={() => {
-                  setIsDetailsModalOpen(false);
-                  setIsCreateModalOpen(true);
-                  setIsEditing(true);
-                  setNombre(selectedPaciente.nombre);
-                  
-                  // CAMBIO 4: Cargar documento directo al estado unificado
-                  setDocumentoField(selectedPaciente.documento || "");
-                  
-                  setTelefono(selectedPaciente.telefono);
-                  setEmail(selectedPaciente.email);
-                  setIdSeguro(selectedPaciente.id_seguro);
-                }}>
-                <Pencil size={16} /> Editar
-              </button>
-              <button className="btn-danger" onClick={() => { setIsDetailsModalOpen(false); setIsDeleteModalOpen(true); }}>
-                <Trash2 size={16} /> Eliminar
-              </button>
-              <button className="btn-secondary" onClick={() => setIsDetailsModalOpen(false)}>Cerrar</button>
+              <div className="lp-action-row">
+                <button className="lp-btn-edit-soft" onClick={() => {
+                    setIsDetailsModalOpen(false);
+                    setIsCreateModalOpen(true);
+                    setIsEditing(true);
+                    setNombre(selectedPaciente.nombre);
+                    setDocumentoField(selectedPaciente.documento || "");
+                    setTelefono(selectedPaciente.telefono);
+                    setEmail(selectedPaciente.email);
+                    setIdSeguro(selectedPaciente.id_seguro);
+                  }}>
+                  <Pencil size={18} /> Editar
+                </button>
+                <button className="lp-btn-danger-soft" onClick={() => { setIsDetailsModalOpen(false); setIsDeleteModalOpen(true); }}>
+                  <Trash2 size={18} /> Eliminar
+                </button>
+              </div>
+              <button className="lp-btn-secondary" onClick={() => setIsDetailsModalOpen(false)}>Cerrar</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL CREAR SEGURO */}
+      {/* OTROS MODALES (Simplificados por brevedad, mantienen funcionalidad) */}
       {isCreateSeguroModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
+        <div className="lp-modal-overlay">
+          <div className="lp-modal-content">
             <h3>Nuevo Seguro</h3>
-            <input className="modal-input" placeholder="Nombre de la empresa" value={nuevoSeguroNombre} onChange={e => setNuevoSeguroNombre(e.target.value.toUpperCase())} />
-            <input className="modal-input" placeholder="Persona de contacto" value={nuevoSeguroContacto} onChange={e => handleNameInput(e.target.value, setNuevoSeguroContacto)} />
-            
-            <div className="phone-input-container" style={{ marginBottom: '15px' }}>
-              <PhoneInput
-                country={'ve'}
-                value={nuevoSeguroTelefono}
-                onChange={val => setNuevoSeguroTelefono(val)}
-                inputStyle={{ width: '100%', height: '40px' }}
-              />
+            <div className="lp-form-group" style={{gap:'1rem', marginTop:'1rem'}}>
+               <input className="lp-modal-input" placeholder="Nombre" value={nuevoSeguroNombre} onChange={e => setNuevoSeguroNombre(e.target.value.toUpperCase())} />
+               <input className="lp-modal-input" placeholder="Contacto" value={nuevoSeguroContacto} onChange={e => handleNameInput(e.target.value, setNuevoSeguroContacto)} />
+               <PhoneInput country={'ve'} value={nuevoSeguroTelefono} onChange={val => setNuevoSeguroTelefono(val)} />
             </div>
-
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setIsCreateSeguroModalOpen(false)}>Cancelar</button>
-              <button className="btn-primary" onClick={handleCreateSeguro}><Save size={16} /> Guardar Seguro</button>
+            <div className="lp-modal-footer" style={{marginTop:'1.5rem'}}>
+              <button className="lp-btn-secondary" onClick={() => setIsCreateSeguroModalOpen(false)}>Cancelar</button>
+              <button className="lp-btn-primary" onClick={handleCreateSeguro}><Save size={16} /> Guardar</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL ELIMINAR PACIENTE */}
       {isDeleteModalOpen && selectedPaciente && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header-danger"><AlertTriangle size={28} /><h3>¿Eliminar paciente?</h3></div>
-            <p>Se eliminará a <strong>{selectedPaciente.nombre}</strong>. Esta acción no se puede deshacer.</p>
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
-              <button className="btn-danger" onClick={handleDeletePaciente}><Trash2 size={16} /> Eliminar</button>
+        <div className="lp-modal-overlay">
+          <div className="lp-modal-content">
+            <div className="lp-modal-header-danger"><AlertTriangle size={28} /><h3>¿Eliminar paciente?</h3></div>
+            <p style={{textAlign:'center', margin:'1rem 0'}}>Se eliminará a <strong>{selectedPaciente.nombre}</strong> de forma permanente.</p>
+            <div className="lp-modal-footer">
+              <button className="lp-btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
+              <button className="lp-btn-danger" onClick={handleDeletePaciente}><Trash2 size={16} /> Confirmar</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL HISTORIAS */}
       {isStoriesModalOpen && selectedPaciente && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ width: '95%', maxWidth: '1200px' }}>
+        <div className="lp-modal-overlay">
+          <div className="lp-modal-content" style={{ width: '95%', maxWidth: '1200px' }}>
             <ListStories pacienteId={selectedPaciente.id} />
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setIsStoriesModalOpen(false)}>Cerrar Historias</button>
+            <div className="lp-modal-footer">
+              <button className="lp-btn-secondary" onClick={() => setIsStoriesModalOpen(false)}>Cerrar Historias</button>
             </div>
           </div>
         </div>

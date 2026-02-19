@@ -18,10 +18,10 @@ import ListTypesDoctor from "../components/Patients/ListTypesDoctor";
 import { EntityProvider } from "../context/EntityContext";
 import { Menu, X } from "lucide-react";
 
-// Estilos y recursos visuales
 import "../styles/pages/HomePage.css";
 import fondoHorizontal from "../assets/images/fondoHorizontal.jpeg";
 import fondoApp from "../assets/images/fondoApp.jpeg";
+import logo from "../assets/images/logo.png";
 
 export default function HomePage() {
   const [activeComponent, setActiveComponent] = useState("products");
@@ -36,34 +36,42 @@ export default function HomePage() {
         setIsSidebarOpen(false);
       }
     };
+
     if (isSidebarOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     }
+
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isSidebarOpen]);
 
   return (
     <EntityProvider>
       <div className={`home-layout ${isSidebarOpen ? "sidebar-open" : ""}`}>
-        
-        {/* Capas de fondo dinámico */}
-        <div 
-          className="home-background" 
-          style={{ 
-            '--bg-desktop': `url(${fondoHorizontal})`,
-            '--bg-mobile': `url(${fondoApp})`
-          }} 
+
+        {/* Fondo */}
+        <div
+          className="home-background"
+          style={{
+            "--bg-desktop": `url(${fondoHorizontal})`,
+            "--bg-mobile": `url(${fondoApp})`,
+          }}
         />
         <div className="home-overlay" />
 
+        {/* 🔥 LOGO FLOTANTE DERECHA */}
+        <img src={logo} alt="Logo" className="floating-logo" />
+
+        {/* Botón móvil */}
         <button className="mobile-toggle" onClick={toggleSidebar}>
           {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
 
-        <aside ref={sidebarRef} className={`sidebar-wrapper ${isSidebarOpen ? "is-open" : ""}`}>
+        {/* Sidebar */}
+        <aside
+          ref={sidebarRef}
+          className={`sidebar-wrapper ${isSidebarOpen ? "is-open" : ""}`}
+        >
           <Sidebar
-            isOpen={isSidebarOpen}
-            setIsOpen={setIsSidebarOpen}
             activeComponent={activeComponent}
             setActiveComponent={(comp) => {
               setActiveComponent(comp);
@@ -72,13 +80,9 @@ export default function HomePage() {
           />
         </aside>
 
+        {/* Contenido */}
         <main className="main-viewport">
-          <header className="top-bar">
-            
-          </header>
-
           <section className="content-area">
-            {/* Sin glass-container, el contenido va directo */}
             {activeComponent === "patients" && <ListPatients />}
             {activeComponent === "insurances" && <ListInsurances />}
             {activeComponent === "stories" && <ListStories />}
@@ -95,6 +99,7 @@ export default function HomePage() {
             {activeComponent === "purchases" && <ListPurchases />}
           </section>
         </main>
+
       </div>
     </EntityProvider>
   );

@@ -156,3 +156,29 @@
   background: rgba(255, 255, 255, 0.2);
   border-radius: 10px;
 }
+
+/* 🔥 Logo flotante superior derecha */
+.floating-logo {
+  position: fixed;
+  top: 20px;
+  right: 30px;
+  height: 55px;
+  width: auto;
+  object-fit: contain;
+  z-index: 50;
+  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.4));
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.floating-logo:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .floating-logo {
+    height: 40px;
+    right: 20px;
+  }
+}
