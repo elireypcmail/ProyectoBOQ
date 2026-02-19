@@ -1,8 +1,8 @@
 import React from "react";
-import { X, FileText, Trash2 } from "lucide-react";
-import "../../../styles/ui/steps/StepConfirm.css"; 
+import { X, FileText, Trash2, Calendar, Package, Hash, Truck } from "lucide-react";
+import "../../../styles/ui/PurchaseDetailModal.css"; 
 
-const PurchaseDetailModal = ({ isOpen, purchase, onClose, onEdit }) => {
+const PurchaseDetailModal = ({ isOpen, purchase, onClose }) => {
   if (!isOpen || !purchase) return null;
 
   // --- 1. HELPERS DE FORMATEO ---
@@ -23,7 +23,7 @@ const PurchaseDetailModal = ({ isOpen, purchase, onClose, onEdit }) => {
 
   const formatNum = (val) => {
     const num = safeParse(val);
-    // Siguiendo tu instrucción: decimales con ","
+    // Configuración para decimales con "," y miles con "."
     return num.toLocaleString('de-DE', { 
       minimumFractionDigits: 2, 
       maximumFractionDigits: 2 
@@ -33,7 +33,7 @@ const PurchaseDetailModal = ({ isOpen, purchase, onClose, onEdit }) => {
   // --- 2. EXTRACCIÓN DE DATOS ---
   const totals = purchase.totales_cargos || {};
   const items = purchase.items || [];
-  const lotes = purchase.detalle_lotes || []; // Extraemos los lotes del JSON
+  const lotes = purchase.detalle_lotes || [];
 
   const subtotalBruto = safeParse(totals.subtotal);
   const descuento = safeParse(totals.monto_descuento_fijo);
@@ -44,98 +44,100 @@ const PurchaseDetailModal = ({ isOpen, purchase, onClose, onEdit }) => {
   const saldoPendiente = totalFacturaNeto - abono + cargos;
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content" style={{ maxWidth: '900px', width: '95%', padding: 0 }}>
+    <div className="pdm-modal-overlay">
+      <div className="pdm-modal-content" style={{ maxWidth: '900px', width: '95%', padding: 0 }}>
         
-        <div className="modal-header" style={{ padding: '15px 25px', borderBottom: '1px solid #eee' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <FileText size={20} className="text-primary" />
-            <h3 style={{ margin: 0 }}>Detalle de Compra</h3>
+        {/* HEADER */}
+        <div className="pdm-modal-header">
+          <div className="pdm-header-title">
+            <FileText size={22} className="pdm-icon-primary" />
+            <h3>Detalle de Compra</h3>
           </div>
-          <button className="icon-btn" onClick={onClose}><X size={24} /></button>
+          <button className="pdm-close-btn" onClick={onClose}>
+            <X size={24} />
+          </button>
         </div>
 
-        <div className="modal-body pconf-step-container" style={{ padding: '25px', maxHeight: '75vh', overflowY: 'auto' }}>
+        <div className="pdm-modal-body">
           
           {/* RESUMEN CABECERA */}
-          <div className="pconf-summary-grid" style={{ marginBottom: '30px' }}>
-            <div className="pconf-summary-card">
-              <label>Factura N°</label>
+          <div className="pdm-summary-grid">
+            <div className="pdm-summary-card">
+              <label><Hash size={14} /> Factura N°</label>
               <span>{purchase.nro_factura || "-"}</span>
             </div>
-            <div className="pconf-summary-card">
-              <label>Proveedor</label>
+            <div className="pdm-summary-card">
+              <label><Truck size={14} /> Proveedor</label>
               <span>{purchase.proveedor || purchase.proveedor_nombre || "-"}</span>
             </div>
-            <div className="pconf-summary-card">
-              <label>Emisión</label>
+            <div className="pdm-summary-card">
+              <label><Calendar size={14} /> Emisión</label>
               <span>{formatDate(purchase.fecha_emision)}</span>
             </div>
-            <div className="pconf-summary-card">
-              <label>Vencimiento</label>
+            <div className="pdm-summary-card">
+              <label><Calendar size={14} /> Vencimiento</label>
               <span>{formatDate(purchase.fecha_vencimiento)}</span>
             </div>
           </div>
 
           {/* TABLA DE PRODUCTOS Y LOTES */}
-          <h3 style={{ fontSize: '1.2rem', color: '#1e293b', marginBottom: '15px' }}>Detalle de Mercancía</h3>
-          <div className="pconf-table-wrapper">
-            <table className="pconf-items-table">
+          <div className="pdm-section-title">
+            <Package size={18} />
+            <h4>Detalle de Mercancía</h4>
+          </div>
+          
+          <div className="pdm-table-container">
+            <table className="pdm-main-table">
               <thead>
-                <tr style={{ backgroundColor: '#f8fafc' }}>
-                  <th style={{ textAlign: 'left', color: '#64748b', fontSize: '0.75rem' }}>DESCRIPCIÓN</th>
-                  <th className="pconf-center" style={{ color: '#64748b', fontSize: '0.75rem' }}>CANTIDAD</th>
-                  <th className="pconf-center" style={{ color: '#64748b', fontSize: '0.75rem' }}>COSTO</th>
-                  <th className="pconf-center" style={{ color: '#64748b', fontSize: '0.75rem' }}>TOTAL</th>
+                <tr>
+                  <th>DESCRIPCIÓN</th>
+                  <th className="pdm-text-center">CANTIDAD</th>
+                  <th className="pdm-text-center">COSTO</th>
+                  <th className="pdm-text-center">TOTAL</th>
                 </tr>
               </thead>
               <tbody>
                 {items.map((item, index) => {
-                  // Filtramos los lotes que pertenecen a este producto
                   const itemLotes = lotes.filter(l => l.id_producto === item.id_producto);
 
                   return (
-                    <React.Fragment key={index}>
-                      {/* Fila del Producto */}
-                      <tr>
-                        <td className="pconf-desc" style={{ fontWeight: '600', color: '#1e293b' }}>
-                          {item.Producto}
-                        </td>
-                        <td className="pconf-center">{formatNum(item.Cant)}</td>
-                        <td className="pconf-center">{formatNum(item.Costo_Base)}</td>
-                        <td className="pconf-center">{formatNum(item.Subtotal_Linea)}</td>
+                    <React.Fragment key={`prod-${index}`}>
+                      <tr className="pdm-row-product">
+                        <td className="pdm-cell-desc">{item.Producto}</td>
+                        <td className="pdm-text-center">{formatNum(item.Cant)}</td>
+                        <td className="pdm-text-center">$ {formatNum(item.Costo_Base)}</td>
+                        <td className="pdm-text-center">$ {formatNum(item.Subtotal_Linea)}</td>
                       </tr>
 
-                      {/* Fila de Detalles de Lote (Sub-tabla) */}
                       {itemLotes.length > 0 && (
-                        <tr>
-                          <td colSpan="4" style={{ padding: '0 0 15px 40px', backgroundColor: '#ffffff' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '5px' }}>
-                              <thead>
-                                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                  <th style={{ textAlign: 'left', fontSize: '0.7rem', color: '#94a3b8', padding: '8px' }}>LOTE</th>
-                                  <th style={{ textAlign: 'left', fontSize: '0.7rem', color: '#94a3b8', padding: '8px' }}>DEPÓSITO</th>
-                                  <th style={{ textAlign: 'center', fontSize: '0.7rem', color: '#94a3b8', padding: '8px' }}>CANT.</th>
-                                  <th style={{ textAlign: 'center', fontSize: '0.7rem', color: '#94a3b8', padding: '8px' }}>VENC.</th>
-                                  <th style={{ textAlign: 'center', fontSize: '0.7rem', color: '#94a3b8', padding: '8px' }}>ACCIÓN</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {itemLotes.map((lote, lIdx) => (
-                                  <tr key={lIdx} style={{ borderBottom: '1px solid #f8fafc' }}>
-                                    <td style={{ fontSize: '0.85rem', fontWeight: 'bold', padding: '10px 8px' }}>#{lote.nro_lote}</td>
-                                    <td style={{ fontSize: '0.85rem', color: '#475569', padding: '10px 8px' }}>DEPOSITO {lote.id_deposito}</td>
-                                    <td style={{ fontSize: '0.85rem', textAlign: 'center', padding: '10px 8px' }}>{formatNum(lote.cantidad)}</td>
-                                    <td style={{ fontSize: '0.85rem', textAlign: 'center', padding: '10px 8px' }}>{formatDate(lote.fecha_vencimiento)}</td>
-                                    <td style={{ textAlign: 'center', padding: '10px 8px' }}>
-                                      <button className="icon-btn-sm" style={{ color: '#94a3b8', border: '1px solid #e2e8f0', padding: '4px', borderRadius: '6px' }}>
-                                        <Trash2 size={16} />
-                                      </button>
-                                    </td>
+                        <tr className="pdm-row-subtable">
+                          <td colSpan="4">
+                            <div className="pdm-subtable-wrapper">
+                              <table className="pdm-lotes-table">
+                                <thead>
+                                  <tr>
+                                    <th>LOTE</th>
+                                    <th>DEPÓSITO</th>
+                                    <th className="pdm-text-center">CANT.</th>
+                                    <th className="pdm-text-center">VENC.</th>
+                                    <th className="pdm-text-center">ESTADO</th>
                                   </tr>
-                                ))}
-                              </tbody>
-                            </table>
+                                </thead>
+                                <tbody>
+                                  {itemLotes.map((lote, lIdx) => (
+                                    <tr key={`lote-${lIdx}`}>
+                                      <td className="pdm-lote-tag">#{lote.nro_lote}</td>
+                                      <td>Deposito {lote.id_deposito}</td>
+                                      <td className="pdm-text-center">{formatNum(lote.cantidad)}</td>
+                                      <td className="pdm-text-center">{formatDate(lote.fecha_vencimiento)}</td>
+                                      <td className="pdm-text-center">
+                                        <span className="pdm-status-pill">Cargado</span>
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
                           </td>
                         </tr>
                       )}
@@ -147,49 +149,40 @@ const PurchaseDetailModal = ({ isOpen, purchase, onClose, onEdit }) => {
           </div>
 
           {/* PANEL DE TOTALES */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
-            <div style={{ 
-              width: '100%', 
-              maxWidth: '450px', 
-              border: '1px solid #e2e8f0', 
-              borderRadius: '12px', 
-              padding: '20px',
-              backgroundColor: '#ffffff'
-            }}>
-              <div className="pconf-final-row">
-                <span style={{ color: '#475569' }}>Subtotal</span>
-                <span style={{ fontWeight: '500' }}>{formatNum(subtotalBruto)}</span>
+          <div className="pdm-footer-flex">
+            <div className="pdm-totals-panel">
+              <div className="pdm-total-line">
+                <span>Subtotal</span>
+                <span>$ {formatNum(subtotalBruto)}</span>
               </div>
               
-              <div className="pconf-final-row">
-                <span style={{ color: '#dc2626' }}>Descuento</span>
-                <span style={{ color: '#dc2626' }}>- {formatNum(descuento)}</span>
+              <div className="pdm-total-line pdm-text-danger">
+                <span>Descuento</span>
+                <span>- $ {formatNum(descuento)}</span>
               </div>
 
-              <div style={{ margin: '15px 0', borderTop: '1px solid #f1f5f9' }}></div>
+              <div className="pdm-divider"></div>
 
-              <div className="pconf-final-row" style={{ alignItems: 'center' }}>
-                <span style={{ fontWeight: '600', color: '#334155', fontSize: '0.9rem' }}>TOTAL FACTURA</span>
-                <span style={{ color: '#dc2626', fontSize: '1.75rem', fontWeight: '800' }}>
-                  $ {formatNum(totalFacturaNeto)}
-                </span>
+              <div className="pdm-total-line pdm-main-total">
+                <span>TOTAL FACTURA</span>
+                <span className="pdm-price-large">$ {formatNum(totalFacturaNeto)}</span>
               </div>
 
-              <div style={{ margin: '15px 0', borderTop: '1px solid #f1f5f9' }}></div>
+              <div className="pdm-divider"></div>
 
-              <div className="pconf-final-row">
-                <span style={{ color: '#475569' }}>Monto Abonado</span>
-                <span style={{ color: '#10b981', fontWeight: '500' }}>- {formatNum(abono)}</span>
+              <div className="pdm-total-line pdm-text-success">
+                <span>Monto Abonado</span>
+                <span>- $ {formatNum(abono)}</span>
               </div>
 
-              <div className="pconf-final-row">
-                <span style={{ color: '#dc2626' }}>Cargos</span>
-                <span style={{ color: '#dc2626' }}>+ {formatNum(cargos)}</span>
+              <div className="pdm-total-line pdm-text-danger">
+                <span>Cargos Adicionales</span>
+                <span>+ $ {formatNum(cargos)}</span>
               </div>
 
-              <div className="pconf-final-row" style={{ marginTop: '10px' }}>
-                <span style={{ fontWeight: '700', color: '#0f172a', fontSize: '1.1rem' }}>Total Factura + Cargos</span>
-                <span style={{ fontWeight: '800', color: saldoPendiente > 0 ? '#dc2626' : '#0f172a', fontSize: '1.2rem' }}>
+              <div className="pdm-total-line pdm-grand-total">
+                <span>Saldo Pendiente</span>
+                <span className={saldoPendiente > 0 ? "pdm-text-danger" : ""}>
                   $ {formatNum(saldoPendiente)}
                 </span>
               </div>
@@ -197,8 +190,8 @@ const PurchaseDetailModal = ({ isOpen, purchase, onClose, onEdit }) => {
           </div>
         </div>
 
-        <div className="modal-footer" style={{ padding: '15px 25px', borderTop: '1px solid #eee', justifyContent: 'flex-end', gap: '10px' }}>
-          <button className="btn-primary" onClick={onClose}>Cerrar</button>
+        <div className="pdm-modal-footer">
+          <button className="pdm-btn-close" onClick={onClose}>Cerrar Detalle</button>
         </div>
 
       </div>
