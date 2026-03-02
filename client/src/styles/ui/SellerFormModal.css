@@ -1,0 +1,231 @@
+/* SELLER FORM MODAL (SellerFM) */
+
+.sellerfm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+}
+
+.sellerfm-content {
+  background: var(--bg);
+  border-radius: 16px;
+  width: 95%;
+  max-width: 600px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-md);
+  animation: sellerfmIn 0.3s ease-out;
+  position: relative;
+}
+
+.sellerfm-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sellerfm-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.sellerfm-close-icon {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  transition: var(--transition);
+}
+
+.sellerfm-close-icon:hover { color: var(--primary); }
+
+.sellerfm-body {
+  padding: 1.5rem 2rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.sellerfm-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sellerfm-col-span-2 { grid-column: span 2; }
+
+.sellerfm-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.sellerfm-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--soft);
+  font-size: 0.95rem;
+  transition: var(--transition);
+}
+
+.sellerfm-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(236, 78, 83, 0.1);
+}
+
+/* Input Group with Add Button */
+.sellerfm-input-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.sellerfm-select-container { flex: 1; }
+
+.sellerfm-btn-add-circle {
+  background: #e0e7ff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  color: #4f46e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.sellerfm-btn-add-circle:hover { background: #ced4ff; }
+
+/* Phone Input Customization */
+.sellerfm-phone-wrapper .sellerfm-phone-input {
+  width: 100% !important;
+  height: 42px !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--border) !important;
+  background: var(--soft) !important;
+}
+
+/* Footer */
+.sellerfm-footer {
+  padding: 1.5rem 2rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.sellerfm-btn-cancel {
+  padding: 0.65rem 1.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--soft);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.sellerfm-btn-save {
+  background: linear-gradient(135deg, var(--primary), #d43f44);
+  color: white;
+  padding: 0.65rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: var(--transition);
+}
+
+/* --- MINI MODAL (OFICINA) --- */
+.sellerfm-mini-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 16px;
+}
+
+.sellerfm-mini-card {
+  background: white;
+  width: 320px;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  border: 1px solid var(--border);
+}
+
+.sellerfm-mini-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 1.25rem;
+}
+
+.sellerfm-mini-header h4 { margin: 0; font-size: 1rem; }
+
+.sellerfm-icon-primary { color: var(--primary); }
+
+.sellerfm-mini-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.sellerfm-mini-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sellerfm-btn-mini-close {
+  background: var(--soft);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+}
+
+.sellerfm-btn-mini-save {
+  flex: 1;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.sellerfm-btn-mini-save:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.sellerfm-spin { animation: sellerfmSpin 1s linear infinite; }
+
+@keyframes sellerfmSpin { to { transform: rotate(360deg); } }
+@keyframes sellerfmIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}

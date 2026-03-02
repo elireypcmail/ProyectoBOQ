@@ -15,4 +15,6 @@ router.get("/:id", controller.getByIdPatients)
 router.put("/:id", controller.updatePatients)
 router.delete("/:id", controller.deletePatients)
 
+router.post("/save/file/:id", upload.array("files"), controller.save_newFiles)
+
 export default router

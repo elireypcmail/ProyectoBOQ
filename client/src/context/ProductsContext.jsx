@@ -117,7 +117,28 @@ export const ProductsProvider = ({ children }) => {
     }
   };
   
-  // -------------------- PRODUCTOS --------------------
+  const saveFilesProduct = async (id_product, files, filesJson) => {
+    try {
+      console.log(id_product, files, filesJson)
+      
+      let id = id_product
+
+      // 🔹 Guardar archivos en backend
+      await ProductsAPI.saveFileProducts(id, files, filesJson)
+      
+      // 🔹 Traer todos los proyectos actualizados desde la API
+      const res = await getAllProducts()
+      setProducts(res.data.data || [])
+      
+      return { status: true }
+    } catch (error) {
+      console.log(error)
+      setErrors(error.response?.data || ["Error saving Product files"])
+      return { status: false, error: error.response?.data || error.message }
+    }
+  }
+
+  // -------------------- AUDITORIA PRODUCTOS --------------------
   
     const getAuditProd = async (id_producto) => {
     try {
@@ -541,6 +562,7 @@ export const ProductsProvider = ({ children }) => {
         createNewProduct,
         editProduct,
         deleteProductById,
+        saveFilesProduct,
 
         getAuditProd,
         

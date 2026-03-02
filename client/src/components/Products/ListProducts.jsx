@@ -24,12 +24,13 @@ const ListProducts = () => {
     getAllProducts,
     getAllCategories,
     getAllBrands,
-    getProductsById, // Inyectamos la función del contexto
+    getProductsById, 
     createNewProduct,
     editProduct,
     deleteProductById,
     createNewCategory,
-    createNewBrand
+    createNewBrand,
+    saveFilesProduct // <-- Extraemos la función para guardar archivos
   } = useProducts();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -78,6 +79,44 @@ const ListProducts = () => {
     const res = await createNewBrand({ nombre });
     await getAllBrands();
     return res.data;
+  };
+
+  // NUEVO: Handler unificado para guardar producto y sus imágenes
+  const handleSaveProduct = async (data, files) => {
+    try {
+      let productId = null;
+
+      if (selectedProduct) {
+        await editProduct(selectedProduct.id, data);
+        productId = selectedProduct.id;
+      } else {
+        const res = await createNewProduct(data);
+        console.log("Respuesta completa:", res);
+        
+        // Según tus logs, la estructura es res.data.data.id
+        productId = res?.data?.data?.id || res?.id || res?.data?.id; 
+      }
+
+      console.log("productId capturado:", productId);
+
+      if (files && files.length > 0 && productId) {
+        const filesJson = files.map((f, idx) => ({
+          id: null,
+          name: f.name,
+          order: idx + 1,
+        }));
+        
+        // Este es el punto donde recibes el error 500
+        await saveFilesProduct(productId, files, filesJson);
+      }
+
+      await getAllProducts();
+      setIsFormOpen(false);
+      setSelectedProduct(null);
+    } catch (error) {
+      console.error("Error en el flujo de guardado:", error);
+      // IMPORTANTE: No alertar aquí si el error ya se manejó en el Context
+    }
   };
 
   return (
@@ -148,7 +187,7 @@ const ListProducts = () => {
       <ProductFormModal
         isOpen={isFormOpen}
         onClose={() => { setIsFormOpen(false); setSelectedProduct(null); }}
-        onSubmit={selectedProduct ? (data) => editProduct(selectedProduct.id, data) : createNewProduct}
+        onSubmit={handleSaveProduct} // <-- Pasamos nuestro handler unificado aquí
         initialData={selectedProduct}
         categories={categories}
         brands={brands}

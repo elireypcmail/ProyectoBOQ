@@ -1,0 +1,212 @@
+/* SUPPLIER FORM MODAL (SFM) */
+
+.sfm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+}
+
+.sfm-content {
+  background: var(--bg);
+  border-radius: 16px;
+  width: 95%;
+  max-width: 600px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-md);
+  animation: sfmIn 0.3s ease-out;
+}
+
+.sfm-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sfm-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.sfm-close-icon {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  transition: var(--transition);
+}
+
+.sfm-close-icon:hover { color: var(--primary); }
+
+.sfm-body {
+  padding: 1.5rem 2rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.sfm-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sfm-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.sfm-input, .sfm-textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--soft);
+  font-size: 0.95rem;
+  transition: var(--transition);
+}
+
+.sfm-input:focus, .sfm-textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(236, 78, 83, 0.1);
+}
+
+.sfm-textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+/* Phone Input Customization */
+.sfm-phone-wrapper .sfm-phone-input {
+  width: 100% !important;
+  height: 42px !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--border) !important;
+  background: var(--soft) !important;
+}
+
+.sfm-phone-wrapper .sfm-phone-button {
+  border-radius: 8px 0 0 8px !important;
+  border: 1px solid var(--border) !important;
+  background: var(--border) !important;
+}
+
+/* File Section */
+.sfm-dropzone {
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  padding: 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  background: var(--soft);
+  color: var(--muted);
+  transition: var(--transition);
+}
+
+.sfm-dropzone:hover {
+  border-color: var(--primary);
+  background: #fff5f5;
+  color: var(--primary);
+}
+
+.sfm-preview-grid {
+  display: flex;
+  gap: 10px;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.sfm-preview-item {
+  position: relative;
+  width: 70px;
+  height: 70px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.sfm-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sfm-pdf-placeholder {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e2e8f0;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.sfm-remove-file {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: white;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  line-height: 0;
+}
+
+/* Footer */
+.sfm-footer {
+  padding: 1.5rem 2rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.sfm-btn-cancel {
+  padding: 0.65rem 1.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--soft);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.sfm-btn-save {
+  background: linear-gradient(135deg, var(--primary), #d43f44);
+  color: white;
+  padding: 0.65rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: var(--transition);
+}
+
+.sfm-btn-save:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.sfm-spin { animation: sfmSpin 1s linear infinite; }
+
+@keyframes sfmSpin { to { transform: rotate(360deg); } }
+@keyframes sfmIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}

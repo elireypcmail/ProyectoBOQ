@@ -19,6 +19,7 @@ import brandsRouter from "./routes/brands.routes.js"
 import lotsRouter from "./routes/lots.routes.js"
 import SupsRouter from "./routes/suppliers.routes.js"
 import ShopRouter from "./routes/shopping.routes.js"
+import SellerRouter from "./routes/sellers.routes.js"
 
 const app = express()
 const server = http.createServer(app)
@@ -52,3 +53,4 @@ app.use("/marcas",brandsRouter)
 app.use("/lotes",lotsRouter)
 app.use("/proveedores", SupsRouter)
 app.use("/compras", ShopRouter)
+app.use("/vendedores", SellerRouter)

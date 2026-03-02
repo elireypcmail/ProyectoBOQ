@@ -319,12 +319,13 @@ CREATE TABLE proveedores (
   documento VARCHAR(100),
   telefono VARCHAR(20),
   email VARCHAR(100),
+  datos_bancarios TEXT NOT NULL,
   files JSON,
   estatus BOOLEAN NOT NULL DEFAULT TRUE,
   fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE proveedor_images (
+CREATE TABLE proveedores_images (
   id SERIAL PRIMARY KEY,
   proveedor_id INT NOT NULL REFERENCES proveedores(id) ON DELETE CASCADE,
   nombre_file TEXT,
@@ -348,6 +349,7 @@ CREATE TABLE compras (
   cargo DECIMAL(10,2) NOT NULL,
   total DECIMAL(10,2) NOT NULL,
   abonado DECIMAL(10,2) NOT NULL,
+  notas_abono TEXT,
   estado_pago TEXT NOT NULL,
   estatus BOOLEAN NOT NULL DEFAULT TRUE,
   fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
@@ -377,7 +379,6 @@ CREATE TABLE compras_detalle (
   estatus BOOLEAN NOT NULL DEFAULT TRUE,
   fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
 
 CREATE TABLE compras_detalle_lote (
   id SERIAL PRIMARY KEY,

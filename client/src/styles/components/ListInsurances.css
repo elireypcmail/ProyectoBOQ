@@ -23,7 +23,6 @@
 .insurances-view-container {
   width: 90%;
   max-width: 1200px;
-  margin: 2rem auto;
   background: var(--ins-bg);
   padding: 1.75rem;
   border-radius: 14px;
@@ -279,4 +278,75 @@
   .ins-col-span-2 {
     grid-column: span 1;
   }
+}
+
+/* --- PAGINACIÓN MEJORADA --- */
+.insurances-pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 2.5rem;
+  padding: 0.75rem;
+  background: white;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 50px;
+  box-shadow: var(--ins-shadow-sm);
+  border: 1px solid var(--ins-border);
+}
+
+.insurances-page-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ins-muted);
+  cursor: pointer;
+  transition: var(--ins-transition);
+}
+
+.insurances-page-btn:hover:not(:disabled) {
+  background: var(--ins-soft);
+  color: var(--ins-primary);
+  border-color: var(--ins-border);
+}
+
+.insurances-page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.insurances-page-info {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ins-text-main);
+  padding: 0 1rem;
+  min-width: 80px;
+  text-align: center;
+}
+
+/* Opcional: Si quieres números de página estilo círculos */
+.insurances-page-number {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--ins-transition);
+}
+
+.insurances-page-number.active {
+  background: var(--ins-primary);
+  color: white;
+  box-shadow: 0 4px 10px rgba(236, 78, 83, 0.3);
 }

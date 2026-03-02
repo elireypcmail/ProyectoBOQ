@@ -31,6 +31,38 @@ export const HealthProvider = ({ children }) => {
     }
   };
 
+  const getPacienteById = async (id) => {
+    try {
+      const res = await HealthAPI.getPacienteById(id);
+      const paciente = res.data?.data;
+
+      if (!paciente) return null;
+
+      setPacientes((prevPacientes) => {
+        const exists = prevPacientes.find(p => p.id === id);
+
+        if (exists) {
+          // 🔄 Actualiza el existente
+          return prevPacientes.map(p =>
+            p.id === id ? paciente : p
+          );
+        } else {
+          // ➕ Lo agrega si no existe
+          return [...prevPacientes, paciente];
+        }
+      });
+
+      return paciente;
+
+    } catch (error) {
+      setErrors((prev) => [
+        ...prev,
+        error.response?.data?.msg || "Error fetching paciente by id",
+      ]);
+      return null;
+    }
+  };
+
   const createNewPaciente = async (newPaciente) => {
     try {
       console.log(newPaciente)
@@ -238,6 +270,39 @@ export const HealthProvider = ({ children }) => {
     }
   }
 
+  const getHistoriaById = async (id) => {
+    try {
+      console.log("Fetching historia by id:", id);
+      const res = await HealthAPI.getHistoriaById(id);
+      const historia = res.data?.data;
+
+      if (!historia) return null;
+
+      setHistorias((prevHistorias) => {
+        // Buscamos si la historia ya existe en el estado local
+        const exists = prevHistorias.find((h) => h.id === id);
+
+        if (exists) {
+          // 🔄 Actualiza la historia existente
+          return prevHistorias.map((h) =>
+            h.id === id ? historia : h
+          );
+        } else {
+          // ➕ Agrega la nueva historia si no estaba
+          return [...prevHistorias, historia];
+        }
+      });
+
+      return historia;
+
+    } catch (error) {
+      setErrors((prev) => [
+        ...prev,
+        error.response?.data?.msg || "Error fetching historia by id",
+      ]);
+      return null;
+    }
+  }
 
   const createNewHistoria = async (newHistoria) => {
     try {
@@ -305,6 +370,7 @@ export const HealthProvider = ({ children }) => {
 
         // Pacientes
         getAllPacientes,
+        getPacienteById,
         createNewPaciente,
         editedPaciente,
         deletePacienteById,
@@ -331,6 +397,7 @@ export const HealthProvider = ({ children }) => {
         // Historias
         getAllHistorias,
         getHistoriasByPacientes,
+        getHistoriaById,
         createNewHistoria,
         editedHistoria,
         deleteHistoriaById,

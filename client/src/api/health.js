@@ -17,7 +17,7 @@ export const savePacienteFiles = (id, files, filesJson) => {
   const formData = new FormData();
   files.forEach(file => formData.append("files", file));
   formData.append("filesJson", JSON.stringify(filesJson));
-  return instanceApp.post(`/pacientes/${id}/files`, formData, {
+  return instanceApp.post(`/pacientes/save/file/${id}`, formData, {
     headers: { "Content-Type": "multipart/form-data" }
   });
 };
@@ -54,7 +54,7 @@ export const saveHistoriaFiles = (id, files, filesJson) => {
   const formData = new FormData();
   files.forEach(file => formData.append("files", file));
   formData.append("filesJson", JSON.stringify(filesJson));
-  return instanceApp.post(`/historias/${id}/files`, formData, {
+  return instanceApp.post(`/historias/save/file/${id}`, formData, {
     headers: { "Content-Type": "multipart/form-data" }
   });
 };

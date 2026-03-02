@@ -7,6 +7,23 @@ export const getProductById = (id) => instanceApp.get(`/productos/${id}`);
 export const createProduct = (data) => instanceApp.post("/productos", data);
 export const updateProduct = (id, data) => instanceApp.put(`/productos/${id}`, data);
 export const deleteProduct = (id) => instanceApp.delete(`/productos/${id}`);
+export const saveFileProducts = (id, files, filesJson) => {
+  const formData = new FormData()
+
+  // Agregar archivos
+  files.forEach((file) => {
+    formData.append("files", file)
+  })
+
+  // Agregar JSON como string
+  formData.append("files_json", JSON.stringify(filesJson))
+
+  return instanceApp.post(`/productos/save/file/${id}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  })
+}
 
 // -------------------- PRODUCTOS AUDITORIA --------------------
 export const getProductAudById = (id) => instanceApp.get(`/productos/auditoria/precio/${id}`);

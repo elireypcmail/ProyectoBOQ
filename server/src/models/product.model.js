@@ -8,40 +8,73 @@ export class ProductsModel {
     try {
       connection = await pool.connect();
 
-      const result = await connection.query(`
-      SELECT 
-        p.*,
-        c.nombre AS categoria,
-        m.nombre AS marca,
-        COALESCE(SUM(i.existencia_general), 0) AS existencia_general,
-        i.sku,
-        i.costo_unitario,
-        i.precio_venta,
-        i.margen_ganancia,
-        i.stock_minimo_general
-      FROM productos p
-      LEFT JOIN categorias c ON p.id_categoria = c.id
-      LEFT JOIN marcas m ON p.id_marca = m.id
-      LEFT JOIN LATERAL (
-        SELECT *
-        FROM inventario i2
-        WHERE i2.id_producto = p.id
-        AND i2.estatus = TRUE
-        ORDER BY i2.fecha_creacion DESC
-        LIMIT 1
-      ) i ON true
-      WHERE p.estatus = TRUE
-      GROUP BY 
-        p.id, c.nombre, m.nombre, 
-        i.sku, i.costo_unitario, i.precio_venta, i.margen_ganancia, i.stock_minimo_general
-      ORDER BY p.id DESC
-    `);
+      const sql = `
+        SELECT 
+          p.id, p.descripcion, p.id_categoria, p.id_marca, p.files, p.estatus, p.fecha_creacion,
+          c.nombre AS categoria,
+          m.nombre AS marca,
+          COALESCE(i.existencia_general, 0) AS existencia_general,
+          i.sku,
+          i.costo_unitario,
+          i.precio_venta,
+          i.margen_ganancia,
+          i.stock_minimo_general,
+          COALESCE(
+            json_agg(
+              json_build_object(
+                'id', pi.id,
+                'data', encode(pi.data, 'base64'),
+                'mime_type', pi.mime_type,
+                'nombre_file', pi.nombre_file,
+                'is_main', pi.is_main
+              )
+            ) FILTER (WHERE pi.id IS NOT NULL), '[]'
+          ) AS images
+        FROM productos p
+        LEFT JOIN categorias c ON p.id_categoria = c.id
+        LEFT JOIN marcas m ON p.id_marca = m.id
+        LEFT JOIN LATERAL (
+          SELECT *
+          FROM inventario i2
+          WHERE i2.id_producto = p.id
+          AND i2.estatus = TRUE
+          ORDER BY i2.fecha_creacion DESC
+          LIMIT 1
+        ) i ON true
+        LEFT JOIN productos_images pi ON pi.product_id = p.id
+        WHERE p.estatus = TRUE
+        GROUP BY 
+          p.id, c.nombre, m.nombre, 
+          i.sku, i.existencia_general, i.costo_unitario, i.precio_venta, 
+          i.margen_ganancia, i.stock_minimo_general
+        ORDER BY p.id DESC
+      `;
 
-      if (!result.rows.length) {
+      const result = await connection.query(sql);
+      let products = result.rows;
+
+      // 🔹 Reordenar imágenes según el campo JSON 'files' de la tabla productos
+      products = products.map(p => {
+        const filesJson = p.files || [];
+        let orderedImages = [];
+
+        if (filesJson.length > 0) {
+          orderedImages = filesJson.map(fj => {
+            const match = p.images.find(img => img.id === fj.id);
+            return { ...fj, ...(match || {}) };
+          });
+        } else {
+          orderedImages = p.images;
+        }
+
+        return { ...p, images: orderedImages };
+      });
+
+      if (products.length === 0) {
         return { status: false, code: 404, msg: "No se encontraron productos" };
       }
 
-      return { status: true, code: 200, data: result.rows };
+      return { status: true, code: 200, data: products };
     } catch (error) {
       return {
         status: false,
@@ -59,44 +92,70 @@ export class ProductsModel {
     try {
       connection = await pool.connect();
 
-      const result = await connection.query(
-        `
-      SELECT 
-        p.*,
-        c.nombre AS categoria,
-        m.nombre AS marca,
-        i.sku,
-        i.existencia_general,
-        i.costo_unitario,
-        i.precio_venta,
-        i.margen_ganancia,
-        i.stock_minimo_general
-      FROM productos p
-      LEFT JOIN categorias c ON p.id_categoria = c.id
-      LEFT JOIN marcas m ON p.id_marca = m.id
-      LEFT JOIN LATERAL (
-        SELECT *
-        FROM inventario i
-        WHERE i.id_producto = p.id
-        AND i.estatus = TRUE
-        ORDER BY i.fecha_creacion DESC
-        LIMIT 1
-      ) i ON true
-      WHERE p.id = $1
-    `,
-        [id],
-      );
+      const sql = `
+        SELECT 
+          p.id, p.descripcion, p.id_categoria, p.id_marca, p.files, p.estatus, p.fecha_creacion,
+          c.nombre AS categoria,
+          m.nombre AS marca,
+          i.sku,
+          i.existencia_general,
+          i.costo_unitario,
+          i.precio_venta,
+          i.margen_ganancia,
+          i.stock_minimo_general,
+          COALESCE(
+            json_agg(
+              json_build_object(
+                'id', pi.id,
+                'data', encode(pi.data, 'base64'),
+                'mime_type', pi.mime_type,
+                'nombre_file', pi.nombre_file,
+                'is_main', pi.is_main
+              )
+            ) FILTER (WHERE pi.id IS NOT NULL), '[]'
+          ) AS images
+        FROM productos p
+        LEFT JOIN categorias c ON p.id_categoria = c.id
+        LEFT JOIN marcas m ON p.id_marca = m.id
+        LEFT JOIN LATERAL (
+          SELECT *
+          FROM inventario i2
+          WHERE i2.id_producto = p.id
+          AND i2.estatus = TRUE
+          ORDER BY i2.fecha_creacion DESC
+          LIMIT 1
+        ) i ON true
+        LEFT JOIN productos_images pi ON pi.product_id = p.id
+        WHERE p.id = $1
+        GROUP BY 
+          p.id, c.nombre, m.nombre, 
+          i.sku, i.existencia_general, i.costo_unitario, i.precio_venta, 
+          i.margen_ganancia, i.stock_minimo_general
+      `;
+
+      const result = await connection.query(sql, [id]);
 
       if (!result.rows.length) {
         return { status: false, code: 404, msg: "Producto no encontrado" };
       }
 
-      return { status: true, code: 200, data: result.rows[0] };
+      let p = result.rows[0];
+      const filesJson = p.files || [];
+      
+      // 🔹 Aplicar ordenamiento
+      if (filesJson.length > 0) {
+        p.images = filesJson.map(fj => {
+          const match = p.images.find(img => img.id === fj.id);
+          return { ...fj, ...(match || {}) };
+        });
+      }
+
+      return { status: true, code: 200, data: p };
     } catch (error) {
       return {
         status: false,
         code: 500,
-        msg: "Error al obtener producto",
+        msg: "Error al obtener el producto",
         error: error.message,
       };
     } finally {
@@ -646,6 +705,105 @@ export class ProductsModel {
       };
     } finally {
       if (connection) connection.release();
+    }
+  }
+
+// ================= Productos + Imagenes ================= */
+
+    static async saveImages(id_product, files) {
+    let connection;
+    try {
+      connection = await pool.connect();
+
+      if (!files || files.length === 0) {
+        return { status: true, msg: "No files to save", data: [] };
+      }
+
+      // 1. Construir la consulta dinámica para insertar múltiples filas a la vez
+      // Parámetros por fila: product_id, nombre_file, data, mime_type, is_main
+      const values = [];
+      const rows = files.map((f, i) => {
+        const offset = i * 5; // 5 es el número de columnas que insertamos
+        values.push(
+          id_product,
+          f.originalname,
+          f.buffer,
+          f.mimetype,
+          i === 0 // La primera imagen del array se marca como principal (portada)
+        );
+
+        // Genera los placeholders: ($1, $2, $3, $4, $5), ($6, $7, $8, $9, $10), etc.
+        return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5})`;
+      });
+
+      const sqlInsert = `
+        INSERT INTO productos_images 
+        (product_id, nombre_file, data, mime_type, is_main)
+        VALUES ${rows.join(", ")}
+        RETURNING id, nombre_file, is_main
+      `;
+
+      const result = await connection.query(sqlInsert, values);
+
+      return {
+        status: true,
+        msg: `${result.rowCount} images saved successfully`,
+        code: 201,
+        data: result.rows,
+      };
+
+    } catch (error) {
+      console.error("❌ Error en Products.saveImages:", error);
+      return {
+        status: false,
+        msg: "Error saving images",
+        code: 500,
+        error: error.message,
+      };
+    } finally {
+      if (connection) connection.release();
+    }
+  }
+
+  static async orderFiles(id_product, filesJson) {
+    let connection
+    try {
+      connection = await pool.connect()
+
+      await connection.query(
+        `UPDATE products SET files = $1 WHERE id = $2`,
+        [JSON.stringify(filesJson), id_product]
+      )
+
+      const portada = filesJson.find(f => f.order === 1)
+
+      if (portada?.id) {
+        await connection.query(
+          `UPDATE productos_images SET is_main = false WHERE product_id = $1`,
+          [id_product]
+        )
+
+        await connection.query(
+          `UPDATE productos_images SET is_main = true WHERE id = $1`,
+          [portada.id]
+        )
+      }
+
+      return {
+        status: true,
+        msg: "File order saved successfully",
+        code: 201
+      }
+
+    } catch (error) {
+      return {
+        status: false,
+        msg: "Error saving file order",
+        code: 500,
+        error: error.message
+      }
+    } finally {
+      if (connection) connection.release()
     }
   }
 

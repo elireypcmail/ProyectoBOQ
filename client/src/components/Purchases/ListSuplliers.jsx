@@ -1,23 +1,14 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { usePurchases } from "../../context/PurchasesContext";
-
-// Dependencia para teléfono internacional
-import PhoneInput from "react-phone-input-2";
-import "react-phone-input-2/lib/style.css";
-
-// Iconos
-import {
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  Pencil,
-  Trash2,
-  Save,
-  AlertTriangle,
-  Plus
-} from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Plus, Trash2, AlertTriangle, Loader2 } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
-import "../../styles/components/ListZone.css";
+
+// Context & Modals
+import { usePurchases } from "../../context/PurchasesContext";
+import SupplierDetailModal from './Ui/SupplierDetailModal';
+import SupplierFormModal from './Ui/SupplierFormModal';
+
+// Importación del nuevo CSS
+import "../../styles/components/ListSuppliers.css";
 
 const ListSuppliers = () => {
   const {
@@ -25,77 +16,24 @@ const ListSuppliers = () => {
     getAllSuppliers,
     createNewSupplier,
     editSupplier,
-    deleteSupplierById
+    deleteSupplierById,
+    saveFilesSupplier
   } = usePurchases();
 
-  // UI
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  // Modales
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-
-  // Formulario
   const [selectedSupplier, setSelectedSupplier] = useState(null);
-  const [nombre, setNombre] = useState("");
-  
-  // CAMBIO 1: Estado unificado para el documento
-  const [documentoField, setDocumentoField] = useState("");
-  
-  const [telefono, setTelefono] = useState("");
-  const [email, setEmail] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     getAllSuppliers();
   }, []);
 
-  // --- HELPERS ---
-
-  const handleNameInput = (value) => {
-    setNombre(value.toUpperCase());
-  };
-
-  // CAMBIO 2: Lógica unificada (1 Letra + Guion + 10 Números)
-  const handleDocumentInput = (value) => {
-    // 1. Convertir a mayúsculas
-    const upperValue = value.toUpperCase();
-
-    // 2. Limpiar todo lo que no sea letra o número para procesar
-    const cleanValue = upperValue.replace(/[^A-Z0-9]/g, "");
-
-    // Si está vacío, resetear
-    if (!cleanValue) {
-      setDocumentoField("");
-      return;
-    }
-
-    // 3. Extraer partes
-    const firstChar = cleanValue.charAt(0);
-    const rest = cleanValue.slice(1);
-
-    // 4. Validar que el primer caracter sea LETRA
-    if (!/^[A-Z]$/.test(firstChar)) {
-      // Si el usuario intenta escribir un número primero, lo ignoramos
-      return; 
-    }
-
-    // 5. Validar que el resto sean NÚMEROS y máximo 10 dígitos
-    const numbersOnly = rest.replace(/[^0-9]/g, "").slice(0, 10);
-
-    // 6. Formatear visualmente: LETRA-NUMEROS
-    // Si hay números, ponemos el guion. Si solo está la letra, mostramos solo la letra.
-    const formatted = numbersOnly.length > 0 
-      ? `${firstChar}-${numbersOnly}` 
-      : firstChar;
-
-    setDocumentoField(formatted);
-  };
-
-  // Filtrado
   const filteredSuppliers = useMemo(() => {
     return (suppliers || []).filter(s =>
       s.nombre.toUpperCase().includes(searchTerm.toUpperCase())
@@ -108,56 +46,45 @@ const ListSuppliers = () => {
     currentPage * itemsPerPage
   );
 
-  const resetForm = () => {
-    setNombre("");
-    setDocumentoField(""); // Reset campo único
-    setTelefono("");
-    setEmail("");
+  const handleOpenCreate = () => {
     setSelectedSupplier(null);
+    setIsFormModalOpen(true);
   };
 
-  const openEditModal = (supplier) => {
+  const handleOpenEdit = (supplier) => {
     setSelectedSupplier(supplier);
-    setNombre(supplier.nombre);
-    
-    // CAMBIO 3: Cargar documento directamente al campo único
-    setDocumentoField(supplier.documento || "");
-
-    setTelefono(supplier.telefono || "");
-    setEmail(supplier.email || "");
-    setIsEditModalOpen(true);
+    setIsFormModalOpen(true);
   };
 
-  const handleSave = async () => {
-    if (!nombre.trim()) {
-      alert("El nombre es obligatorio");
-      return;
+  const handleSaveSupplier = async (data, files) => {
+    setIsSaving(true);
+    try {
+      let supplierId = null;
+      if (selectedSupplier) {
+        await editSupplier(selectedSupplier.id, data);
+        supplierId = selectedSupplier.id;
+      } else {
+        const res = await createNewSupplier(data);
+        supplierId = res?.data?.data?.id || res?.id || res?.data?.id;
+      }
+
+      if (files && files.length > 0 && supplierId) {
+        const filesJson = files.map((f, idx) => ({
+          id: null,
+          name: f.name,
+          order: idx + 1,
+        }));
+        await saveFilesSupplier(supplierId, files, filesJson);
+      }
+
+      await getAllSuppliers();
+      setIsFormModalOpen(false);
+      setSelectedSupplier(null);
+    } catch (error) {
+      console.error("Error al guardar proveedor:", error);
+    } finally {
+      setIsSaving(false);
     }
-
-    // Validar que el documento esté completo (al menos Letra y 1 número)
-    if (documentoField.length < 3 && documentoField.length > 0) {
-         alert("El documento debe tener un formato válido (Ej: V-123456)");
-         return;
-    }
-
-    const payload = {
-      nombre: nombre.trim(),
-      documento: documentoField || null, // Se envía tal cual (Ej: "V-12345678")
-      telefono: telefono,
-      email: email.toLowerCase().trim() || null,
-      estatus: true
-    };
-
-    if (isEditModalOpen && selectedSupplier) {
-      await editSupplier(selectedSupplier.id, payload);
-    } else {
-      await createNewSupplier(payload);
-    }
-
-    resetForm();
-    setIsCreateModalOpen(false);
-    setIsEditModalOpen(false);
-    getAllSuppliers();
   };
 
   const handleDelete = async () => {
@@ -168,22 +95,22 @@ const ListSuppliers = () => {
   };
 
   return (
-    <div className="orders-container">
+    <div className="lsu-container">
       {/* HEADER */}
-      <div className="orders-header">
-        <div>
+      <div className="lsu-header">
+        <div className="lsu-title-section">
           <h2>Gestión de Proveedores</h2>
           <p>{filteredSuppliers.length} proveedores registrados</p>
         </div>
-        <button className="btn-primary" onClick={() => { resetForm(); setIsCreateModalOpen(true); }}>
+        <button className="lsu-btn-primary" onClick={handleOpenCreate}>
           <Plus size={16} /> Nuevo Proveedor
         </button>
       </div>
 
-      {/* BUSCADOR */}
-      <div className="orders-toolbar">
-        <div className="search-box">
-          <Search size={16} />
+      {/* TOOLBAR */}
+      <div className="lsu-toolbar">
+        <div className="lsu-search-box">
+          <Search size={16} className="lsu-search-icon" />
           <input
             placeholder="Buscar proveedor..."
             value={searchTerm}
@@ -193,32 +120,32 @@ const ListSuppliers = () => {
       </div>
 
       {/* TABLA */}
-      <div className="orders-table-wrapper">
-        <table className="orders-table">
+      <div className="lsu-table-wrapper">
+        <table className="lsu-table">
           <thead>
             <tr>
               <th>ID</th>
               <th>Nombre</th>
-              <th className="hide-mobile">Teléfono</th>
-              <th className="hide-mobile">Email</th>
-              <th className="center">Acciones</th>
+              <th className="lsu-hide-mobile">Teléfono</th>
+              <th className="lsu-hide-mobile">Email</th>
+              <th className="lsu-text-center">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {currentSuppliers.length ? currentSuppliers.map(s => (
               <tr key={s.id}>
-                <td>#{s.id}</td>
-                <td>{s.nombre}</td>
-                <td className="hide-mobile">{s.telefono ? `+${s.telefono}` : "—"}</td>
-                <td className="hide-mobile">{s.email || "—"}</td>
-                <td className="center">
-                  <button className="icon-btn" onClick={() => { setSelectedSupplier(s); setIsDetailsModalOpen(true); }}>
+                <td className="lsu-col-id">#{s.id}</td>
+                <td className="lsu-col-name">{s.nombre}</td>
+                <td className="lsu-hide-mobile">{s.telefono ? `+${s.telefono}` : "—"}</td>
+                <td className="lsu-hide-mobile">{s.email || "—"}</td>
+                <td className="lsu-text-center">
+                  <button className="lsu-icon-btn" onClick={() => { setSelectedSupplier(s); setIsDetailsModalOpen(true); }}>
                     <SlOptionsVertical size={16} />
                   </button>
                 </td>
               </tr>
             )) : (
-              <tr><td colSpan="5" className="no-results">No se encontraron proveedores</td></tr>
+              <tr><td colSpan="5" className="lsu-no-results">No se encontraron proveedores</td></tr>
             )}
           </tbody>
         </table>
@@ -226,116 +153,54 @@ const ListSuppliers = () => {
 
       {/* PAGINACIÓN */}
       {totalPages > 1 && (
-        <div className="orders-pagination">
-          <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>
+        <div className="lsu-pagination">
+          <button 
+            className="lsu-page-btn"
+            disabled={currentPage === 1} 
+            onClick={() => setCurrentPage(p => p - 1)}
+          >
             <ChevronLeft size={18} />
           </button>
-          <span>Página {currentPage} de {totalPages}</span>
-          <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>
+          <span className="lsu-page-info">Página {currentPage} de {totalPages}</span>
+          <button 
+            className="lsu-page-btn"
+            disabled={currentPage === totalPages} 
+            onClick={() => setCurrentPage(p => p + 1)}
+          >
             <ChevronRight size={18} />
           </button>
         </div>
       )}
 
-      {/* MODAL CREAR / EDITAR */}
-      {(isCreateModalOpen || isEditModalOpen) && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>{isCreateModalOpen ? "Nuevo Proveedor" : "Editar Proveedor"}</h3>
+      {/* MODALES */}
+      <SupplierFormModal 
+        isOpen={isFormModalOpen}
+        supplier={selectedSupplier}
+        onClose={() => setIsFormModalOpen(false)}
+        onSave={handleSaveSupplier}
+        isSaving={isSaving} 
+      />
 
-            <label className="modal-label">Nombre / Razón Social</label>
-            <input
-              className="modal-input"
-              placeholder="Ej: INVERSIONES 123 C.A."
-              value={nombre}
-              onChange={(e) => handleNameInput(e.target.value)}
-            />
-
-            <label className="modal-label">Documento de Identidad</label>
-            {/* CAMBIO 4: Input unificado */}
-            <input
-                className="modal-input"
-                placeholder="Ej: V-1234567890"
-                value={documentoField}
-                onChange={(e) => setDocumentoField(e.target.value.toUpperCase())}
-            />
-
-            <label className="modal-label">Teléfono de Contacto</label>
-            <div className="phone-input-container" style={{ marginBottom: '15px' }}>
-              <PhoneInput
-                country={'ve'}
-                value={telefono}
-                onChange={(value) => setTelefono(value)}
-                inputStyle={{
-                    width: '100%',
-                    height: '40px',
-                    borderRadius: '8px',
-                    border: '1px solid #ccc'
-                }}
-                buttonStyle={{
-                    borderRadius: '8px 0 0 8px'
-                }}
-              />
-            </div>
-
-            <label className="modal-label">Correo Electrónico</label>
-            <input
-              className="modal-input"
-              type="email"
-              placeholder="correo@ejemplo.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value.replace(/\s/g, ""))}
-            />
-
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => { setIsCreateModalOpen(false); setIsEditModalOpen(false); resetForm(); }}>
-                Cancelar
-              </button>
-              <button className="btn-primary" onClick={handleSave}>
-                <Save size={16} /> Guardar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL DETALLES */}
-      {isDetailsModalOpen && selectedSupplier && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Detalles del Proveedor</h3>
-            <div className="modal-info-body">
-              <div className="detail-card"><strong>ID:</strong> #{selectedSupplier.id}</div>
-              <div className="detail-card"><strong>Nombre:</strong> {selectedSupplier.nombre}</div>
-              <div className="detail-card"><strong>Documento:</strong> {selectedSupplier.documento || "—"}</div>
-              <div className="detail-card"><strong>Teléfono:</strong> {selectedSupplier.telefono ? `+${selectedSupplier.telefono}` : "—"}</div>
-              <div className="detail-card"><strong>Email:</strong> {selectedSupplier.email || "—"}</div>
-            </div>
-            <div className="modal-footer">
-              <button className="btn-primary" onClick={() => { setIsDetailsModalOpen(false); openEditModal(selectedSupplier); }}>
-                <Pencil size={16} /> Editar
-              </button>
-              <button className="btn-danger" onClick={() => { setIsDetailsModalOpen(false); setIsDeleteModalOpen(true); }}>
-                <Trash2 size={16} /> Eliminar
-              </button>
-              <button className="btn-secondary" onClick={() => setIsDetailsModalOpen(false)}>Cerrar</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <SupplierDetailModal 
+        isOpen={isDetailsModalOpen}
+        supplier={selectedSupplier}
+        onClose={() => setIsDetailsModalOpen(false)}
+        onEdit={handleOpenEdit}
+        onDelete={() => setIsDeleteModalOpen(true)}
+      />
 
       {/* MODAL ELIMINAR */}
       {isDeleteModalOpen && selectedSupplier && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header-danger">
+        <div className="lsu-modal-overlay">
+          <div className="lsu-modal-content">
+            <div className="lsu-modal-header-danger">
               <AlertTriangle size={28} />
               <h3>¿Eliminar proveedor?</h3>
             </div>
-            <p>Confirma que deseas eliminar a <strong>{selectedSupplier.nombre}</strong>.</p>
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
-              <button className="btn-danger" onClick={handleDelete}>
+            <p className="lsu-modal-text">Confirma que deseas eliminar a <strong>{selectedSupplier.nombre}</strong>.</p>
+            <div className="lsu-modal-footer">
+              <button className="lsu-btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
+              <button className="lsu-btn-danger" onClick={handleDelete}>
                 <Trash2 size={16} /> Eliminar
               </button>
             </div>

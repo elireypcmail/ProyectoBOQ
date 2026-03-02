@@ -1,48 +1,49 @@
-import React, { useState, useRef, useEffect } from "react";
-import Sidebar from "../components/Layout/Sidebar";
-import ListPatients from "../components/Patients/ListPatients";
-import ListInsurances from "../components/Patients/ListInsurances";
-import ListStories from "../components/Patients/ListStories";
-import ListProducts from "../components/Products/ListProducts";
-import ListCategories from "../components/Products/ListCategories";
-import ListBrands from "../components/Products/ListBrands";
-import ListLots from "../components/Products/ListLots";
-import ListSuppliers from "../components/Purchases/ListSuplliers";
-import ListPurchases from "../components/Purchases/ListPurchases";
-import ListZones from "../components/Entities/ListZones";
-import ListDeposits from "../components/Entities/ListDeposits";
-import ListOffices from "../components/Entities/ListOffices";
-import ListDoctors from "../components/Patients/ListDoctors";
-import ListTypesDoctor from "../components/Patients/ListTypesDoctor";
+import React, { useState, useRef, useEffect } from "react"
+import Sidebar          from "../components/Layout/Sidebar"
+import ListPatients     from "../components/Patients/ListPatients"
+import ListInsurances   from "../components/Patients/ListInsurances"
+import ListStories      from "../components/Patients/ListStories"
+import ListProducts     from "../components/Products/ListProducts"
+import ListCategories   from "../components/Products/ListCategories"
+import ListBrands       from "../components/Products/ListBrands"
+import ListLots         from "../components/Products/ListLots"
+import ListSellers      from "../components/Sales/ListSellers"
+import ListSuppliers    from "../components/Purchases/ListSuplliers"
+import ListPurchases    from "../components/Purchases/ListPurchases"
+import ListZones        from "../components/Entities/ListZones"
+import ListDeposits     from "../components/Entities/ListDeposits"
+import ListOffices      from "../components/Entities/ListOffices"
+import ListDoctors      from "../components/Patients/ListDoctors"
+import ListTypesDoctor  from "../components/Patients/ListTypesDoctor"
 
-import { EntityProvider } from "../context/EntityContext";
-import { Menu, X } from "lucide-react";
+import { EntityProvider } from "../context/EntityContext"
+import { Menu, X } from "lucide-react"
 
-import "../styles/pages/HomePage.css";
-import fondoHorizontal from "../assets/images/fondoHorizontal.jpeg";
-import fondoApp from "../assets/images/fondoApp.jpeg";
-import logo from "../assets/images/logo.png";
+import "../styles/pages/HomePage.css"
+import fondoHorizontal from "../assets/images/fondoHorizontal.jpeg"
+import fondoApp from "../assets/images/fondoApp.jpeg"
+import logo from "../assets/images/logo.png"
 
 export default function HomePage() {
-  const [activeComponent, setActiveComponent] = useState("products");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const sidebarRef = useRef(null);
+  const [activeComponent, setActiveComponent] = useState("products")
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const sidebarRef = useRef(null)
 
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen)
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-        setIsSidebarOpen(false);
+        setIsSidebarOpen(false)
       }
-    };
-
-    if (isSidebarOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
     }
 
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isSidebarOpen]);
+    if (isSidebarOpen) {
+      document.addEventListener("mousedown", handleClickOutside)
+    }
+
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [isSidebarOpen])
 
   return (
     <EntityProvider>
@@ -74,8 +75,8 @@ export default function HomePage() {
           <Sidebar
             activeComponent={activeComponent}
             setActiveComponent={(comp) => {
-              setActiveComponent(comp);
-              setIsSidebarOpen(false);
+              setActiveComponent(comp)
+              setIsSidebarOpen(false)
             }}
           />
         </aside>
@@ -97,10 +98,11 @@ export default function HomePage() {
             {activeComponent === "types-doctors" && <ListTypesDoctor />}
             {activeComponent === "suppliers" && <ListSuppliers />}
             {activeComponent === "purchases" && <ListPurchases />}
+            {activeComponent === "sellers" && <ListSellers />}
           </section>
         </main>
 
       </div>
     </EntityProvider>
-  );
+  )
 }

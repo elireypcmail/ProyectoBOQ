@@ -35,6 +35,7 @@ const Sidebar = ({ setActiveComponent, activeComponent }) => {
       children: [
         { name: "Proveedores", key: "suppliers", icon: <Truck size={18} /> },
         { name: "Compras", key: "purchases", icon: <ShoppingCart size={18} /> },
+        { name: "Vendedores", key: "sellers", icon: <UserPlus size={18} /> },
       ]
     },
     { 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import Select from "react-select";
-import { Save, X, Plus } from "lucide-react";
+import { Save, X, Plus, UploadCloud, XCircle } from "lucide-react"; // Añadidos iconos para archivos
 import "../../styles/ui/ProductFormModal.css";
 
 const ProductFormModal = ({
@@ -20,14 +20,15 @@ const ProductFormModal = ({
     id_marca: "",
     sku: "",
     existencia_general: 0,
-    costo_unitario: 0,
-    precio_venta: 0,
-    margen_ganancia: 0,
+    costo_unitario: "", // Ahora manejan strings para permitir comas
+    precio_venta: "0,00",
+    margen_ganancia: "",
     stock_minimo_general: 1,
     estatus: true
   };
 
   const [form, setForm] = useState(emptyForm);
+  const [selectedFiles, setSelectedFiles] = useState([]); // Estado para archivos
   const [isCreatingCat, setIsCreatingCat] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [isCreatingBrand, setIsCreatingBrand] = useState(false);
@@ -43,33 +44,40 @@ const ProductFormModal = ({
     [brands]
   );
 
+  // Función para parsear números con coma
+  const parseLocaleNumber = (stringNumber) => {
+    if (!stringNumber) return 0;
+    return parseFloat(stringNumber.toString().replace(",", ".")) || 0;
+  };
+
   useEffect(() => {
     if (initialData) {
       setForm({
         ...emptyForm,
         ...initialData,
         existencia_general: Number(initialData.existencia_general) || 0,
-        costo_unitario: Number(initialData.costo_unitario) || 0,
-        margen_ganancia: Number(initialData.margen_ganancia) || 0,
         stock_minimo_general: Number(initialData.stock_minimo_general) || 1,
-        precio_venta: Number(initialData.precio_venta) || 0,
+        // Convertimos a string con coma si vienen como número de la BD
+        costo_unitario: initialData.costo_unitario ? String(initialData.costo_unitario).replace(".", ",") : "",
+        margen_ganancia: initialData.margen_ganancia ? String(initialData.margen_ganancia).replace(".", ",") : "",
+        precio_venta: initialData.precio_venta ? String(initialData.precio_venta).replace(".", ",") : "0,00",
       });
+      // Si el initialData trae archivos, se podrían cargar aquí
     } else {
       setForm(emptyForm);
+      setSelectedFiles([]); // Limpiar archivos
     }
   }, [initialData, isOpen]);
 
-  // Recalcular precio automáticamente permitiendo decimales
+  // Recalcular precio automáticamente permitiendo decimales con coma
   useEffect(() => {
-    const costo = Number(form.costo_unitario) || 0;
-    const margen = Number(form.margen_ganancia) || 0;
-    const precio = costo + (costo * (margen / 100));
+    const costo = parseLocaleNumber(form.costo_unitario);
+    const margen = parseLocaleNumber(form.margen_ganancia);
+    let precio = costo + (costo * (margen / 100));
     
-    // Se eliminó Math.floor para permitir decimales. 
-    // toFixed(2) asegura una precisión estándar de moneda.
     setForm(prev => ({ 
       ...prev, 
-      precio_venta: Number(precio.toFixed(2)) 
+      precio_venta: precio.toFixed(2).replace(".", ",")
     }));
   }, [form.costo_unitario, form.margen_ganancia]);
 
@@ -79,16 +87,22 @@ const ProductFormModal = ({
     const { name, value, type } = e.target;
     let val = value;
 
-    if (type === "text") {
+    if (type === "text" && name !== "costo_unitario" && name !== "margen_ganancia") {
       val = val.toUpperCase();
     } else if (type === "number") {
-      // Permitimos que el valor sea procesado como número con decimales
       val = value === "" ? "" : Number(value);
     }
 
-    // Validaciones de límites
-    if (name === "margen_ganancia" && val !== "") val = Math.min(Math.max(val, 0), 100);
-    if (name === "costo_unitario" && val !== "") val = Math.min(val, 100_000_000);
+    // Validación especial para inputs monetarios/porcentajes con comas
+    if (name === "costo_unitario" || name === "margen_ganancia") {
+      if (!/^[0-9,]*$/.test(val)) return; // Solo permite números y comas
+      
+      if (name === "margen_ganancia" && val !== "") {
+        const numVal = parseLocaleNumber(val);
+        if (numVal > 100) val = "100";
+        if (numVal < 0) val = "0";
+      }
+    }
     
     if (name === "stock_minimo_general" && val !== "") {
         val = Math.max(val, 1);
@@ -97,9 +111,21 @@ const ProductFormModal = ({
     setForm(prev => ({ ...prev, [name]: val }));
   };
 
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (selectedFiles.length >= 5) return alert("Máximo 5 archivos permitidos");
+
+    const newFiles = files.slice(0, 5 - selectedFiles.length).map((file) => ({
+      url: URL.createObjectURL(file),
+      mime_type: file.type,
+      name: file.name,
+      file,
+    }));
+    setSelectedFiles((prev) => [...prev, ...newFiles]);
+  };
+
   const handleSubmit = () => {
     const usuario_id = Number(localStorage.getItem("UserId"));
-
     const { descripcion, sku, id_categoria, id_marca, stock_minimo_general } = form;
 
     if (!descripcion.trim()) return alert("La descripción es obligatoria.");
@@ -112,19 +138,22 @@ const ProductFormModal = ({
 
     const finalData = {
       ...form,
-      costo_unitario: Number(form.costo_unitario) || 0,
-      precio_venta: Number(form.precio_venta) || 0, // Aseguramos envío de decimales
-      margen_ganancia: Number(form.margen_ganancia) || 0,
+      // Parseamos los valores al enviar a la BD
+      costo_unitario: parseLocaleNumber(form.costo_unitario),
+      precio_venta: parseLocaleNumber(form.precio_venta), 
+      margen_ganancia: parseLocaleNumber(form.margen_ganancia),
       stock_minimo_general: Number(form.stock_minimo_general),
       usuario_id
     };
 
-    onSubmit(finalData);
+    // Pasamos tanto los datos como los archivos al componente padre
+    onSubmit(finalData, selectedFiles.map(f => f.file));
     onClose();
   };
 
   const handleCancel = () => {
     setForm(emptyForm);
+    setSelectedFiles([]);
     setIsCreatingCat(false);
     setIsCreatingBrand(false);
     onClose();
@@ -227,41 +256,90 @@ const ProductFormModal = ({
             <h4 className="pfm-section-title">Precios y Márgenes</h4>
             <div className="pfm-grid">
               <div className="pfm-field">
-                <label className="pfm-label">COSTO</label>
+                <label className="pfm-label">COSTO ($)</label>
                 <input 
                   className="pfm-input" 
-                  type="number" 
+                  type="text" 
                   name="costo_unitario" 
-                  step="0.01"
-                  value={form.costo_unitario === 0 ? "" : form.costo_unitario} 
+                  value={form.costo_unitario} 
                   onChange={handleChange} 
-                  placeholder="0.00"
+                  placeholder="0,00"
                 />
               </div>
               <div className="pfm-field">
                 <label className="pfm-label">MARGEN (%)</label>
                 <input 
                   className="pfm-input" 
-                  type="number" 
+                  type="text" 
                   name="margen_ganancia" 
-                  step="0.01"
-                  value={form.margen_ganancia === 0 ? "" : form.margen_ganancia} 
+                  value={form.margen_ganancia} 
                   onChange={handleChange} 
                   placeholder="0"
                 />
               </div>
               <div className="pfm-field">
-                <label className="pfm-label">PRECIO VENTA</label>
+                <label className="pfm-label">PRECIO VENTA ($)</label>
                 <input 
                   className="pfm-input pfm-input--readonly" 
-                  type="number" 
-                  step="0.01"
+                  type="text" 
                   value={form.precio_venta} 
                   readOnly 
                 />
               </div>
             </div>
           </div>
+
+          {/* NUEVA SECCIÓN: Galería de imágenes/videos */}
+          <div className="pfm-section">
+            <h4 className="pfm-section-title">Archivos Multimedia</h4>
+            <div className="pfm-field">
+              <div 
+                className="uploadAdm-box" 
+                style={{ cursor: 'pointer', textAlign: 'center', padding: '20px', border: '2px dashed #d1d5db', borderRadius: '8px' }}
+                onClick={() => document.getElementById("fileUpload").click()}
+              >
+                <UploadCloud size={30} style={{ margin: '0 auto', color: '#6b7280' }} />
+                <span className="upload-label" style={{ display: 'block', marginTop: '10px', color: '#374151' }}>
+                  Haz clic aquí para subir (Máx. 5 archivos)
+                </span>
+                <input 
+                  id="fileUpload" 
+                  type="file" 
+                  multiple 
+                  accept="image/*,video/*" 
+                  style={{ display: 'none' }}
+                  onChange={handleFileChange} 
+                />
+              </div>
+
+              {selectedFiles.length > 0 && (
+                <ul className="files_containerEdit" style={{ display: 'flex', gap: '10px', marginTop: '15px', padding: 0, listStyle: 'none', flexWrap: 'wrap' }}>
+                  {selectedFiles.map((file, index) => (
+                    <li key={index} className="file_itemEdit" style={{ position: 'relative', width: '100px', height: '100px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e5e7eb' }}>
+                      <div className="file_order" style={{ position: 'absolute', top: '4px', left: '4px', background: 'rgba(0,0,0,0.5)', color: 'white', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', zIndex: 10 }}>
+                        {index + 1}
+                      </div>
+                      <div className="file_background" style={{ width: '100%', height: '100%' }}>
+                        {file.mime_type?.startsWith("video") 
+                          ? <video src={file.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> 
+                          : <img src={file.url} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        }
+                      </div>
+                      {index === 0 && <div className="badge_portada" style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', background: 'rgba(59, 130, 246, 0.8)', color: 'white', textAlign: 'center', fontSize: '10px', padding: '2px 0' }}>Portada</div>}
+                      <XCircle 
+                        className="cms-file-remove" 
+                        color="#ef4444" 
+                        size={20} 
+                        style={{ position: 'absolute', top: '4px', right: '4px', cursor: 'pointer', background: 'white', borderRadius: '50%' }}
+                        onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== index))} 
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+
         </div>
 
         <div className="pfm-footer">

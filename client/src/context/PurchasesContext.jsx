@@ -81,6 +81,27 @@ export const PurchasesProvider = ({ children }) => {
     }
   };
 
+  const saveFilesSupplier = async (id_supplier, files, filesJson) => {
+      try {
+        console.log(id_supplier, files, filesJson)
+        
+        let id = id_supplier
+  
+        // 🔹 Guardar archivos en backend
+        await PurchasesAPI.saveFileSupplier(id, files, filesJson)
+        
+        // 🔹 Traer todos los proveedores actualizados desde la API
+        const res = await getAllSuppliers()
+        setSuppliers(res.data.data || [])
+        
+        return { status: true }
+      } catch (error) {
+        console.log(error)
+        setErrors(error.response?.data || ["Error saving Supplier files"])
+        return { status: false, error: error.response?.data || error.message }
+      }
+    }
+
   return (
     <PurchasesContext.Provider
       value={{
@@ -93,6 +114,7 @@ export const PurchasesProvider = ({ children }) => {
         createNewSupplier,
         editSupplier,
         deleteSupplierById,
+        saveFilesSupplier,
 
       }}
     >
