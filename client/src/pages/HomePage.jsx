@@ -8,6 +8,7 @@ import ListCategories   from "../components/Products/ListCategories"
 import ListBrands       from "../components/Products/ListBrands"
 import ListLots         from "../components/Products/ListLots"
 import ListSellers      from "../components/Sales/ListSellers"
+import ListSales        from "../components/Sales/ListSales"
 import ListSuppliers    from "../components/Purchases/ListSuplliers"
 import ListPurchases    from "../components/Purchases/ListPurchases"
 import ListZones        from "../components/Entities/ListZones"
@@ -15,6 +16,7 @@ import ListDeposits     from "../components/Entities/ListDeposits"
 import ListOffices      from "../components/Entities/ListOffices"
 import ListDoctors      from "../components/Patients/ListDoctors"
 import ListTypesDoctor  from "../components/Patients/ListTypesDoctor"
+import ListClinics      from "../components/Clinics/ListClinics"
 
 import { EntityProvider } from "../context/EntityContext"
 import { Menu, X } from "lucide-react"
@@ -99,6 +101,8 @@ export default function HomePage() {
             {activeComponent === "suppliers" && <ListSuppliers />}
             {activeComponent === "purchases" && <ListPurchases />}
             {activeComponent === "sellers" && <ListSellers />}
+            {activeComponent === "sales" && <ListSales />}
+            {activeComponent === "clinics" && <ListClinics />}
           </section>
         </main>
 

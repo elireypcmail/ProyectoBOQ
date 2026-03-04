@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext } from "react";
-import * as ShoppingAPI from "../api/incExp"; // Ajusta la ruta si es necesario
+import * as ShoppingAPI from "../api/incExp";
 
 export const IncExpContext = createContext();
 
@@ -11,11 +11,18 @@ export const useIncExp = () => {
 };
 
 export const IncExpProvider = ({ children }) => {
+
+  /* ================= ESTADOS ================= */
+
   const [shoppings, setShoppings] = useState([]);
+  const [sales, setSales] = useState([]);
+
   const [errors, setErrors] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // -------------------- FLUJO DE COMPRAS (EGRESOS) --------------------
+  /* ============================================================
+     ===================== COMPRAS (EGRESOS) ====================
+     ============================================================ */
 
   const getAllShoppings = async () => {
     setLoading(true);
@@ -34,21 +41,17 @@ export const IncExpProvider = ({ children }) => {
       const res = await ShoppingAPI.getShoppingById(id);
       return res.data?.data;
     } catch (error) {
-      setErrors((prev) => [...prev, "Error al obtener la factura"]);
+      setErrors((prev) => [...prev, "Error al obtener la compra"]);
       return null;
     }
   };
 
-  /**
-   * Procesa el ingreso de una factura (Costo, Precio, Lotes, Kardex)
-   */
   const createNewShopping = async (shoppingData) => {
     try {
       const res = await ShoppingAPI.createShopping(shoppingData);
 
-      // Solo validar éxito
       if (res.data?.status) {
-        await getAllShoppings(); // refrescar lista desde el servidor
+        await getAllShoppings();
       }
 
       return { status: true };
@@ -58,11 +61,9 @@ export const IncExpProvider = ({ children }) => {
         "Error en el servidor al procesar la compra";
 
       setErrors((prev) => [...prev, errorDetail]);
-
       return { status: false, error: errorDetail };
     }
   };
-
 
   const deleteShoppingById = async (id) => {
     try {
@@ -70,23 +71,90 @@ export const IncExpProvider = ({ children }) => {
       setShoppings((prev) => prev.filter((s) => s.id !== id));
       return { status: true };
     } catch (error) {
-      setErrors((prev) => [...prev, "No se pudo eliminar la factura"]);
+      setErrors((prev) => [...prev, "No se pudo eliminar la compra"]);
       return { status: false };
     }
   };
 
+  /* ============================================================
+     ====================== VENTAS (INGRESOS) ===================
+     ============================================================ */
+
+  const getAllSales = async () => {
+    setLoading(true);
+    try {
+      const res = await ShoppingAPI.getAllSales();
+      setSales(res.data?.data || []);
+    } catch (error) {
+      setErrors((prev) => [...prev, "Error al cargar el historial de ventas"]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getSaleById = async (id) => {
+    try {
+      const res = await ShoppingAPI.getSalesById(id);
+      return res.data?.data;
+    } catch (error) {
+      setErrors((prev) => [...prev, "Error al obtener la venta"]);
+      return null;
+    }
+  };
+
+  const createNewSale = async (saleData) => {
+    try {
+      const res = await ShoppingAPI.createSales(saleData);
+
+      if (res.data?.status) {
+        await getAllSales();
+      }
+
+      return { status: true };
+    } catch (error) {
+      const errorDetail =
+        error.response?.data?.msg ||
+        "Error en el servidor al procesar la venta";
+
+      setErrors((prev) => [...prev, errorDetail]);
+      return { status: false, error: errorDetail };
+    }
+  };
+
+  const deleteSaleById = async (id) => {
+    try {
+      await ShoppingAPI.deleteSales(id);
+      setSales((prev) => prev.filter((s) => s.id !== id));
+      return { status: true };
+    } catch (error) {
+      setErrors((prev) => [...prev, "No se pudo eliminar la venta"]);
+      return { status: false };
+    }
+  };
+
+  /* ================= PROVIDER ================= */
+
   return (
     <IncExpContext.Provider
       value={{
+        // Estados
         shoppings,
+        sales,
         errors,
         loading,
         setErrors,
-        
+
+        // Compras
         getAllShoppings,
         getShoppingById,
         createNewShopping,
-        deleteShoppingById
+        deleteShoppingById,
+
+        // Ventas
+        getAllSales,
+        getSaleById,
+        createNewSale,
+        deleteSaleById
       }}
     >
       {children}

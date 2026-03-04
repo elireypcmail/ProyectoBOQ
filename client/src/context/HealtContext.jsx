@@ -17,6 +17,7 @@ export const HealthProvider = ({ children }) => {
   const [pacientes, setPacientes] = useState([]);
   const [medicos, setMedicos] = useState([]);
   const [tipoMedicos, setTipoMedicos] = useState([]);
+  const [personal, setPersonal] = useState([]);
   const [seguros, setSeguros] = useState([]);
   const [historias, setHistorias] = useState([]);
   const [errors, setErrors] = useState([]);
@@ -74,7 +75,6 @@ export const HealthProvider = ({ children }) => {
       return { status: false, error: error.response?.data || error.message };
     }
   };
-
 
   const editedPaciente = async (id, paciente) => {
     try {
@@ -201,6 +201,91 @@ export const HealthProvider = ({ children }) => {
       return { status: true, data: res.data.data };
     } catch (error) {
       setErrors(prev => [...prev, error.response?.data || ["Error deleting tipoMedico"]]);
+      return { status: false, error: error.response?.data || error.message };
+    }
+  };
+
+  // -------------------- PERSONAL --------------------
+
+  const getAllPersonal = async () => {
+    try {
+      const res = await HealthAPI.getPersonal();
+      setPersonal(res.data.data || []);
+    } catch (error) {
+      setErrors(prev => [
+        ...prev,
+        error.response?.data || ["Error fetching personal"]
+      ]);
+    }
+  };
+
+  const getPersonalById = async (id) => {
+    try {
+      const res = await HealthAPI.getPersonalById(id);
+      const persona = res.data?.data;
+
+      if (!persona) return null;
+
+      setPersonal(prev => {
+        const exists = prev.find(p => p.id === id);
+        if (exists) {
+          return prev.map(p => (p.id === id ? persona : p));
+        } else {
+          return [...prev, persona];
+        }
+      });
+
+      return persona;
+    } catch (error) {
+      setErrors(prev => [
+        ...prev,
+        error.response?.data?.msg || "Error fetching personal by id"
+      ]);
+      return null;
+    }
+  };
+
+  const createNewPersonal = async (newPersonal) => {
+    try {
+      const res = await HealthAPI.createPersonal(newPersonal);
+      setPersonal(prev => [...prev, res.data.data]);
+      return { status: true, data: res.data.data };
+    } catch (error) {
+      setErrors(prev => [
+        ...prev,
+        error.response?.data || ["Error creating personal"]
+      ]);
+      return { status: false, error: error.response?.data || error.message };
+    }
+  };
+
+  const editedPersonal = async (id, persona) => {
+    try {
+      const res = await HealthAPI.editPersonal(id, persona);
+      const updated = res.data.data;
+      setPersonal(prev =>
+        prev.map(p => (p.id === id ? updated : p))
+      );
+      return { status: true, data: updated };
+    } catch (error) {
+      setErrors(prev => [
+        ...prev,
+        error.response?.data || ["Error editing personal"]
+      ]);
+      return { status: false, error: error.response?.data || error.message };
+    }
+  };
+
+  const deletePersonalById = async (id) => {
+    try {
+      const res = await HealthAPI.deletePersonal(id);
+      setPersonal(prev => prev.filter(p => p.id !== id));
+      return { status: true, data: res.data.data };
+    } catch (error) {
+      setErrors(prev => [
+        ...prev,
+        error.response?.data || ["Error deleting personal"]
+      ]);
       return { status: false, error: error.response?.data || error.message };
     }
   };
@@ -365,6 +450,7 @@ export const HealthProvider = ({ children }) => {
         medicos,
         tipoMedicos,
         seguros,
+        personal,
         historias,
         errors,
 
@@ -387,6 +473,13 @@ export const HealthProvider = ({ children }) => {
         createNewTipoMedico,
         editedTipoMedico,
         deleteTipoMedicoById,
+
+        // Personal
+        getAllPersonal,
+        getPersonalById,
+        createNewPersonal,
+        editedPersonal,
+        deletePersonalById,
 
         // Seguros
         getAllSeguros,

@@ -1,0 +1,210 @@
+/* ==========================================================================
+   MODAL CREATE CATALOG STYLES
+   ========================================================================== */
+
+/* --- Overlay & Main Container --- */
+.modal-catalog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(8px);
+  padding: 20px;
+}
+
+.modal-catalog-content {
+  background: #ffffff;
+  width: 100%;
+  max-width: 650px; /* Un poco más ancho para las 2 columnas */
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: catalog-slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes catalog-slide-up {
+  from { opacity: 0; transform: translateY(30px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* --- Header --- */
+.modal-catalog-header {
+  padding: 20px 24px;
+  background: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.modal-catalog-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #ec3137;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.modal-catalog-close-btn {
+  background: #f8fafc;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s;
+}
+
+.modal-catalog-close-btn:hover {
+  background: #f1f5f9;
+  color: #ec3137;
+  transform: rotate(90deg);
+}
+
+/* --- Body & Grid --- */
+.modal-catalog-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: #ffffff;
+}
+
+.grid-2-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 20px;
+}
+
+.modal-catalog-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal-catalog-form-group label {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+/* --- Inputs & Selects --- */
+.catalog-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: #1e293b;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.catalog-input:focus {
+  border-color: #ec3137;
+  box-shadow: 0 0 0 1px #ec3137;
+}
+
+.catalog-input::placeholder {
+  color: #94a3b8;
+}
+
+/* Estilos para ocultar flechas de input number */
+.catalog-input::-webkit-inner-spin-button,
+.catalog-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* --- Footer --- */
+.modal-catalog-footer {
+  padding: 16px 24px;
+  background: #f8fafc;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  align-items: center;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* --- Buttons --- */
+.catalog-btn-secondary {
+  padding: 10px 20px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #475569;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.catalog-btn-secondary:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.catalog-btn-primary {
+  padding: 10px 24px;
+  background: #ec3137;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 150px;
+}
+
+.catalog-btn-primary:hover:not(:disabled) {
+  background: #d92d30;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(236, 49, 55, 0.2);
+}
+
+.catalog-btn-primary:disabled, 
+.catalog-btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* --- Responsiveness --- */
+@media (max-width: 640px) {
+  .grid-2-columns {
+    grid-template-columns: 1fr;
+  }
+  
+  .modal-catalog-content {
+    border-radius: 0;
+    max-height: 100vh;
+    height: 100vh;
+  }
+
+  .modal-catalog-overlay {
+    padding: 0;
+  }
+
+  .modal-catalog-footer {
+    padding: 20px;
+    flex-direction: column-reverse;
+  }
+
+  .modal-catalog-footer button {
+    width: 100%;
+  }
+}

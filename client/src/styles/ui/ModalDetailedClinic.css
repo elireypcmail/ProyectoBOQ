@@ -1,0 +1,266 @@
+/* --- CLINIC DETAILS MODAL (MCL Unique Style) --- */
+
+.mcl-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1rem;
+}
+
+.mcl-modal-content {
+  background: #ffffff;
+  border-radius: 28px;
+  width: 100%;
+  max-width: 650px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+  animation: mclFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+/* HEADER */
+.mcl-header {
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.mcl-header-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.mcl-avatar {
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, #ec4e53, #f43f5e);
+  color: white;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(236, 78, 83, 0.3);
+}
+
+.mcl-clinic-name {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #1e293b;
+  letter-spacing: -0.02em;
+}
+
+.mcl-id-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.mcl-close-btn {
+  background: #f8fafc;
+  border: none;
+  color: #94a3b8;
+  padding: 8px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.mcl-close-btn:hover {
+  background: #fee2e2;
+  color: #ef4444;
+  transform: rotate(90deg);
+}
+
+/* BODY & GRID */
+.mcl-body {
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.mcl-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+
+.mcl-info-card {
+  background: #f8fafc;
+  padding: 1rem;
+  border-radius: 18px;
+  display: flex;
+  gap: 1rem;
+  border: 1px solid transparent;
+  transition: 0.2s;
+}
+
+.mcl-info-card:hover {
+  background: white;
+  border-color: #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.mcl-icon-box {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  background: white;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ec4e53;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.mcl-text-group label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.mcl-text-group p {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #334155;
+  word-break: break-word;
+}
+
+.mcl-col-full {
+  grid-column: span 2;
+}
+
+/* DIRECCIÓN CON SCROLL ESTILIZADO */
+.mcl-address-container {
+  width: 100%;
+}
+
+.mcl-address-scroll {
+  max-height: 80px;
+  overflow-y: auto;
+  margin-top: 4px;
+  padding-right: 8px;
+}
+
+/* Personalización del Scrollbar */
+.mcl-address-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.mcl-address-scroll::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+.mcl-address-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+.mcl-address-scroll::-webkit-scrollbar-thumb:hover {
+  background: #ec4e53;
+}
+
+/* FOOTER */
+.mcl-footer {
+  padding: 1.5rem 2rem;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.mcl-actions-main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.mcl-btn {
+  border: none;
+  padding: 0.8rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  transition: 0.2s;
+}
+
+.mcl-btn-edit {
+  background: #ec4e53;
+  color: white;
+}
+
+.mcl-btn-edit:hover {
+  background: #d43f44;
+  transform: translateY(-2px);
+}
+
+.mcl-btn-delete {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.mcl-btn-delete:hover {
+  background: #fecaca;
+}
+
+.mcl-btn-close {
+  background: white;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.mcl-btn-close:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+/* ANIMACIONES */
+@keyframes mclFadeIn {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* RESPONSIVE */
+@media (max-width: 600px) {
+  .mcl-info-grid {
+    grid-template-columns: 1fr;
+  }
+  .mcl-col-full {
+    grid-column: span 1;
+  }
+  .mcl-actions-main {
+    grid-template-columns: 1fr;
+  }
+  .mcl-header {
+    padding: 1rem;
+  }
+  .mcl-body {
+    padding: 1.25rem;
+  }
+}

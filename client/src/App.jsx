@@ -11,6 +11,7 @@ import { ProductsProvider }                 from './context/ProductsContext'
 import { PurchasesProvider }                from './context/PurchasesContext'
 import { IncExpProvider }                   from './context/IncExpContext'
 import { SalesProvider }                    from './context/SalesContext'
+import { ClinicsProvider }                  from './context/ClinicsContext'
 function App() {
   return (
     <div>
@@ -21,13 +22,15 @@ function App() {
               <PurchasesProvider>
                 <IncExpProvider>
                   <SalesProvider>
-                    <BrowserRouter>
-                      <Routes>
-                        <Route path='/' element={<LoginPage/>}></Route>
-                        <Route path='/inicio' element={<HomePage/>}></Route>
-                        {/* <Route path='/login' element={<LoginPage/>}></Route> */}
-                      </Routes>      
-                    </BrowserRouter>
+                    <ClinicsProvider>
+                      <BrowserRouter>
+                        <Routes>
+                          <Route path='/' element={<LoginPage/>}></Route>
+                          <Route path='/inicio' element={<HomePage/>}></Route>
+                          {/* <Route path='/login' element={<LoginPage/>}></Route> */}
+                        </Routes>      
+                      </BrowserRouter>
+                    </ClinicsProvider>
                   </SalesProvider>
                 </IncExpProvider>
               </PurchasesProvider>

@@ -1,0 +1,210 @@
+.stconf-v2-container {
+    animation: stconf-fadeIn 0.4s ease-out;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    width: 100%;
+}
+
+/* --- Encabezados --- */
+.stconf-v2-header h3 {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+}
+
+.stconf-v2-header p {
+    color: #64748b;
+    font-size: 0.9rem;
+    margin: 4px 0 0 0;
+}
+
+/* --- Grilla de Resumen --- */
+.stconf-v2-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.stconf-v2-info-card {
+    background: #ffffff;
+    padding: 15px 18px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 70px;
+}
+
+.stconf-v2-info-card label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: #94a3b8;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.stconf-v2-info-card span {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #334155;
+    line-height: 1.2;
+}
+
+/* --- Sección Personal --- */
+.stconf-v2-staff-box {
+    margin-top: 8px;
+    padding: 20px;
+    background: #f1f5f9;
+    border-radius: 12px;
+}
+
+.stconf-v2-sub-title {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    color: #64748b;
+    margin: 0 0 15px 0;
+    font-weight: 700;
+}
+
+.stconf-v2-staff-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.stconf-v2-staff-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #ffffff;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.stconf-v2-avatar {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    background: #6366f1;
+    color: white;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+.stconf-v2-staff-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.stconf-v2-staff-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin: 0;
+    color: #1e293b;
+}
+
+.stconf-v2-staff-role {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin: 0;
+}
+
+/* --- Tabla (Alineación Centrada Reforzada) --- */
+.stconf-v2-table-area {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.stconf-v2-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.stconf-v2-table th {
+    background: #f8fafc;
+    padding: 14px 12px;
+    text-align: left;
+    font-size: 0.75rem;
+    color: #64748b;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.stconf-v2-table td {
+    padding: 14px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.85rem;
+    vertical-align: middle;
+}
+
+/* Forzar centrado en celdas específicas */
+.stconf-v2-table th.stconf-v2-txt-center,
+.stconf-v2-table td.stconf-v2-txt-center {
+    text-align: center !important;
+}
+
+.stconf-v2-sku-tag {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    display: block;
+    font-family: monospace;
+}
+
+.stconf-v2-item-text { font-weight: 500; color: #1e293b; }
+
+/* --- Totales --- */
+.stconf-v2-totals-box {
+    width: 100%;
+    max-width: 500px;
+    margin-left: auto;
+    background: #f8fafc;
+    padding: 24px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.stconf-v2-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stconf-v2-main-total {
+    margin-top: 5px;
+    padding-top: 15px;
+    border-top: 2px solid #e2e8f0;
+}
+
+.stconf-v2-amount-lg {
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: #ec3137;
+}
+
+.stconf-v2-paid-row { border-top: 1px solid #e2e8f0; padding-top: 12px; }
+.stconf-v2-paid-val { color: #10b981; font-weight: 700; }
+
+.stconf-v2-balance-row { font-size: 1.25rem; font-weight: 800; }
+.stconf-v2-pending { color: #ef4444; }
+.stconf-v2-ok { color: #1e293b; }
+
+@keyframes stconf-fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+    .stconf-v2-summary-grid { grid-template-columns: 1fr; }
+    .stconf-v2-totals-box { max-width: 100%; }
+}

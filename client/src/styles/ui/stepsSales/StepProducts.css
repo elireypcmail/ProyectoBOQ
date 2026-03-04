@@ -1,0 +1,247 @@
+/* --- StepProducts.css - Modernized and Namespaced --- */
+
+.step-prod-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+/* --- Headers --- */
+.step-prod-header h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 8px 0;
+}
+
+.step-prod-subtitle {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0;
+}
+
+/* --- Toolbar --- */
+.step-prod-toolbar {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.step-prod-search-box {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  cursor: text;
+}
+
+.step-prod-search-icon {
+  position: absolute;
+  left: 14px;
+  color: #94a3b8;
+}
+
+.step-prod-search-box input {
+  width: 100%;
+  padding: 12px 14px 12px 42px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: #334155;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background-color: #f8fafc;
+}
+
+.step-prod-search-box input:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  outline: none;
+  background-color: #ffffff;
+}
+
+.step-prod-btn-add {
+  background-color: #ef4444;
+  color: #ffffff;
+  border: none;
+  padding: 0 24px;
+  height: 44px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.step-prod-btn-add:hover {
+  background-color: #cc3939;
+}
+
+/* --- Empty State --- */
+.step-prod-empty-state {
+  border: 2px dashed #e2e8f0;
+  border-radius: 12px;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  background: #f8fafc;
+  font-weight: 500;
+}
+
+/* --- Table Structure --- */
+.step-prod-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.step-prod-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 850px;
+  background-color: #ffffff;
+}
+
+.step-prod-table th {
+  text-align: left;
+  padding: 14px 16px;
+  border-bottom: 2px solid #e2e8f0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+  background-color: #f8fafc;
+}
+
+.step-prod-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.95rem;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.step-prod-table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.step-prod-table tbody tr.step-prod-row-valid:hover {
+  background-color: #f8fafc;
+}
+
+.step-prod-row-error {
+  background-color: #fff1f2;
+}
+
+/* --- Typography & Alignment --- */
+.step-prod-text-center { text-align: center !important; }
+.step-prod-text-right { text-align: right !important; }
+
+.step-prod-sku { 
+  font-weight: 700; 
+  color: #ef4444; 
+  font-family: monospace;
+  font-size: 1rem;
+}
+.step-prod-desc { font-weight: 500; }
+.step-prod-total { 
+  font-weight: 700; 
+  color: #0f172a; 
+  white-space: nowrap;
+}
+
+/* --- Inputs --- */
+.step-prod-input {
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  text-align: right;
+  font-weight: 600;
+  color: #1e293b;
+  outline: none;
+  transition: all 0.2s ease;
+  min-width: 70px;
+  max-width: 150px;
+  font-variant-numeric: tabular-nums;
+  background-color: #ffffff;
+}
+
+.step-prod-input:focus { 
+  border-color: #ef4444; 
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); 
+}
+
+.step-prod-input-readonly {
+  border: none;
+  background-color: transparent;
+  color: #64748b;
+  padding: 0;
+  pointer-events: none;
+}
+
+.step-prod-input-error {
+  border-color: #ef4444 !important;
+  background-color: #fef2f2 !important;
+  color: #991b1b;
+}
+
+/* Currency Wrapper */
+.step-prod-currency-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.step-prod-currency-symbol {
+  font-weight: 600;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+/* Hide native number arrows */
+.step-prod-input::-webkit-inner-spin-button,
+.step-prod-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+/* .step-prod-input { -moz-appearance: textfield; } */
+
+/* --- Actions --- */
+.step-prod-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.step-prod-action-btn {
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+
+.step-prod-btn-batch { background: #f0fdfa; color: #0d9488; }
+.step-prod-btn-batch:hover { background: #ccfbf1; border-color: #99f6e4; }
+
+.step-prod-btn-edit { background: #eff6ff; color: #ef4444; }
+.step-prod-btn-edit:hover { background: #dbeafe; border-color: #bfdbfe; }
+
+.step-prod-btn-delete { background: #fef2f2; color: #ef4444; }
+.step-prod-btn-delete:hover { background: #fee2e2; border-color: #fecaca; }
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+  .step-prod-toolbar { flex-direction: column; align-items: stretch; }
+  .step-prod-btn-add { justify-content: center; }
+  .step-prod-input { max-width: 90px; }
+}

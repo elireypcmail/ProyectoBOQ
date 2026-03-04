@@ -1,9 +1,10 @@
 /* --- Variables de Diseño --- */
 :root {
     --primary: #ec3137;
-    --primary-hover: #ec3137; /* El color que tenías en el hover */
+    --primary-hover: #d12a30;
     --success: #10b981;
     --danger: #ef4444;
+    --edit: #2563eb;
     --slate-900: #0f172a;
     --slate-600: #475569;
     --slate-400: #94a3b8;
@@ -31,7 +32,7 @@
     background: #fff;
     width: 100%;
     max-width: 900px;
-    height: 90vh; /* Ajuste para no chocar con bordes de pantalla */
+    height: 90vh;
     max-height: 850px; 
     overflow-y: auto;
     border-radius: 16px;
@@ -66,7 +67,7 @@
     color: var(--primary);
     font-weight: 600;
     font-size: 0.95rem;
-    display: block; /* Para que baje en móvil si es necesario */
+    display: block;
 }
 
 .bm-btn-close {
@@ -93,6 +94,7 @@
     border-radius: 12px;
     padding: 18px;
     height: fit-content;
+    transition: all 0.3s ease;
 }
 
 .bm-card-title {
@@ -128,7 +130,7 @@
     padding: 10px;
     border: 1px solid var(--slate-200);
     border-radius: 8px;
-    font-size: 0.95rem; /* Evita zoom en iOS */
+    font-size: 0.95rem;
     outline: none;
     width: 100%;
     transition: border 0.2s;
@@ -136,6 +138,7 @@
 
 .bm-input:focus { border-color: var(--primary); }
 
+/* --- Botones de Acción Formulario --- */
 .bm-btn-add {
     width: 100%;
     margin-top: 15px;
@@ -152,7 +155,29 @@
 .bm-btn-add:hover:not(:disabled) { background: var(--primary-hover); }
 .bm-btn-add:disabled { background: var(--slate-200); cursor: not-allowed; }
 
-/* --- Resumen e Items --- */
+.bm-btn-add.is-editing {
+    background: var(--edit);
+}
+
+.bm-btn-cancel-edit {
+    width: 100%;
+    margin-top: 8px;
+    background: transparent;
+    border: 1px solid var(--slate-200);
+    color: var(--slate-600);
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.bm-btn-cancel-edit:hover {
+    background: var(--slate-50);
+    border-color: var(--slate-400);
+}
+
+/* --- Resumen --- */
 .bm-summary-item {
     display: flex;
     justify-content: space-between;
@@ -164,16 +189,17 @@
 
 .bm-summary-info { background: #f0f9ff; color: #0369a1; border-left: 4px solid #0369a1; }
 .bm-summary-success { background: #f0fdd4; color: #15803d; border-left: 4px solid #15803d; }
-.bm-summary-status { background: var(--slate-50); border: 1px solid var(--slate-200); }
+.bm-text-danger { color: var(--danger); }
+.bm-text-success { color: var(--success); }
 
-/* --- Tabla --- */
+/* --- Tabla y Botones de Fila --- */
 .bm-table-wrapper {
     padding: 0 30px 20px;
 }
 
 .bm-table {
     width: 100%;
-    min-width: 550px; /* Evita que las columnas se colapsen */
+    min-width: 550px;
     border-collapse: collapse;
 }
 
@@ -185,15 +211,42 @@
     text-transform: uppercase;
     text-align: left;
     border-bottom: 2px solid var(--slate-100);
-    position: sticky;
-    top: 0;
 }
 
 .bm-table td {
-    padding: 12px;
+    padding: 10px 12px;
     border-bottom: 1px solid var(--slate-100);
     font-size: 0.9rem;
+    vertical-align: middle;
 }
+
+.row-editing {
+    background-color: #f0f7ff;
+}
+
+.bm-actions-container {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+.bm-btn-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.bm-btn-edit { background: #eff6ff; color: var(--edit); }
+.bm-btn-edit:hover { background: var(--edit); color: white; }
+
+.bm-btn-delete { background: #fef2f2; color: var(--danger); }
+.bm-btn-delete:hover { background: var(--danger); color: white; }
 
 /* --- Footer --- */
 .bm-footer {
@@ -218,60 +271,15 @@
     cursor: pointer;
 }
 
-/* --- SUBMODAL --- */
-.bm-submodal-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
-    border-radius: 16px;
-    backdrop-filter: blur(2px);
-}
-
-.bm-submodal-content {
-    background: #fff;
-    padding: 25px;
-    border-radius: 12px;
-    width: 90%;
-    max-width: 400px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-}
-
-/* --- MEDIA QUERIES (Responsive) --- */
+/* --- Responsive --- */
 @media (max-width: 768px) {
-    .bm-container {
-        height: 100%;
-        max-height: 100vh;
-        border-radius: 0;
-    }
-
-    .bm-content-grid {
-        grid-template-columns: 1fr;
-        padding: 15px;
-    }
-
-    .bm-form-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .bm-header, .bm-footer {
-        padding: 15px;
-    }
-
-    .bm-table-wrapper {
-        padding: 0 15px 15px;
-    }
-
-    .bm-btn-save {
-        width: 100%;
-        justify-content: center;
-    }
+    .bm-container { height: 100%; max-height: 100vh; border-radius: 0; }
+    .bm-content-grid { grid-template-columns: 1fr; padding: 15px; }
+    .bm-form-grid { grid-template-columns: 1fr; }
+    .bm-header, .bm-footer { padding: 15px; }
+    .bm-table-wrapper { padding: 0 15px 15px; }
 }
 
-/* --- Animaciones --- */
 @keyframes bm-slideIn {
     from { opacity: 0; transform: scale(0.98) translateY(10px); }
     to { opacity: 1; transform: scale(1) translateY(0); }

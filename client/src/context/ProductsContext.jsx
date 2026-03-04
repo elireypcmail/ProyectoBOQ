@@ -138,6 +138,31 @@ export const ProductsProvider = ({ children }) => {
     }
   }
 
+  // -------------------- PRODUCTOS + CATÁLOGO --------------------
+
+  const getFilteredProducts = async (filters) => {
+    try {
+      // Llamamos al API pasando el objeto de filtros (brandId, categoryId, etc.)
+      const res = await ProductsAPI.catalogProducts(filters);
+      
+      // Si el backend responde con éxito, retornamos la data
+      if (res.data?.status) {
+        return { status: true, data: res.data.data };
+      } else {
+        return { status: false, msg: res.data?.msg || "No se encontraron productos" };
+      }
+    } catch (error) {
+      setErrors((prev) => [
+        ...prev,
+        error.response?.data || ["Error al filtrar productos para el catálogo"],
+      ]);
+      return { 
+        status: false, 
+        error: error.response?.data || error.message 
+      };
+    }
+  };
+
   // -------------------- AUDITORIA PRODUCTOS --------------------
   
     const getAuditProd = async (id_producto) => {
@@ -563,7 +588,7 @@ export const ProductsProvider = ({ children }) => {
         editProduct,
         deleteProductById,
         saveFilesProduct,
-
+        getFilteredProducts,
         getAuditProd,
         
         getAllCategories,

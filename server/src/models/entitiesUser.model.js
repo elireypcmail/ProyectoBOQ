@@ -1,4 +1,3 @@
-// models/EntitiesUser.model.js
 import pool from "../connection/db.connect.js";
 
 export class EntitiesUser {
@@ -16,12 +15,15 @@ export class EntitiesUser {
       connection = await pool.connect();
 
       let sql;
-      // Si es oficinas, hacemos join con zonas
       if (table === "oficinas") {
+        // Traemos nombre de zona y deposito
         sql = `
-          SELECT o.*, z.nombre AS nombre_zona
+          SELECT o.*, 
+                 z.nombre AS nombre_zona,
+                 d.nombre AS nombre_deposito
           FROM oficinas o
           LEFT JOIN zonas z ON o.id_zona = z.id
+          LEFT JOIN depositos d ON o.id_deposito = d.id
           WHERE o.estatus = true
           ORDER BY o.id
         `;
@@ -69,9 +71,12 @@ export class EntitiesUser {
 
       if (table === "oficinas") {
         sql = `
-          SELECT o.*, z.nombre AS nombre_zona
+          SELECT o.*, 
+                 z.nombre AS nombre_zona,
+                 d.nombre AS nombre_deposito
           FROM oficinas o
           LEFT JOIN zonas z ON o.id_zona = z.id
+          LEFT JOIN depositos d ON o.id_deposito = d.id
           WHERE o.id = $1 AND o.estatus = true
         `;
       } else {
@@ -151,9 +156,6 @@ export class EntitiesUser {
     }
   }
 
-  /* ============================= */
-  /* UPDATE */
-  /* ============================= */
   static async update(table, id, data) {
     const msgNotFound = {
       status: false,
@@ -208,9 +210,6 @@ export class EntitiesUser {
     }
   }
 
-  /* ============================= */
-  /* DELETE (SOFT DELETE) */
-  /* ============================= */
   static async delete(table, id) {
     const msgNotFound = {
       status: false,

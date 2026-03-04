@@ -152,3 +152,76 @@ controller.deleteDoctorTypes = async (req, res) => {
     return res.status(500).json({ error: error.message })
   }
 }
+
+/* ================= Personal ================= */
+
+controller.getAllStaff = async (req, res) => {
+  try {
+    const result = await DoctorsModel.getAllStaff()
+    return res.status(result.code).json(result)
+  } catch (error) {
+    return res.status(500).json({ error: error.message })
+  }
+}
+
+controller.getByIdStaff = async (req, res) => {
+  try {
+    const { id } = req.params
+    console.log(134)
+    const result = await DoctorsModel.getStaffById(id)
+    return res.status(result.code).json(result)
+  } catch (error) {
+    return res.status(500).json({ error: error.message })
+  }
+}
+
+controller.createStaff = async (req, res) => {
+  try {
+    const { nombre, estatus } = req.body
+
+    if (!nombre) {
+      return res.status(400).json({
+        error: "nombre es obligatorio"
+      })
+    }
+
+    const result = await DoctorsModel.createStaff({
+      nombre,
+      estatus
+    })
+
+    return res.status(result.code).json(result)
+  } catch (error) {
+    return res.status(500).json({ error: error.message })
+  }
+}
+
+controller.updateStaff = async (req, res) => {
+  try {
+    const { id } = req.params
+    const data = req.body
+
+    if (!id) {
+      return res.status(400).json({ error: "Staff id required" })
+    }
+
+    if (Object.keys(data).length === 0) {
+      return res.status(400).json({ error: "No data to update" })
+    }
+
+    const result = await DoctorsModel.updateStaff(id, data)
+    return res.status(result.code).json(result)
+  } catch (error) {
+    return res.status(500).json({ error: error.message })
+  }
+}
+
+controller.deleteStaff = async (req, res) => {
+  try {
+    const { id } = req.params
+    const result = await DoctorsModel.deleteStaff(id)
+    return res.status(result.code).json(result)
+  } catch (error) {
+    return res.status(500).json({ error: error.message })
+  }
+}

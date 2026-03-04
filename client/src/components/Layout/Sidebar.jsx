@@ -35,7 +35,7 @@ const Sidebar = ({ setActiveComponent, activeComponent }) => {
       children: [
         { name: "Proveedores", key: "suppliers", icon: <Truck size={18} /> },
         { name: "Compras", key: "purchases", icon: <ShoppingCart size={18} /> },
-        { name: "Vendedores", key: "sellers", icon: <UserPlus size={18} /> },
+        { name: "Ventas", key: "sales", icon: <ShoppingCart size={18} /> },
       ]
     },
     { 
@@ -44,7 +44,9 @@ const Sidebar = ({ setActiveComponent, activeComponent }) => {
       icon: <Stethoscope size={22} />,
       children: [
         { name: "Personal Médico", key: "doctors", icon: <UserPlus size={18} /> },
-        { name: "Tipos de Médico", key: "types-doctors", icon: <Tags size={18} /> }
+        { name: "Tipos de Médico", key: "types-doctors", icon: <Tags size={18} /> },
+        { name: "Seguros", key: "insurances", icon: <Shield size={18} /> },
+        { name: "Clinicas", key: "clinics", icon: <Stethoscope size={18} /> }
       ]
     },
     { 
@@ -52,8 +54,7 @@ const Sidebar = ({ setActiveComponent, activeComponent }) => {
       key: "pacientes-group", 
       icon: <HeartPulse size={22} />,
       children: [
-        { name: "Pacientes", key: "patients", icon: <Users size={18} /> },
-        { name: "Seguros", key: "insurances", icon: <Shield size={18} /> }
+        { name: "Pacientes", key: "patients", icon: <Users size={18} /> }
       ]
     },
     { 
@@ -64,6 +65,7 @@ const Sidebar = ({ setActiveComponent, activeComponent }) => {
         { name: "Zonas", key: "zones", icon: <Map size={18} /> },
         { name: "Oficinas", key: "offices", icon: <Building2 size={18} /> },
         { name: "Depósitos", key: "deposits", icon: <Warehouse size={18} /> },
+        { name: "Vendedores", key: "sellers", icon: <UserPlus size={18} /> },
         { name: "Usuarios", key: "users", icon: <Users size={18} /> },
       ]
     },

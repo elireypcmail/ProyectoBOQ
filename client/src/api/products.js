@@ -5,6 +5,7 @@ import { instanceApp } from "./axios";
 export const getAllProducts = () => instanceApp.get("/productos");
 export const getProductById = (id) => instanceApp.get(`/productos/${id}`);
 export const createProduct = (data) => instanceApp.post("/productos", data);
+export const catalogProducts = (data) => instanceApp.post("/productos/catalogo", data);
 export const updateProduct = (id, data) => instanceApp.put(`/productos/${id}`, data);
 export const deleteProduct = (id) => instanceApp.delete(`/productos/${id}`);
 export const saveFileProducts = (id, files, filesJson) => {

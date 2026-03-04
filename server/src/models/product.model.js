@@ -708,7 +708,7 @@ export class ProductsModel {
     }
   }
 
-// ================= Productos + Imagenes ================= */
+  // ================= Productos + Imagenes ================= */
 
     static async saveImages(id_product, files) {
     let connection;
@@ -804,6 +804,143 @@ export class ProductsModel {
       }
     } finally {
       if (connection) connection.release()
+    }
+  }
+
+  // ================= Productos + Imagenes ================= */
+  static async getProductFilter(filters = {}) {
+    let connection;
+    try {
+      connection = await pool.connect();
+
+      const { 
+        categoryId, 
+        brandId, 
+        minPrice, 
+        maxPrice, 
+        loteId, 
+        depositId 
+      } = filters;
+      
+      let whereConditions = ["p.estatus = TRUE"];
+      let queryParams = [];
+
+      // --- Construcción Dinámica de Filtros ---
+      if (categoryId) {
+        queryParams.push(categoryId);
+        whereConditions.push(`p.id_categoria = $${queryParams.length}`);
+      }
+
+      if (brandId) {
+        queryParams.push(brandId);
+        whereConditions.push(`p.id_marca = $${queryParams.length}`);
+      }
+
+      if (minPrice) {
+        queryParams.push(minPrice);
+        whereConditions.push(`i.precio_venta >= $${queryParams.length}`);
+      }
+
+      if (maxPrice) {
+        queryParams.push(maxPrice);
+        whereConditions.push(`i.precio_venta <= $${queryParams.length}`);
+      }
+
+      // Filtro por Lote Específico (ID)
+      if (loteId) {
+        queryParams.push(loteId);
+        whereConditions.push(`EXISTS (
+          SELECT 1 FROM lotes l 
+          WHERE l.id_producto = p.id 
+          AND l.id = $${queryParams.length}
+        )`);
+      }
+
+      // Filtro por Depósito (Verifica si hay stock o registro en ese depósito)
+      if (depositId) {
+        queryParams.push(depositId);
+        whereConditions.push(`EXISTS (
+          SELECT 1 FROM edeposito ed 
+          WHERE ed.id_producto = p.id 
+          AND ed.id_deposito = $${queryParams.length}
+          AND ed.existencia_deposito > 0
+        )`);
+      }
+
+      const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : "";
+
+      const sql = `
+        SELECT 
+          p.id, p.descripcion, p.id_categoria, p.id_marca, p.files, p.estatus, p.fecha_creacion,
+          c.nombre AS categoria,
+          m.nombre AS marca,
+          COALESCE(i.existencia_general, 0) AS existencia_general,
+          i.sku,
+          i.costo_unitario,
+          i.precio_venta,
+          i.margen_ganancia,
+          i.stock_minimo_general,
+          COALESCE(
+            (SELECT json_agg(
+              json_build_object(
+                'id', pi.id,
+                'data', encode(pi.data, 'base64'),
+                'mime_type', pi.mime_type,
+                'nombre_file', pi.nombre_file,
+                'is_main', pi.is_main
+              )
+            ) FROM productos_images pi WHERE pi.product_id = p.id), '[]'
+          ) AS images
+        FROM productos p
+        LEFT JOIN categorias c ON p.id_categoria = c.id
+        LEFT JOIN marcas m ON p.id_marca = m.id
+        LEFT JOIN LATERAL (
+          SELECT *
+          FROM inventario i2
+          WHERE i2.id_producto = p.id
+          AND i2.estatus = TRUE
+          ORDER BY i2.fecha_creacion DESC
+          LIMIT 1
+        ) i ON true
+        ${whereClause}
+        ORDER BY p.id DESC
+      `;
+
+      const result = await connection.query(sql, queryParams);
+      let products = result.rows;
+
+      // --- Reordenar imágenes según el campo JSON 'files' ---
+      products = products.map(p => {
+        const filesJson = p.files || [];
+        let orderedImages = [];
+
+        if (filesJson.length > 0 && p.images.length > 0) {
+          orderedImages = filesJson.map(fj => {
+            const match = p.images.find(img => img.id === fj.id);
+            return match ? { ...fj, ...match } : null;
+          }).filter(img => img !== null);
+        } else {
+          orderedImages = p.images;
+        }
+        return { ...p, images: orderedImages };
+      });
+
+      if (products.length === 0) {
+        return { status: false, code: 404, msg: "No se encontraron productos con esos filtros" };
+      }
+
+      return { status: true, code: 200, data: products };
+      
+    } catch (error) {
+      console.error("Error en getProductFilter:", error);
+      return {
+        status: false,
+        code: 500,
+        msg: "Error al obtener productos",
+        error: error.message,
+      };
+    } finally {
+      if (connection) connection.release();
     }
   }
 

@@ -87,7 +87,7 @@ const ListTypesDoctor = () => {
       {/* HEADER */}
       <div className="orders-header">
         <div>
-          <h2>Tipos de Médicos</h2>
+          <h2>Tipos de Personal Médico</h2>
           <p>Total tipos: {filteredTipos.length}</p>
         </div>
         <button className="btn-primary" onClick={() => setIsCreateModalOpen(true)}>

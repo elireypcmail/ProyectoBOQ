@@ -17,7 +17,8 @@ CREATE TABLE usuarios (
 CREATE TABLE oficinas (
   id SERIAL PRIMARY KEY,
   nombre VARCHAR(100) NOT NULL,
-  id_zona INT,
+  id_zona INT NOT NULL REFERENCES zonas(id) ON DELETE CASCADE,
+  id_deposito INT NOT NULL REFERENCES depositos(id) ON DELETE CASCADE,
   estatus BOOLEAN NOT NULL DEFAULT TRUE,
   fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
@@ -41,6 +42,21 @@ CREATE TABLE parametros (
   nro_factura INT NOT NULL,
   descripcion VARCHAR(100) NOT NULL,
   valor TEXT NOT NULL,
+  estatus BOOLEAN NOT NULL DEFAULT TRUE,
+  fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- Clinicas
+
+CREATE TABLE clinicas (
+  id SERIAL PRIMARY KEY,
+  nombre VARCHAR(150) NOT NULL,
+  rif VARCHAR(200),
+  contacto TEXT NOT NULL,
+  telefono VARCHAR(20),
+  email VARCHAR(100),
+  direccion TEXT NOT NULL,
+  notas TEXT NOT NULL,
   estatus BOOLEAN NOT NULL DEFAULT TRUE,
   fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
@@ -234,6 +250,27 @@ CREATE TABLE vendedores (
   fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE personal (
+  id SERIAL PRIMARY KEY,
+  id_medico INT REFERENCES medicos(id) ON DELETE CASCADE,
+  estatus BOOLEAN NOT NULL DEFAULT TRUE,
+  fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE presupuestos (
+  id SERIAL PRIMARY KEY,
+  id_paciente INT NOT NULL REFERENCES pacientes(id) ON DELETE CASCADE,
+  id_personal INT REFERENCES personal(id) ON DELETE CASCADE,
+  id_vendedor INT REFERENCES vendedores(id) ON DELETE CASCADE,
+  id_oficina INT NOT NULL REFERENCES oficinas(id) ON DELETE CASCADE,
+  id_seguro INT NOT NULL REFERENCES seguros(id) ON DELETE CASCADE,
+  nro_presupuesto VARCHAR(100) NOT NULL,
+  total DECIMAL(10,2) NOT NULL,
+  estado_pago TEXT NOT NULL,
+  estatus BOOLEAN NOT NULL DEFAULT TRUE,
+  fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
 -- Ventas ( Ingresos )
 
 CREATE TABLE ventas (
@@ -249,14 +286,8 @@ CREATE TABLE ventas (
   impuesto DECIMAL(10,2) NOT NULL,
   total DECIMAL(10,2) NOT NULL,
   abonado DECIMAL(10,2) NOT NULL,
+  notas_abono TEXT,
   estado_pago TEXT NOT NULL,
-  estatus BOOLEAN NOT NULL DEFAULT TRUE,
-  fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE personal (
-  id SERIAL PRIMARY KEY,
-  id_medico INT REFERENCES medicos(id) ON DELETE CASCADE,
   estatus BOOLEAN NOT NULL DEFAULT TRUE,
   fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
@@ -284,27 +315,12 @@ CREATE TABLE venta_detalle_lote (
   fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 )
 
-CREATE TABLE presupuestos (
-  id SERIAL PRIMARY KEY,
-  id_paciente INT NOT NULL REFERENCES pacientes(id) ON DELETE CASCADE,
-  id_personal INT REFERENCES personal(id) ON DELETE CASCADE,
-  id_vendedor INT REFERENCES vendedores(id) ON DELETE CASCADE,
-  id_oficina INT NOT NULL REFERENCES oficinas(id) ON DELETE CASCADE,
-  id_seguro INT NOT NULL REFERENCES seguros(id) ON DELETE CASCADE,
-  nro_presupuesto VARCHAR(100) NOT NULL,
-  total DECIMAL(10,2) NOT NULL,
-  estado_pago TEXT NOT NULL,
-  estatus BOOLEAN NOT NULL DEFAULT TRUE,
-  fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-);
-
 CREATE TABLE presupuestos_detalle (
   id SERIAL PRIMARY KEY,
   id_presupuesto INT NOT NULL REFERENCES presupuestos(id) ON DELETE CASCADE,
   id_inventario INT NOT NULL REFERENCES inventario(id) ON DELETE CASCADE,
   cantidad INT NOT NULL,
   precio_venta DECIMAL(10,2) NOT NULL,
-  cantidad INT NOT NULL,
   cantidad_vendida INT NOT NULL,
   backorder INT NOT NULL,
   estatus BOOLEAN NOT NULL DEFAULT TRUE,

@@ -2,8 +2,11 @@ import React from "react";
 import '../../../../styles/ui/steps/StepTotals.css';
 
 const StepTotals = ({ totals, setTotals }) => {
-  
-  // --- HELPERS (Mantenidos intactos) ---
+
+  /* ================= HELPERS ================= */
+
+  console.log("totals")
+  console.log(totals)
 
   const round2 = (num) => {
     return Math.round((Number(num) + Number.EPSILON) * 100) / 100;
@@ -29,7 +32,7 @@ const StepTotals = ({ totals, setTotals }) => {
     return String(val).replace('.', ',');
   };
 
-  // --- LÓGICA DE ETIQUETAS ---
+  /* ================= ETIQUETAS ================= */
 
   const calculateTotalDiscountPercentage = () => {
     const subtotal = safeParse(totals.subtotal);
@@ -39,80 +42,80 @@ const StepTotals = ({ totals, setTotals }) => {
     return percentage.toFixed(2).replace('.', ',');
   };
 
-  const calculateCargoPercentage = () => {
-    const subtotal = safeParse(totals.subtotal);
-    if (subtotal <= 0) return "0,00";
-    const percentage = (safeParse(totals.cargos_monto) / subtotal) * 100;
-    return percentage.toFixed(2).replace('.', ',');
-  };
+  /* ================= CÁLCULOS ================= */
 
-  // --- LÓGICA DE CÁLCULOS (Ajustada) ---
   const subtotalBruto = safeParse(totals.subtotal);
-  const cargosAdicionales = safeParse(totals.cargos_monto);
+  const impuestos = safeParse(totals.impuestos_monto);
   const descFijoManual = safeParse(totals.monto_descuento_fijo);
-  
-  // Lo que es abonable: Subtotal menos el descuento
-  const subtotalNetoAbonable = round2(subtotalBruto - descFijoManual);
-
-  // El Total Factura que muestra el diseño (Subtotal + Cargos - Descuento)
-  const totalFactura = round2(subtotalBruto - descFijoManual);
   const montoAbonado = safeParse(totals.monto_abonado);
-  const saldoPendiente = round2(totalFactura + cargosAdicionales - montoAbonado);
 
-  // --- HANDLERS ---
+  const totalFactura = round2(subtotalBruto - descFijoManual);
+  const totalConImpuestos = round2(totalFactura + impuestos);
+  const saldoPendiente = round2(totalConImpuestos - montoAbonado);
+
+  const subtotalNetoAbonable = totalFactura; // sigue siendo sin impuestos
+
+  /* ================= HANDLERS ================= */
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
-    // Caso especial para el campo de notas (permite cualquier texto)
     if (name === "notas_abono") {
       setTotals((prev) => ({ ...prev, [name]: value }));
       return;
     }
 
     if (value.length > 12) return;
+
     if (value === "") {
       setTotals((prev) => ({ ...prev, [name]: "" }));
       return;
     }
 
     const regex = /^\d*[.,]?\d{0,2}$/;
+
     if (regex.test(value)) {
-        let finalValue = value;
-        const numValue = parseFloat(value.replace(',', '.'));
+      let finalValue = value;
+      const numValue = parseFloat(value.replace(',', '.'));
 
-        if (name === "monto_descuento_fijo") {
-            const subtotal = safeParse(totals.subtotal);
-            if (numValue > subtotal) {
-                finalValue = subtotal.toString().replace('.', ',');
-            }
+      if (name === "monto_descuento_fijo") {
+        const subtotal = safeParse(totals.subtotal);
+        if (numValue > subtotal) {
+          finalValue = subtotal.toString().replace('.', ',');
         }
+      }
 
-        if (name === "monto_abonado") {
-            if (numValue > subtotalNetoAbonable) {
-                finalValue = subtotalNetoAbonable.toString().replace('.', ',');
-            }
+      if (name === "monto_abonado") {
+        if (numValue > subtotalNetoAbonable) {
+          finalValue = subtotalNetoAbonable.toString().replace('.', ',');
         }
-        setTotals((prev) => ({ ...prev, [name]: finalValue }));
+      }
+
+      setTotals((prev) => ({ ...prev, [name]: finalValue }));
     }
   };
+
+  /* ================= RENDER ================= */
 
   return (
     <div className="ptotals-container">
       <div className="ptotals-header">
         <h3>Finalizar Compra</h3>
-        <p>Revisión de Costos, Pagos y Cargos</p>
+        <p>Revisión de Costos, Pagos e Impuestos</p>
       </div>
 
       <div className="ptotals-main-grid">
-        {/* COLUMNA IZQUIERDA: INPUTS */}
+
+        {/* ================= COLUMNA IZQUIERDA ================= */}
         <div className="ptotals-column">
+
           <div className="ptotals-card ptotals-card-discount">
             <h4 className="ptotals-card-title">💰 Descuentos y Pagos</h4>
+
             <div className="ptotals-group">
               <label className="ptotals-label">Monto de Descuento</label>
               <input
-                type="text" 
+                type="text"
                 name="monto_descuento_fijo"
                 placeholder="0,00"
                 value={displayValue(totals.monto_descuento_fijo)}
@@ -136,11 +139,10 @@ const StepTotals = ({ totals, setTotals }) => {
                 style={{ border: '1px solid #ec3137' }}
               />
               <small style={{ color: "#64748b", fontSize: "0.7rem" }}>
-                * Máximo permitido (sin cargos): {formatCurrency(subtotalNetoAbonable)}
+                * Máximo permitido (sin impuestos): {formatCurrency(subtotalNetoAbonable)}
               </small>
             </div>
 
-            {/* NUEVO CAMPO: NOTAS DE ABONO */}
             <div className="ptotals-group" style={{ marginTop: '15px' }}>
               <label className="ptotals-label">Notas del Abono</label>
               <textarea
@@ -149,104 +151,105 @@ const StepTotals = ({ totals, setTotals }) => {
                 value={totals.notas_abono || ""}
                 onChange={handleInputChange}
                 className="ptotals-input"
-                style={{ 
-                  minHeight: '80px', 
-                  resize: 'none', 
-                  padding: '10px',
-                  fontSize: '0.85rem' 
-                }}
+                style={{ minHeight: '80px', resize: 'none', padding: '10px', fontSize: '0.85rem' }}
               />
             </div>
           </div>
 
           <div className="ptotals-card ptotals-card-logistics">
-            <h4 className="ptotals-card-title">🚚 Logística y Cargos</h4>
+            <h4 className="ptotals-card-title">🚚 Impuestos</h4>
             <div className="ptotals-group">
-              <label className="ptotals-label">Cargo</label>
+              <label className="ptotals-label">Impuesto</label>
               <input
                 type="text"
-                name="cargos_monto"
+                name="impuestos_monto"
                 placeholder="0,00"
-                value={displayValue(totals.cargos_monto)}
+                value={displayValue(totals.impuestos_monto)}
                 onChange={handleInputChange}
                 className="ptotals-input"
               />
             </div>
           </div>
+
         </div>
 
-        {/* COLUMNA DERECHA: RESUMEN */}
+        {/* ================= COLUMNA DERECHA ================= */}
         <div className="ptotals-column">
           <div className="ptotals-card ptotals-card-summary" style={{ padding: '24px' }}>
-            <h4 style={{ 
-              color: '#64748b', 
-              fontSize: '0.75rem', 
-              fontWeight: '700', 
-              textTransform: 'uppercase', 
+
+            <h4 style={{
+              color: '#64748b',
+              fontSize: '0.75rem',
+              fontWeight: '700',
+              textTransform: 'uppercase',
               letterSpacing: '0.05em',
-              marginBottom: '20px' 
+              marginBottom: '20px'
             }}>
               Resumen de Factura
             </h4>
-            
+
             <div className="ptotals-summary-row" style={{ marginBottom: '12px' }}>
-              <span style={{ color: '#475569', fontSize: '0.95rem' }}>Subtotal</span>
-              <span style={{ fontWeight: '600', color: '#1e293b' }}>{formatCurrency(subtotalBruto)}</span>
+              <span>Subtotal</span>
+              <span style={{ fontWeight: '600' }}>
+                {formatCurrency(subtotalBruto)}
+              </span>
             </div>
 
             <div className="ptotals-summary-row" style={{ marginBottom: '20px' }}>
-              <span style={{ color: '#475569', fontSize: '0.95rem' }}>Descuento ( {calculateTotalDiscountPercentage()}% )</span>
-              <span style={{ color: '#f43f5e', fontWeight: '500' }}>- {formatCurrency(descFijoManual)}</span>
+              <span>Descuento ( {calculateTotalDiscountPercentage()}% )</span>
+              <span style={{ color: '#f43f5e', fontWeight: '500' }}>
+                - {formatCurrency(descFijoManual)}
+              </span>
             </div>
 
-            {/* SECCIÓN TOTAL FACTURA */}
             <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '16px' }}>
-               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                  <span style={{ fontWeight: '700', color: '#1e293b', fontSize: '1rem' }}>Total Factura</span>
-               </div>
-               <div style={{ 
-                 textAlign: 'right', 
-                 fontSize: '2.6rem', 
-                 fontWeight: '800', 
-                 color: '#ec3137', 
-                 lineHeight: '1',
-                 marginTop: '4px'
-               }}>
-                 {formatCurrency(totalFactura)}
-               </div>
+              <div style={{ fontWeight: '700' }}>
+                Total Factura
+              </div>
+              <div style={{
+                textAlign: 'right',
+                fontSize: '2.6rem',
+                fontWeight: '800',
+                color: '#ec3137'
+              }}>
+                {formatCurrency(totalFactura)}
+              </div>
             </div>
 
-            {/* BLOQUE GRIS: ABONADO Y CARGOS */}
-            <div style={{ 
-              backgroundColor: '#f8fafc', 
-              margin: '24px -24px 0 -24px', 
+            <div style={{
+              backgroundColor: '#f8fafc',
+              margin: '24px -24px 0 -24px',
               padding: '16px 24px',
               borderTop: '1px solid #f1f5f9',
               borderBottom: '1px solid #f1f5f9'
             }}>
               <div className="ptotals-summary-row" style={{ marginBottom: '12px' }}>
-                <span style={{ color: '#475569' }}>Abonado</span>
-                <span style={{ color: '#10b981', fontWeight: '700' }}>- {formatCurrency(montoAbonado)}</span>
+                <span>Impuestos</span>
+                <span style={{ color: '#ec3137', fontWeight: '700' }}>
+                  + {formatCurrency(impuestos)}
+                </span>
               </div>
+
               <div className="ptotals-summary-row">
-                <span style={{ color: '#475569' }}>Cargos ( {calculateCargoPercentage()}% )</span>
-                <span style={{ color: '#ec3137', fontWeight: '700' }}>+ {formatCurrency(cargosAdicionales)}</span>
+                <span>Abonado</span>
+                <span style={{ color: '#10b981', fontWeight: '700' }}>
+                  - {formatCurrency(montoAbonado)}
+                </span>
               </div>
             </div>
 
-            {/* SALDO PENDIENTE */}
             <div className="ptotals-summary-row" style={{ marginTop: '20px' }}>
-              <span style={{ fontWeight: '700', color: '#1e293b', fontSize: '1rem' }}>Total Factura + Cargos</span>
-              <span style={{ 
-                color: '#ef4444', 
-                fontWeight: '800', 
-                fontSize: '1.25rem' 
-              }}>
+              <span style={{ fontWeight: '700', fontSize: '1rem' }}>
+                Saldo Pendiente
+              </span>
+              <span style={{ color: '#ef4444', fontWeight: '800', fontSize: '1.25rem' }}>
                 {formatCurrency(saldoPendiente)}
               </span>
             </div>
+
           </div>
         </div>
+
       </div>
     </div>
   );

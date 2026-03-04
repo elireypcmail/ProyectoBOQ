@@ -1,268 +1,276 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import Select from "react-select";
-import { Plus, Save, X } from "lucide-react";
-import { usePurchases } from "../../../../context/PurchasesContext";
-import "../../../../styles/ui/steps/StepInfo.css"
+import { Trash2, User, Building2, ShieldCheck, UserCircle, Stethoscope, Warehouse } from "lucide-react";
+import "../../../../styles/ui/stepsSales/StepInfo.css";
 
-import PhoneInput from "react-phone-input-2";
-import "react-phone-input-2/lib/style.css";
+import { useHealth } from "../../../../context/HealtContext";
+import { useSales } from "../../../../context/SalesContext";
+import { useEntity } from "../../../../context/EntityContext";
+import { useClinics } from "../../../../context/ClinicsContext";
 
 const StepInfo = ({ formData, setFormData, onValidationChange }) => {
-  const { suppliers, getAllSuppliers, createNewSupplier } = usePurchases();
+  const {
+    pacientes,
+    medicos,
+    seguros,
+    getAllPacientes,
+    getAllMedicos,
+    getAllSeguros
+  } = useHealth();
 
-  const [isCreateSupplierOpen, setIsCreateSupplierOpen] = useState(false);
-  const [newSup, setNewSup] = useState({
-    nombre: "",
-    documento: "",
-    telefono: "",
-    email: "",
-  });
+  const { sellers, getAllSellers } = useSales();
+  const { entities, getAllEntities } = useEntity();
+  const { clinics, getAllClinics } = useClinics();
 
+  const oficinas = entities?.oficinas || [];
+  const depositos = entities?.depositos || [];
+
+  /* ===================== LOAD DATA ===================== */
   useEffect(() => {
-    if (suppliers.length === 0) getAllSuppliers();
+    getAllPacientes();
+    getAllMedicos();
+    getAllSellers();
+    getAllEntities("oficinas");
+    getAllEntities("depositos");
+    getAllSeguros();
+    getAllClinics();
   }, []);
 
-  // --- LÓGICA DE CÁLCULO DE VENCIMIENTO ---
-  useEffect(() => {
-    if (formData.fecha_emision) {
-      // Usamos una copia de la fecha para no mutar el original
-      const fecha = new Date(formData.fecha_emision + 'T00:00:00'); 
-      // Si dias_plazo es vacío o 0, sumamos 0
-      const dias = parseInt(formData.dias_plazo) || 0;
-      
-      fecha.setDate(fecha.getDate() + dias);
-      
-      const yyyy = fecha.getFullYear();
-      const mm = String(fecha.getMonth() + 1).padStart(2, '0');
-      const dd = String(fecha.getDate()).padStart(2, '0');
-      
-      const fechaVencimiento = `${yyyy}-${mm}-${dd}`;
-      
-      if (formData.fecha_vencimiento !== fechaVencimiento) {
-        setFormData(prev => ({ ...prev, fecha_vencimiento: fechaVencimiento }));
-      }
-    }
-  }, [formData.fecha_emision, formData.dias_plazo, setFormData]);
-
-  // --- LÓGICA DE VALIDACIÓN ---
+  /* ===================== VALIDATION ===================== */
   useEffect(() => {
     const isValid =
-      formData.nro_factura?.trim() !== "" &&
-      formData.id_proveedor !== "" && 
-      formData.rif?.trim() !== "" &&
-      formData.fecha_emision !== "";
+      formData.id_paciente !== "" &&
+      formData.personal_asignado?.length > 0 &&
+      formData.id_vendedor !== "" &&
+      formData.id_oficina !== "" &&
+      formData.id_deposito !== "" &&
+      formData.id_clinica !== "";
 
-    if (onValidationChange) onValidationChange(isValid);
+    onValidationChange?.(isValid);
   }, [formData, onValidationChange]);
 
-  const supplierOptions = useMemo(() => {
-    return (suppliers || []).map((s) => ({
-      value: s.id,
-      label: s.nombre,
-      documento: s.documento,
+  /* ===================== HELPERS ===================== */
+  const buildOptions = (data, labelKey = "nombre") =>
+    (data || []).map((item) => ({
+      value: item.id,
+      label: item[labelKey]?.toUpperCase(),
+      tipo: item.tipo?.toUpperCase() || "MÉDICO GENERAL"
     }));
-  }, [suppliers]);
 
-  const currentSupplierValue = useMemo(() => {
-    return (
-      supplierOptions.find(
-        (opt) => opt.value === parseInt(formData.id_proveedor),
-      ) || null
-    );
-  }, [formData.id_proveedor, supplierOptions]);
+  const selectValue = (options, value) =>
+    options.find((opt) => opt.value === value) || null;
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    
-    // Permitir vacío para campos numéricos como dias_plazo
-    if (name === "dias_plazo" && value === "") {
-        setFormData((prev) => ({ ...prev, [name]: "" }));
-        return;
-    }
+  /* ===================== OPTIONS ===================== */
+  const pacienteOptions = useMemo(() => buildOptions(pacientes), [pacientes]);
+  const medicoOptions = useMemo(() => buildOptions(medicos), [medicos]);
+  const sellerOptions = useMemo(() => buildOptions(sellers), [sellers]);
+  const insuranceOptions = useMemo(() => buildOptions(seguros), [seguros]);
+  const clinicOptions = useMemo(() => buildOptions(clinics), [clinics]);
+  const officeOptions = useMemo(() => buildOptions(oficinas), [oficinas]);
+  const depositOptions = useMemo(() => buildOptions(depositos), [depositos]);
 
-    const upperCaseFields = ["nro_factura", "rif"];
-    const finalValue = upperCaseFields.includes(name)
-      ? value.toUpperCase()
-      : value;
-
-    setFormData((prev) => ({ ...prev, [name]: finalValue }));
-  };
-
-  const handleSelectChange = (option) => {
-    setFormData((prev) => ({
-      ...prev,
-      id_proveedor: option ? option.value : "",
-      proveedor: option ? option.label : "",
-      rif: option && option.documento ? option.documento.toUpperCase() : "",
-    }));
-  };
-
-  const handleSaveNewSupplier = async () => {
-    if (!newSup.nombre || !newSup.documento)
-      return alert("Nombre y Documento son requeridos");
-
-    const payload = {
-      ...newSup,
-      nombre: newSup.nombre.trim().toUpperCase(),
-      documento: newSup.documento.trim().toUpperCase(),
-      email: newSup.email?.toLowerCase().trim() || null,
-      estatus: true,
-    };
-
-    const res = await createNewSupplier(payload);
-    if (res.status) {
+  /* ===================== HANDLERS ===================== */
+  const handleClinicChange = (opt) => {
+    if (!opt) {
       setFormData((prev) => ({
         ...prev,
-        id_proveedor: res.data.id,
-        proveedor: res.data.nombre.toUpperCase(),
-        rif: res.data.documento.toUpperCase(),
+        id_clinica: "", nombre_clinica: "",
+        id_oficina: "", nombre_oficina: ""
       }));
-      setIsCreateSupplierOpen(false);
-      setNewSup({ nombre: "", documento: "", telefono: "", email: "" });
+      return;
+    }
+
+    const rawClinic = clinics.find((c) => c.id === opt.value);
+    const relatedOffice = oficinas.find((o) => o.id === rawClinic?.id_oficina);
+
+    setFormData((prev) => ({
+      ...prev,
+      id_clinica: opt.value,
+      nombre_clinica: opt.label,
+      id_oficina: relatedOffice?.id || "",
+      nombre_oficina: relatedOffice?.nombre?.toUpperCase() || ""
+    }));
+  };
+
+  const handleAddPersonal = (opt) => {
+    if (!opt) return;
+    if (!formData.personal_asignado?.some((p) => p.id === opt.value)) {
+      setFormData((prev) => ({
+        ...prev,
+        personal_asignado: [...(prev.personal_asignado || []), { id: opt.value, nombre: opt.label, tipo: opt.tipo }]
+      }));
     }
   };
 
-  const customSelectStyles = {
-    control: (base) => ({
+  const siSelectStyles = {
+    control: (base, state) => ({
       ...base,
-      borderRadius: "8px",
-      borderColor: "#e2e8f0",
-      minHeight: "45px",
+      borderRadius: "10px",
+      borderColor: state.isFocused ? "#ec3137" : "#e2e8f0",
+      minHeight: "48px",
       boxShadow: "none",
-      "&:hover": { borderColor: "#cbd5e1" },
+      "&:hover": { borderColor: "#ec3137" }
     }),
-    menu: (base) => ({ ...base, borderRadius: "8px", zIndex: 9999 }),
+    placeholder: (base) => ({ ...base, fontSize: "0.9rem", color: "#a0aec0" }),
+    menu: (base) => ({ ...base, zIndex: 9999, borderRadius: "10px", overflow: "hidden" })
   };
 
   return (
-    <section className="pform-section-white">
-      <div className="section-header">
-        <h3>Información de la Compra</h3>
-        <p>Datos de factura y selección de proveedor</p>
+    <section className="si-container">
+      <div className="si-header">
+        <div className="si-header-content">
+          <h3 className="si-title">Información de la Operación</h3>
+          <p className="si-subtitle">Gestión de ubicación, paciente y logística de inventario.</p>
+        </div>
       </div>
 
-      <div className="pform-form-grid">
-        <div className="pform-group col-span-1">
-          <label>Nro. Factura <span className="required">*</span></label>
-          <input
-            name="nro_factura"
-            value={formData.nro_factura}
-            onChange={handleChange}
-            placeholder="INV-001"
-            required
-          />
-        </div>
+      <div className="si-grid">
+        <div className="si-column si-col-main">
+          {/* CLINICA */}
+          <div className="si-field-group">
+            <label className="si-label"><Building2 size={16} /> Clínica / Institución *</label>
+            <Select
+              options={clinicOptions}
+              value={selectValue(clinicOptions, formData.id_clinica)}
+              onChange={handleClinicChange}
+              placeholder="¿Dónde se realiza el servicio?"
+              styles={siSelectStyles}
+              isClearable
+            />
+          </div>
 
-        <div className="pform-group col-span-2">
-          <label>Proveedor <span className="required">*</span></label>
-          <div style={{ display: "flex", gap: "8px" }}>
-            <div style={{ flex: 1 }}>
+          {/* OFICINA + DEPÓSITO */}
+          <div className="si-row-compact">
+            <div className="si-field-group">
+              <label className="si-label">Oficina *</label>
               <Select
-                options={supplierOptions}
-                value={currentSupplierValue}
-                onChange={handleSelectChange}
-                placeholder="BUSCAR PROVEEDOR..."
-                isClearable
-                isSearchable
-                styles={customSelectStyles}
-                onInputChange={(newValue) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    proveedor_search: newValue.toUpperCase(),
-                  }));
-                }}
+                options={officeOptions}
+                value={selectValue(officeOptions, formData.id_oficina)}
+                onChange={(opt) => setFormData(p => ({
+                  ...p,
+                  id_oficina: opt?.value || "",
+                  nombre_oficina: opt?.label || ""
+                }))}
+                placeholder="Seleccionar oficina..."
+                styles={siSelectStyles}
               />
             </div>
-            <button
-              type="button"
-              className="pfm-btn-add"
-              onClick={() => setIsCreateSupplierOpen(true)}
-              style={{
-                padding: "0 12px",
-                borderRadius: "8px",
-                border: "1px solid #e2e8f0",
-                background: "#fff",
-                cursor: "pointer",
-              }}
-            >
-              <Plus size={20} />
-            </button>
+
+            <div className="si-field-group">
+              <label className="si-label"><Warehouse size={16} /> Depósito de Salida *</label>
+              <Select
+                options={depositOptions}
+                value={selectValue(depositOptions, formData.id_deposito)}
+                onChange={(opt) => setFormData(p => ({
+                  ...p,
+                  id_deposito: opt?.value || "",
+                  nombre_deposito: opt?.label || ""
+                }))}
+                placeholder="Seleccionar depósito..."
+                styles={siSelectStyles}
+                isDisabled={!formData.id_oficina}
+              />
+            </div>
+          </div>
+
+          <div className="si-row-compact">
+            <div className="si-field-group">
+              <label className="si-label">Vendedor *</label>
+              <Select
+                options={sellerOptions}
+                value={selectValue(sellerOptions, formData.id_vendedor)}
+                onChange={(opt) => setFormData(p => ({
+                  ...p,
+                  id_vendedor: opt?.value || "",
+                  nombre_vendedor: opt?.label || ""
+                }))}
+                placeholder="Vendedor..."
+                styles={siSelectStyles}
+              />
+            </div>
+            <div className="si-field-group">
+              <label className="si-label"><ShieldCheck size={16} /> Seguro (Opcional)</label>
+              <Select
+                options={insuranceOptions}
+                value={selectValue(insuranceOptions, formData.id_seguro)}
+                onChange={(opt) => setFormData(p => ({
+                  ...p,
+                  id_seguro: opt?.value || null,
+                  nombre_seguro: opt?.label || ""
+                }))}
+                isClearable
+                placeholder="Ninguno"
+                styles={siSelectStyles}
+              />
+            </div>
           </div>
         </div>
 
-        <div className="pform-group col-span-1">
-          <label>Identificación Proveedor</label>
-          <input
-            name="rif"
-            value={formData.rif}
-            readOnly
-            placeholder="J-00000000"
-            className="input-disabled"
-          />
-        </div>
+        <div className="si-column si-col-side">
+          {/* PACIENTE */}
+          <div className="si-field-group">
+            <label className="si-label"><UserCircle size={16} /> Paciente *</label>
+            <Select
+              options={pacienteOptions}
+              value={selectValue(pacienteOptions, formData.id_paciente)}
+              onChange={(opt) => setFormData(p => ({
+                ...p,
+                id_paciente: opt?.value || "",
+                nombre_paciente: opt?.label || ""
+              }))}
+              placeholder="Buscar paciente..."
+              styles={siSelectStyles}
+            />
+          </div>
 
-        <div className="pform-group col-span-1">
-          <label>Fecha Emisión <span className="required">*</span></label>
-          <input
-            type="date"
-            name="fecha_emision"
-            value={formData.fecha_emision}
-            onChange={handleChange}
-            required
-          />
-        </div>
+          {/* EQUIPO MÉDICO */}
+          <div className="si-field-group si-personal-box">
+            <label className="si-label"><Stethoscope size={16} /> Equipo Médico *</label>
+            <Select
+              options={medicoOptions}
+              value={null}
+              onChange={handleAddPersonal}
+              formatOptionLabel={(opt) => (
+                <div className="si-option-info">
+                  <span className="si-option-label">{opt.label}</span>
+                  <span className="si-option-sublabel">{opt.tipo}</span>
+                </div>
+              )}
+              placeholder="Asignar médicos..."
+              styles={siSelectStyles}
+              getOptionLabel={(option) => `${option.label} ${option.tipo}`}
+            />
 
-        <div className="pform-group col-span-1">
-          <label>Días de Plazo</label>
-          <input
-            type="number"
-            name="dias_plazo"
-            // Lógica para no mostrar el 0 por defecto
-            value={formData.dias_plazo === 0 || formData.dias_plazo === "0" ? "" : formData.dias_plazo}
-            onChange={handleChange}
-            placeholder="0"
-            min="0"
-          />
-        </div>
-
-        <div className="pform-group col-span-1">
-          <label>Vencimiento</label>
-          <input
-            type="date"
-            value={formData.fecha_vencimiento || ""}
-            readOnly
-            className="input-disabled"
-            style={{ backgroundColor: "#f8fafc", color: "#64748b" }}
-          />
+            <div className="si-selected-list">
+              {formData.personal_asignado?.length > 0 ? (
+                formData.personal_asignado.map((med) => (
+                  <div key={med.id} className="si-member-card">
+                    <div className="si-member-info">
+                      <div className="si-member-avatar"><User size={14} /></div>
+                      <div className="si-member-text">
+                        <span className="si-member-name">{med.nombre}</span>
+                        <span className="si-member-type">{med.tipo}</span>
+                      </div>
+                    </div>
+                    <button 
+                      type="button" 
+                      onClick={() => setFormData(prev => ({
+                        ...prev,
+                        personal_asignado: prev.personal_asignado.filter(p => p.id !== med.id)
+                      }))} 
+                      className="si-member-remove"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div className="si-empty-state"><p>No hay personal asignado.</p></div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
-
-      {/* MODAL DE NUEVO PROVEEDOR */}
-      {isCreateSupplierOpen && (
-        <div className="pform-submodal-overlay">
-          <div className="pform-search-box-modal" style={{ maxWidth: "450px" }}>
-            <header className="psbm-header">
-              <h3>Nuevo Proveedor</h3>
-              <button onClick={() => setIsCreateSupplierOpen(false)}><X size={20} /></button>
-            </header>
-            <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "12px" }}>
-              <input 
-                placeholder="Nombre" 
-                value={newSup.nombre} 
-                onChange={(e) => setNewSup({...newSup, nombre: e.target.value.toUpperCase()})}
-              />
-              <input 
-                placeholder="Documento" 
-                value={newSup.documento} 
-                onChange={(e) => setNewSup({...newSup, documento: e.target.value.toUpperCase()})}
-              />
-              <div className="modal-footer">
-                <button onClick={handleSaveNewSupplier} className="btn-next-step"><Save size={16} /> Guardar</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </section>
   );
 };

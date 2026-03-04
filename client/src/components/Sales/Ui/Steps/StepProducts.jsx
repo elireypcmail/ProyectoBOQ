@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { Search, Plus, Trash2, Edit2, Layers } from "lucide-react";
-import "../../../../styles/ui/steps/StepProducts.css";
+import "../../../../styles/Ui/stepsSales/StepProducts.css";
 
 const StepProducts = ({
   items = [],
@@ -11,8 +11,11 @@ const StepProducts = ({
   onEditProduct,
 }) => {
   
+  console.log("# StepProducts Render")
+  console.log(items)
+
   /* =========================================
-      CONSTANTES Y HELPERS
+      CONSTANTS & HELPERS
   ========================================= */
   
   const MAX_VALUE = 999999999; 
@@ -21,14 +24,9 @@ const StepProducts = ({
     return Math.round((num + Number.EPSILON) * 100) / 100;
   };
 
-  /**
-   * Ajuste clave: Si el valor viene de la DB como 123.00 (puntos),
-   * lo visualizamos con coma para que sea editable por nuestra lógica.
-   */
   const formatInitialValue = (value) => {
     if (value === null || value === undefined || value === "") return "";
     
-    // Si detectamos que es un número puro o un string con punto decimal (tipo 123.50)
     if (typeof value === "number" || (typeof value === "string" && value.includes(".") && !value.includes(","))) {
       return value.toString().replace(".", ",");
     }
@@ -36,14 +34,19 @@ const StepProducts = ({
   };
 
   const parseToFloat = (value) => {
-    if (!value) return 0;
+    if (value === null || value === undefined || value === "") return 0;
     if (typeof value === "number") return value;
 
-    const standardNumber = value
-      .toString()
-      .replace(/\./g, "") 
-      .replace(",", "."); 
+    // Si el string tiene puntos Y comas, es formato "de-DE" (1.234,56)
+    // Si solo tiene coma, es un decimal simple (1234,56)
+    let standardNumber = value.toString();
     
+    if (standardNumber.includes(",") && standardNumber.includes(".")) {
+      standardNumber = standardNumber.replace(/\./g, "").replace(",", ".");
+    } else if (standardNumber.includes(",")) {
+      standardNumber = standardNumber.replace(",", ".");
+    }
+
     return parseFloat(standardNumber) || 0;
   };
 
@@ -54,7 +57,7 @@ const StepProducts = ({
   };
 
   /* =========================================
-      MANEJO DE INPUTS
+      INPUT HANDLING
   ========================================= */
 
   const handleInputChange = (id, field, value) => {
@@ -63,8 +66,6 @@ const StepProducts = ({
       return;
     }
 
-    // Normalización: Si el usuario pega o el sistema trae un valor con punto decimal
-    // lo convertimos a coma para que pase la validación de la Regex
     let valToProcess = value;
     if (value.includes(".") && !value.includes(",")) {
        const parts = value.split(".");
@@ -73,7 +74,6 @@ const StepProducts = ({
        }
     }
 
-    // Regex: Permite dígitos, puntos y una sola coma (máximo 2 decimales)
     const regex = /^[0-9.]*(,[0-9]{0,2})?$/;
 
     if (regex.test(valToProcess)) {
@@ -118,14 +118,14 @@ const StepProducts = ({
   };
 
   /* =========================================
-      EFECTOS DE VALIDACIÓN
+      VALIDATION EFFECTS
   ========================================= */
 
   useEffect(() => {
     const updatedItems = items.map((item) => {
       const qty = parseToFloat(item.cantidad);
-      const cost = parseToFloat(item.costo_unitario);
-      const isValid = qty > 0 && cost > 0;
+      const price = parseToFloat(item.precio_venta);
+      const isValid = qty > 0 && price > 0;
 
       if (item.isValid !== isValid) {
         return { ...item, isValid };
@@ -139,64 +139,61 @@ const StepProducts = ({
   }, [items, setItems]);
 
   return (
-    <section className="pform-products-step">
-      <div className="section-header-alt">
+    <section className="step-prod-container">
+      <div className="step-prod-header">
         <h2>Gestión de Productos</h2>
-        <p style={{ fontSize: "0.8rem", color: "#666" }}>
-          * Ingrese cantidad y costo. Use la coma (,) para decimales. Límite: 999.999.999,00
+        <p className="step-prod-subtitle">
+          * Ingrese la cantidad. Use la coma (,) para decimales. Límite: 999.999.999,00
         </p>
       </div>
 
-      <div className="pform-products-toolbar">
-        <div className="search-container-full" onClick={onOpenSearch} style={{ cursor: "pointer" }}>
-          <Search size={18} className="search-icon" />
+      <div className="step-prod-toolbar">
+        <div className="step-prod-search-box" onClick={onOpenSearch}>
+          <Search size={18} className="step-prod-search-icon" />
           <input type="text" placeholder="Buscar por SKU o descripción..." readOnly />
         </div>
-        <button className="btn-add-new-product" onClick={onOpenCreate}>
+        <button className="step-prod-btn-add" onClick={onOpenCreate}>
           <Plus size={18} /> Crear producto nuevo
         </button>
       </div>
 
       {items.length === 0 ? (
-        <div className="pform-empty-table-container">
+        <div className="step-prod-empty-state">
           <p>No hay productos agregados.</p>
         </div>
       ) : (
-        <div className="pform-items-table-container">
-          <table className="pform-items-table">
+        <div className="step-prod-table-wrapper">
+          <table className="step-prod-table">
             <thead>
               <tr>
                 <th>CÓDIGO</th>
                 <th>DESCRIPCIÓN</th>
-                <th className="center">CANTIDAD</th>
-                <th className="center">COSTO</th>
-                <th className="center">TOTAL</th>
-                <th className="center">ACCIONES</th>
+                <th className="step-prod-text-right">CANTIDAD</th>
+                <th className="step-prod-text-right">PRECIO</th>
+                <th className="step-prod-text-right">TOTAL</th>
+                <th className="step-prod-text-center">ACCIONES</th>
               </tr>
             </thead>
             <tbody>
               {items.map((item) => {
                 const qtyVal = parseToFloat(item.cantidad);
-                const costVal = parseToFloat(item.costo_unitario);
-                const totalLine = round2(qtyVal * costVal);
+                const priceVal = parseToFloat(item.precio_venta);
+                const totalLine = round2(qtyVal * priceVal);
                 
-                const hasError = !item.cantidad || !item.costo_unitario || qtyVal <= 0 || costVal <= 0;
+                const hasError = !item.cantidad || !item.precio_venta || qtyVal <= 0 || priceVal <= 0;
 
                 return (
-                  <tr key={item.id} style={{ backgroundColor: hasError ? "#fffafb" : "transparent" }}>
-                    <td className="sku-cell">{item.sku?.substring(0, 10) || "S/C"}</td>
-                    <td className="desc-cell">{item.descripcion}</td>
+                  <tr key={item.id} className={hasError ? "step-prod-row-error" : "step-prod-row-valid"}>
+                    <td className="step-prod-sku">{item.sku?.substring(0, 10) || "S/C"}</td>
+                    <td className="step-prod-desc">{item.descripcion}</td>
 
-                    <td className="center">
+                    <td className="step-prod-text-right">
                       <input
                         type="text"
-                        className={`table-input-dynamic ${!qtyVal ? "input-error" : ""}`}
+                        className={`step-prod-input ${!qtyVal ? "step-prod-input-error" : ""}`}
                         style={{
-                          textAlign: "center",
                           width: calculateWidth(item.cantidad),
-                          minWidth: "60px"
                         }}
-                        // Se aplica el formateo inicial por si vienen datos de la DB
                         value={formatInitialValue(item.cantidad)}
                         onChange={(e) => handleInputChange(item.id, "cantidad", e.target.value)}
                         onBlur={(e) => handleBlurFormat(item.id, "cantidad", e.target.value)}
@@ -205,42 +202,37 @@ const StepProducts = ({
                       />
                     </td>
 
-                    <td className="center">
-                      <div className="input" style={{ display: 'inline-flex', justifyContent: "center", alignItems: 'center' }}>
+                    <td className="step-prod-text-right">
+                      <div className="step-prod-currency-wrapper">
                         <input
                           type="text"
-                          className={`table-input-dynamic ${!costVal ? "input-error" : ""}`}
+                          className={`step-prod-input step-prod-input-readonly ${!priceVal ? "step-prod-input-error" : ""}`}
                           style={{
-                            textAlign: "center",
-                            width: calculateWidth(item.costo_unitario),
-                            minWidth: "80px"
+                            width: calculateWidth(item.precio_venta),
                           }}
-                          // Se aplica el formateo inicial por si vienen datos de la DB
-                          value={formatInitialValue(item.costo_unitario)}
-                          onChange={(e) => handleInputChange(item.id, "costo_unitario", e.target.value)}
-                          onBlur={(e) => handleBlurFormat(item.id, "costo_unitario", e.target.value)}
+                          value={formatInitialValue(item.precio_venta)}
+                          readOnly
                           placeholder="0,00"
-                          inputMode="decimal"
                         />
                       </div>
                     </td>
 
-                    <td className="center total-cell" style={{ fontWeight: "700", color: "#333" }}>
-                      {totalLine.toLocaleString("de-DE", {
+                    <td className="step-prod-text-right step-prod-total">
+                      $ {totalLine.toLocaleString("de-DE", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
                     </td>
 
-                    <td className="center">
-                      <div className="pform-actions-cell">
-                        <button className="btn-batch-row" title="Lotes" onClick={() => onOpenBatch(item)}>
+                    <td className="step-prod-text-center">
+                      <div className="step-prod-actions">
+                        <button className="step-prod-action-btn step-prod-btn-batch" title="Lotes" onClick={() => onOpenBatch?.(item)}>
                           <Layers size={16} />
                         </button>
-                        <button className="btn-edit-row" title="Editar" onClick={() => onEditProduct(item)}>
+                        <button className="step-prod-action-btn step-prod-btn-edit" title="Editar" onClick={() => onEditProduct?.(item)}>
                           <Edit2 size={16} />
                         </button>
-                        <button className="btn-delete-row" title="Quitar" onClick={() => removeItem(item.id)}>
+                        <button className="step-prod-action-btn step-prod-btn-delete" title="Quitar" onClick={() => removeItem(item.id)}>
                           <Trash2 size={16} />
                         </button>
                       </div>

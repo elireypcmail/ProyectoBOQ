@@ -1,0 +1,197 @@
+:root {
+    --sform-primary: #ec3137;
+    --sform-success: #10b981;
+    --sform-slate-900: #0f172a;
+    --sform-slate-600: #475569;
+    --sform-slate-200: #e2e8f0;
+    --sform-slate-50: #f8fafc;
+    --sform-overlay-bg: rgba(15, 23, 42, 0.7);
+}
+
+.sform-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--sform-overlay-bg);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+    padding: 20px;
+}
+
+.sform-main-card {
+    background: #ffffff;
+    width: 95%;
+    max-width: 1250px;
+    height: 92vh;
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: sform-fadeInUp 0.4s ease-out;
+}
+
+.sform-header {
+    padding: 20px 40px;
+    background: white;
+    border-bottom: 1px solid var(--sform-slate-200);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.sform-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--sform-slate-900);
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.sform-subtitle {
+    color: var(--sform-slate-600);
+    font-size: 0.9rem;
+    margin: 2px 0 0 0;
+}
+
+.sform-btn-close-x {
+    background: var(--sform-slate-50);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.sform-btn-close-x:hover {
+    background: #fee2e2;
+    color: var(--sform-primary);
+}
+
+.sform-body-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 30px 40px;
+    background: #fff;
+    scrollbar-width: thin;
+}
+
+.sform-footer-nav {
+    padding: 20px 40px;
+    background: var(--sform-slate-50);
+    border-top: 1px solid var(--sform-slate-200);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.sform-nav-group {
+    display: flex;
+    gap: 12px;
+}
+
+.sform-btn-cancel {
+    padding: 12px 24px;
+    background: transparent;
+    border: 1px solid var(--sform-slate-200);
+    color: var(--sform-slate-600);
+    font-weight: 600;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.sform-btn-back {
+    padding: 12px 24px;
+    background: white;
+    border: 1px solid var(--sform-primary);
+    color: var(--sform-primary);
+    font-weight: 700;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.sform-btn-next {
+    padding: 12px 30px;
+    background: var(--sform-primary);
+    color: white;
+    border: none;
+    font-weight: 700;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.sform-btn-finish {
+    padding: 12px 30px;
+    background: var(--sform-success);
+    color: white;
+    border: none;
+    font-weight: 700;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.sform-spin {
+    animation: sform-spin 1s linear infinite;
+}
+
+@keyframes sform-fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes sform-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 768px) {
+    .sform-main-card {
+        width: 100%;
+        height: 100vh;
+        border-radius: 0;
+    }
+
+    .sform-header,
+    .sform-footer-nav {
+        padding: 15px 20px;
+    }
+
+    .sform-footer-nav {
+        flex-direction: column-reverse;
+        gap: 12px;
+    }
+
+    .sform-nav-group,
+    .sform-btn-next,
+    .sform-btn-finish,
+    .sform-btn-cancel {
+        width: 100%;
+        justify-content: center;
+    }
+}

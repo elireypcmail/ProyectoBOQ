@@ -35,11 +35,14 @@ controllerEnt.create = async (req, res) => {
     const { table } = req.params
     const data = req.body
 
-    // Validación específica por entidad
-    if (table === "oficinas" && !data.id_zona) {
-      return res.status(400).json({
-        error: "El campo id_zona es obligatorio para oficinas"
-      })
+    // Validación específica para oficinas
+    if (table === "oficinas") {
+      if (!data.id_zona) {
+        return res.status(400).json({ error: "El campo id_zona es obligatorio para oficinas" })
+      }
+      if (!data.id_deposito) {
+        return res.status(400).json({ error: "El campo id_deposito es obligatorio para oficinas" })
+      }
     }
 
     const result = await EntitiesUser.create(table, data)
@@ -55,11 +58,14 @@ controllerEnt.update = async (req, res) => {
     const { table, id } = req.params
     const data = req.body
 
-    // Validación específica por entidad
-    if (table === "oficinas" && !data.id_zona) {
-      return res.status(400).json({
-        error: "El campo id_zona es obligatorio para oficinas"
-      })
+    // Validación específica para oficinas
+    if (table === "oficinas") {
+      if (data.id_zona === undefined) {
+        return res.status(400).json({ error: "El campo id_zona es obligatorio para oficinas" })
+      }
+      if (data.id_deposito === undefined) {
+        return res.status(400).json({ error: "El campo id_deposito es obligatorio para oficinas" })
+      }
     }
 
     const result = await EntitiesUser.update(table, id, data)

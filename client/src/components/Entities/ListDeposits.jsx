@@ -6,19 +6,17 @@ import {
   ChevronRight,
   Pencil,
   Trash2,
-  Save,
   AlertTriangle,
   Plus
 } from "lucide-react";
-import { SlOptionsVertical } from "react-icons/sl"
+import { SlOptionsVertical } from "react-icons/sl";
+import DepositsFormModal from "./ui/DepositsFormModal"; // IMPORTACIÓN NUEVA
 import "../../styles/components/ListZone.css";
 
 const ListDeposits = () => {
   const { 
     entities, 
     getAllEntities, 
-    createNewEntity, 
-    editedEntity, 
     deleteEntityById 
   } = useEntity();
 
@@ -26,25 +24,17 @@ const ListDeposits = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  // Modales
+  // Estados de Control
   const [selectedDeposit, setSelectedDeposit] = useState(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  const [editName, setEditName] = useState("");
 
   const deposits = entities.depositos || [];
 
   useEffect(() => {
     getAllEntities("depositos");
   }, []);
-
-  // -------------------- Función de formateo --------------------
-  const handleNameInput = (value, setter) => {
-    const formatted = value.replace(/[^a-zA-ZÁÉÍÓÚÜÑáéíóúüñ\s]/g, "").toUpperCase();
-    setter(formatted);
-  };
 
   const filteredDeposits = useMemo(() => {
     return deposits.filter(d =>
@@ -58,41 +48,15 @@ const ListDeposits = () => {
     currentPage * itemsPerPage
   );
 
-  // -------------------- Acciones --------------------
+  // Acciones
+  const openCreateModal = () => {
+    setSelectedDeposit(null);
+    setIsFormModalOpen(true);
+  };
+
   const openEditModal = (deposit) => {
     setSelectedDeposit(deposit);
-    setEditName(deposit.nombre);
-    setIsEditModalOpen(true);
-  };
-
-  const openDeleteModal = (deposit) => {
-    setSelectedDeposit(deposit);
-    setIsDeleteModalOpen(true);
-  };
-
-  const handleCreate = async () => {
-    if (!editName.trim()) return;
-    try {
-      await createNewEntity("depositos", { nombre: editName.trim() });
-      setIsCreateModalOpen(false);
-      setEditName("");
-      getAllEntities("depositos");
-    } catch (error) {
-      console.error("Error al crear depósito:", error);
-    }
-  };
-
-  const handleUpdate = async () => {
-    if (!editName.trim() || !selectedDeposit) return;
-    try {
-      await editedEntity("depositos", selectedDeposit.id, { nombre: editName.trim() });
-      setIsEditModalOpen(false);
-      setSelectedDeposit(null);
-      setEditName("");
-      getAllEntities("depositos");
-    } catch (error) {
-      console.error("Error al editar depósito:", error);
-    }
+    setIsFormModalOpen(true);
   };
 
   const handleDelete = async () => {
@@ -109,14 +73,13 @@ const ListDeposits = () => {
 
   return (
     <div className="orders-container">
-
       {/* HEADER */}
       <div className="orders-header">
         <div>
           <h2>Gestión de Depósitos</h2>
           <p>{filteredDeposits.length} depósitos registrados</p>
         </div>
-        <button className="btn-primary" onClick={() => { setEditName(""); setIsCreateModalOpen(true); }}>
+        <button className="btn-primary" onClick={openCreateModal}>
           <Plus size={16} /> Nuevo Depósito
         </button>
       </div>
@@ -150,27 +113,14 @@ const ListDeposits = () => {
               currentDeposits.map(deposit => (
                 <tr key={deposit.id}>
                   <td className="id hide-mobile">#{deposit.id}</td>
-                  <td>{deposit.nombre}</td>
+                  <td style={{ textTransform: 'uppercase' }}>{deposit.nombre}</td>
                   <td className="hide-mobile">
                     <span className="badge active">Activo</span>
                   </td>
                   <td className="center">
-                    <div className="actions-desktop">
-                      {/* <button className="icon-btn edit" onClick={() => openEditModal(deposit)}>
-                        <Pencil size={16} />
-                      </button>
-                      <button className="icon-btn delete" onClick={() => openDeleteModal(deposit)}>
-                        <Trash2 size={16} />
-                      </button> */}
-                      <button className="icon-btn edit" onClick={() => { setSelectedDeposit(deposit); setIsDetailsModalOpen(true); }}>
-                        <SlOptionsVertical size={16}/>
-                      </button>
-                    </div>
-                    <div className="actions-mobile">
-                      <button className="icon-btn" onClick={() => { setSelectedDeposit(deposit); setIsDetailsModalOpen(true); }}>
-                        &#8942;
-                      </button>
-                    </div>
+                    <button className="icon-btn edit" onClick={() => { setSelectedDeposit(deposit); setIsDetailsModalOpen(true); }}>
+                      <SlOptionsVertical size={16}/>
+                    </button>
                   </td>
                 </tr>
               ))
@@ -196,41 +146,12 @@ const ListDeposits = () => {
         </div>
       )}
 
-      {/* MODAL CREAR */}
-      {isCreateModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Crear Depósito</h3>
-            <input 
-              className="modal-input" 
-              value={editName} 
-              onChange={(e) => handleNameInput(e.target.value, setEditName)} 
-            />
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setIsCreateModalOpen(false)}>Cancelar</button>
-              <button className="btn-primary" onClick={handleCreate}><Save size={16} /> Crear</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL EDITAR */}
-      {isEditModalOpen && selectedDeposit && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Editar Depósito</h3>
-            <input 
-              className="modal-input" 
-              value={editName} 
-              onChange={(e) => handleNameInput(e.target.value, setEditName)} 
-            />
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setIsEditModalOpen(false)}>Cancelar</button>
-              <button className="btn-primary" onClick={handleUpdate}><Save size={16} /> Guardar</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* --- MODAL DE FORMULARIO (NUEVO/EDITAR) --- */}
+      <DepositsFormModal 
+        isOpen={isFormModalOpen}
+        onClose={() => setIsFormModalOpen(false)}
+        deposit={selectedDeposit}
+      />
 
       {/* MODAL ELIMINAR */}
       {isDeleteModalOpen && selectedDeposit && (
@@ -249,26 +170,28 @@ const ListDeposits = () => {
         </div>
       )}
 
-      {/* MODAL DETALLES MÓVIL */}
+      {/* MODAL DETALLES MÓVIL/OPCIONES */}
       {isDetailsModalOpen && selectedDeposit && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Detalles de {selectedDeposit.nombre}</h3>
+            <h3>Opciones de Depósito</h3>
             <div className="modal-info-body">
               <div className="detail-card"><strong>ID:</strong> <span>#{selectedDeposit.id}</span></div>
-              <div className="detail-card"><strong>Nombre:</strong> <span>{selectedDeposit.nombre}</span></div>
-              <div className="detail-card"><strong>Estado:</strong> <span>Activo</span></div>
+              <div className="detail-card"><strong>Nombre:</strong> <span style={{ textTransform: 'uppercase' }}>{selectedDeposit.nombre}</span></div>
             </div>
 
             <div className="modal-footer" style={{ flexDirection: "column", gap: "0.75rem" }}>
-              <button className="btn-primary" onClick={() => { setIsDetailsModalOpen(false); openEditModal(selectedDeposit); }}><Pencil size={16} /> Editar</button>
-              <button className="btn-danger" onClick={() => { setIsDetailsModalOpen(false); openDeleteModal(selectedDeposit); }}><Trash2 size={16} /> Eliminar</button>
+              <button className="btn-primary" onClick={() => { setIsDetailsModalOpen(false); openEditModal(selectedDeposit); }}>
+                <Pencil size={16} /> Editar
+              </button>
+              <button className="btn-danger" onClick={() => { setIsDetailsModalOpen(false); setIsDeleteModalOpen(true); }}>
+                <Trash2 size={16} /> Eliminar
+              </button>
               <button className="btn-secondary" onClick={() => setIsDetailsModalOpen(false)}>Cerrar</button>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 };

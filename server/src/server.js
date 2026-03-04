@@ -11,6 +11,7 @@ import authRouter from "./routes/auth.routes.js"
 import patientsRouter from "./routes/patients.routes.js"
 import doctorsRouter from "./routes/doctors.routes.js"
 import typesDocRouter from "./routes/typesDoc.routes.js"
+import StaffRouter from "./routes/staff.routes.js"
 import insurancesRouter from "./routes/insurances.routes.js"
 import storiesRouter from "./routes/stories.routes.js"
 import productsRouter from "./routes/products.routes.js"
@@ -19,7 +20,9 @@ import brandsRouter from "./routes/brands.routes.js"
 import lotsRouter from "./routes/lots.routes.js"
 import SupsRouter from "./routes/suppliers.routes.js"
 import ShopRouter from "./routes/shopping.routes.js"
+import SalesRouter from "./routes/sales.routes.js"
 import SellerRouter from "./routes/sellers.routes.js"
+import ClinicsRouter from "./routes/clinics.routes.js"
 
 const app = express()
 const server = http.createServer(app)
@@ -43,8 +46,9 @@ server.listen(_var.PORT, "0.0.0.0", () => {
 // Use routes
 app.use("/auth",authRouter)
 app.use("/medicos",doctorsRouter)
-app.use("/pacientes",patientsRouter)
 app.use("/tipos/medicos",typesDocRouter)
+app.use("/personal",StaffRouter)
+app.use("/pacientes",patientsRouter)
 app.use("/seguros",insurancesRouter)
 app.use("/historias",storiesRouter)
 app.use("/categorias",categoriesRouter)
@@ -54,3 +58,5 @@ app.use("/lotes",lotsRouter)
 app.use("/proveedores", SupsRouter)
 app.use("/compras", ShopRouter)
 app.use("/vendedores", SellerRouter)
+app.use("/ventas", SalesRouter)
+app.use("/clinicas", ClinicsRouter)

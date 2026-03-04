@@ -458,4 +458,227 @@ export class DoctorsModel {
     }
   }
 
+    // Personal
+
+  static async getAllStaff() {
+    let connection;
+    try {
+      connection = await pool.connect();
+
+      // Joining with 'medicos' to get meaningful data (like names)
+      const result = await connection.query(
+        `SELECT p.*, m.nombre as nombre_medico 
+        FROM personal p
+        LEFT JOIN medicos m ON p.id_medico = m.id
+        ORDER BY p.id DESC`
+      );
+
+      if (!result.rows.length) {
+        return {
+          status: false,
+          code: 404,
+          msg: "No staff members found"
+        };
+      }
+
+      return {
+        status: true,
+        code: 200,
+        data: result.rows
+      };
+
+    } catch (error) {
+      return {
+        status: false,
+        code: 500,
+        msg: "Error retrieving staff members",
+        error: error.message
+      };
+    } finally {
+      if (connection) connection.release();
+    }
+  }
+
+  static async getStaffById(id) {
+    if (!id) {
+      return {
+        status: false,
+        code: 400,
+        msg: "Staff ID is required"
+      };
+    }
+
+    let connection;
+    try {
+      connection = await pool.connect();
+
+      const result = await connection.query(
+        `SELECT p.*, m.nombre as nombre_medico 
+        FROM personal p
+        LEFT JOIN medicos m ON p.id_medico = m.id 
+        WHERE p.id = $1`,
+        [id]
+      );
+
+      if (!result.rows.length) {
+        return {
+          status: false,
+          code: 404,
+          msg: "Staff member not found"
+        };
+      }
+
+      return {
+        status: true,
+        code: 200,
+        data: result.rows[0]
+      };
+
+    } catch (error) {
+      return {
+        status: false,
+        code: 500,
+        msg: "Error retrieving staff member",
+        error: error.message
+      };
+    } finally {
+      if (connection) connection.release();
+    }
+  }
+
+  static async createStaff(data) {
+    let connection;
+    try {
+      connection = await pool.connect();
+
+      // Validate if the doctor is already assigned to the staff list
+      const duplicate = await connection.query(
+        `SELECT id FROM personal WHERE id_medico = $1`,
+        [data.id_medico]
+      );
+
+      if (duplicate.rows.length) {
+        return {
+          status: false,
+          code: 409,
+          msg: "This doctor is already registered as staff"
+        };
+      }
+
+      const insert = await connection.query(
+        `INSERT INTO personal (id_medico, estatus)
+        VALUES ($1, $2)
+        RETURNING *`,
+        [
+          data.id_medico,
+          data.estatus ?? true
+        ]
+      );
+
+      return {
+        status: true,
+        code: 201,
+        msg: "Staff member created successfully",
+        data: insert.rows[0]
+      };
+
+    } catch (error) {
+      return {
+        status: false,
+        code: 500,
+        msg: "Error creating staff member",
+        error: error.message
+      };
+    } finally {
+      if (connection) connection.release();
+    }
+  }
+
+  static async updateStaff(id, data) {
+    let connection;
+    try {
+      connection = await pool.connect();
+
+      const fields = Object.keys(data);
+      if (!fields.length) {
+        return {
+          status: false,
+          code: 400,
+          msg: "No data provided for update"
+        };
+      }
+
+      const values = Object.values(data);
+      const setClause = fields.map((f, i) => `${f}=$${i + 1}`).join(", ");
+
+      const result = await connection.query(
+        `UPDATE personal
+        SET ${setClause}
+        WHERE id = $${fields.length + 1}
+        RETURNING *`,
+        [...values, id]
+      );
+
+      if (!result.rows.length) {
+        return {
+          status: false,
+          code: 404,
+          msg: "Staff member not found"
+        };
+      }
+
+      return {
+        status: true,
+        code: 200,
+        msg: "Staff member updated successfully",
+        data: result.rows[0]
+      };
+
+    } catch (error) {
+      return {
+        status: false,
+        code: 500,
+        msg: "Error updating staff member",
+        error: error.message
+      };
+    } finally {
+      if (connection) connection.release();
+    }
+  }
+
+  static async deleteStaff(id) {
+    let connection;
+    try {
+      connection = await pool.connect();
+
+      const result = await connection.query(
+        `DELETE FROM personal WHERE id = $1 RETURNING id`,
+        [id]
+      );
+
+      if (!result.rowCount) {
+        return {
+          status: false,
+          code: 404,
+          msg: "Staff member not found"
+        };
+      }
+
+      return {
+        status: true,
+        code: 200,
+        msg: "Staff member deleted successfully"
+      };
+
+    } catch (error) {
+      return {
+        status: false,
+        code: 500,
+        msg: "Error deleting staff member",
+        error: error.message
+      };
+    } finally {
+      if (connection) connection.release();
+    }
+  }
 }

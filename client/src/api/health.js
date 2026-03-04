@@ -29,6 +29,13 @@ export const createMedico = (data) => instanceApp.post("/medicos", data);
 export const editMedico = (id, data) => instanceApp.put(`/medicos/${id}`, data);
 export const deleteMedico = (id) => instanceApp.delete(`/medicos/${id}`);
 
+// -------------------- PERSONAL --------------------
+export const getPersonal = () => instanceApp.get("/personal");
+export const getPersonalById = (id) => instanceApp.get(`/personal/${id}`);
+export const createPersonal = (data) => instanceApp.post("/personal", data);
+export const editPersonal = (id, data) => instanceApp.put(`/personal/${id}`, data);
+export const deletePersonal = (id) => instanceApp.delete(`/personal/${id}`);
+
 // -------------------- TIPO MEDICOS --------------------
 export const getTipoMedicos = () => instanceApp.get("/tipos/medicos");
 export const getTipoMedicoById = (id) => instanceApp.get(`/tipos/medicos/${id}`);

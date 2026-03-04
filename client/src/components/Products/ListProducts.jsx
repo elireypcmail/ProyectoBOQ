@@ -6,13 +6,13 @@ import {
   AlertTriangle,
   Plus,
   X,
-  Loader2 // Importado para feedback de carga
+  Loader2,
+  FileText // <-- Added icon for the catalog button
 } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
 import ProductFormModal from "../Ui/ProductFormModal";
 import ModalDetailed from "../Ui/ModalDetailed";
-import ListPrices from "./ListPrices";
-import ListLots from "./ListLots";
+import ModalCreateCatalog from "../Ui/ModalCreateCatalog"; // <-- Import the new modal
 
 import "../../styles/components/ListProd.css";
 
@@ -30,7 +30,7 @@ const ListProducts = () => {
     deleteProductById,
     createNewCategory,
     createNewBrand,
-    saveFilesProduct // <-- Extraemos la función para guardar archivos
+    saveFilesProduct
   } = useProducts();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -40,6 +40,9 @@ const ListProducts = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isLoadingProduct, setIsLoadingProduct] = useState(false);
   
+  // <-- New state for the catalog modal
+  const [isCatalogModalOpen, setIsCatalogModalOpen] = useState(false);
+
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isLotsOpen, setIsLotsOpen] = useState(false);
 
@@ -55,7 +58,6 @@ const ListProducts = () => {
     );
   }, [products, searchTerm]);
 
-  // Handler para obtener info fresca del producto antes de abrir el detalle
   const handleOpenDetail = async (id) => {
     setIsLoadingProduct(true);
     try {
@@ -81,7 +83,6 @@ const ListProducts = () => {
     return res.data;
   };
 
-  // NUEVO: Handler unificado para guardar producto y sus imágenes
   const handleSaveProduct = async (data, files) => {
     try {
       let productId = null;
@@ -93,7 +94,6 @@ const ListProducts = () => {
         const res = await createNewProduct(data);
         console.log("Respuesta completa:", res);
         
-        // Según tus logs, la estructura es res.data.data.id
         productId = res?.data?.data?.id || res?.id || res?.data?.id; 
       }
 
@@ -106,7 +106,6 @@ const ListProducts = () => {
           order: idx + 1,
         }));
         
-        // Este es el punto donde recibes el error 500
         await saveFilesProduct(productId, files, filesJson);
       }
 
@@ -115,8 +114,15 @@ const ListProducts = () => {
       setSelectedProduct(null);
     } catch (error) {
       console.error("Error en el flujo de guardado:", error);
-      // IMPORTANTE: No alertar aquí si el error ya se manejó en el Context
     }
+  };
+
+  // <-- New handler for when the user clicks "Generate" in the catalog modal
+  const handleGenerateCatalog = (filters) => {
+    console.log("Filters selected for PDF:", filters);
+    // TODO: Implement PDF generation logic here
+    
+    setIsCatalogModalOpen(false);
   };
 
   return (
@@ -126,9 +132,15 @@ const ListProducts = () => {
           <h2>Gestión de Productos</h2>
           <p>{filteredProducts.length} productos registrados</p>
         </div>
-        <button className="btn-primary" onClick={() => { setSelectedProduct(null); setIsFormOpen(true); }}>
-          <Plus size={16} /> Nuevo Producto
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          {/* <-- Added the Create Catalog Button */}
+          <button className="btn-secondary" onClick={() => setIsCatalogModalOpen(true)}>
+            <FileText size={16} /> Crear Catálogo
+          </button>
+          <button className="btn-primary" onClick={() => { setSelectedProduct(null); setIsFormOpen(true); }}>
+            <Plus size={16} /> Nuevo Producto
+          </button>
+        </div>
       </div>
 
       <div className="prod-toolbar">
@@ -187,7 +199,7 @@ const ListProducts = () => {
       <ProductFormModal
         isOpen={isFormOpen}
         onClose={() => { setIsFormOpen(false); setSelectedProduct(null); }}
-        onSubmit={handleSaveProduct} // <-- Pasamos nuestro handler unificado aquí
+        onSubmit={handleSaveProduct}
         initialData={selectedProduct}
         categories={categories}
         brands={brands}
@@ -203,6 +215,15 @@ const ListProducts = () => {
         onClose={() => { setIsDetailOpen(false); setSelectedProduct(null); }}
         onEdit={() => { setIsDetailOpen(false); setIsFormOpen(true); }}
         onDelete={() => { setIsDetailOpen(false); setIsDeleteModalOpen(true); }}
+      />
+
+      {/* <-- New Catalog Modal Component */}
+      <ModalCreateCatalog 
+        isOpen={isCatalogModalOpen}
+        onClose={() => setIsCatalogModalOpen(false)}
+        categories={categories}
+        brands={brands}
+        onGenerate={handleGenerateCatalog}
       />
 
       {/* MODAL ELIMINAR */}

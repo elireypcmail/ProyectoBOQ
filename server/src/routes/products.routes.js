@@ -18,6 +18,9 @@ router.delete("/:id", controller.deleteProduct)
 
 router.post("/save/file/:id", upload.array("files"), controller.save_newFiles)
 
+// Catalogo
+router.post("/catalogo", controller.generateCatalogProd)
+
 // Auditoria Precios
 router.get("/auditoria/precio/:id", controller.getProductAud)
 

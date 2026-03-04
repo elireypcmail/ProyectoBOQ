@@ -208,6 +208,22 @@ controller.save_newFiles = async (req, res) => {
   }
 };
 
+/* ================= PRODUCTOS + CATALOGO ================= */
+controller.generateCatalogProd = async (req, res) => {
+  try {
+    const filters = req.body; // { categoryId, brandId, minPrice, maxPrice, dateStart, dateEnd, lotNumber }
+    console.log("Filtros recibidos:", filters);
+
+    const result = await ProductsModel.getProductFilter(filters);
+    console.log(result)
+    return res.status(result.code).json(result);
+
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+
 /* ================= PRODUCTOS CON EXISTENCIAS EN DEPOSITO ================= */
 controller.getProductEdeposit = async (req, res) => {
   try {
@@ -215,6 +231,7 @@ controller.getProductEdeposit = async (req, res) => {
     if (!id) return res.status(400).json({ error: "Product id required" });
 
     const result = await ProductsModel.getProductWithDeposits(id);
+    console.log(result)
     return res.status(result.code).json(result);
   } catch (error) {
     return res.status(500).json({ error: error.message });
