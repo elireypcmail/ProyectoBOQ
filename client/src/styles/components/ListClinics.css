@@ -1,155 +1,193 @@
-/* CONTAINER PRINCIPAL */
 .cln-main-container {
-  width: 90%;
-  /* max-width: 1300px; */
-  /* margin: 1.5rem auto; */
+  width: 95%;
+  max-width: 1400px;
+  margin: 1rem auto;
   background: #ffffff;
   padding: 24px;
   border-radius: 20px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+  font-family: 'Inter', sans-serif;
 }
 
-/* TOP BAR */
+/* HEADER ALIGNMENT */
 .cln-top-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 30px;
 }
 
 .cln-info-header {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 16px;
 }
 
 .cln-main-icon {
   color: #ec4e53;
   background: #fef2f2;
-  padding: 10px;
-  border-radius: 12px;
+  padding: 12px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
 }
 
-.cln-info-header h1 {
-  font-size: 1.4rem;
+.cln-title-group h1 {
+  font-size: 1.5rem;
   font-weight: 800;
   margin: 0;
   color: #1e293b;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.5px;
 }
 
-.cln-info-header span {
+.cln-stats {
   font-size: 0.75rem;
   font-weight: 600;
   color: #94a3b8;
+  text-transform: uppercase;
 }
 
 .cln-add-button {
   background: #ec4e53;
   color: white;
   border: none;
-  padding: 12px 20px;
-  border-radius: 10px;
+  padding: 12px 24px;
+  border-radius: 12px;
   font-weight: 700;
   font-size: 0.85rem;
   display: flex;
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(236, 78, 83, 0.25);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .cln-add-button:hover {
   background: #d43f44;
   transform: translateY(-2px);
-  box-shadow: 0 6px 15px rgba(236, 78, 83, 0.35);
+  box-shadow: 0 8px 20px rgba(236, 78, 83, 0.2);
 }
 
-/* SEARCH BAR */
+/* BARRA DE FILTROS */
 .cln-filter-bar {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
 }
 
 .cln-search-wrapper {
   position: relative;
-  max-width: 450px;
+  width: 100%;
+  max-width: 480px; /* Un ancho cómodo para escritorio */
+  display: flex;
+  align-items: center;
 }
 
+/* Icono de Lupa */
 .cln-search-icon {
   position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
+  left: 16px;
   color: #94a3b8;
+  pointer-events: none; /* Para que no interfiera al hacer clic en el input */
+  transition: color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.cln-search-wrapper input {
+/* Input de Búsqueda */
+.cln-search-input {
   width: 100%;
-  padding: 12px 12px 12px 42px;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
+  padding: 12px 16px 12px 48px; /* 48px a la izquierda para dejar espacio al icono */
   font-size: 0.9rem;
   font-weight: 500;
+  color: #1e293b;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
   outline: none;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.01em;
 }
 
-.cln-search-wrapper input:focus {
-  background: #fff;
+/* Estado Focus (Cuando el usuario escribe) */
+.cln-search-input:focus {
+  background-color: #ffffff;
   border-color: #ec4e53;
-  box-shadow: 0 0 0 4px rgba(236, 78, 83, 0.1);
+  box-shadow: 0 0 0 4px rgba(236, 78, 83, 0.1); /* Efecto de halo suave */
 }
 
-/* TABLA */
+/* Cambiar color del icono cuando el input tiene foco */
+.cln-search-wrapper:focus-within .cln-search-icon {
+  color: #ec4e53;
+}
+
+/* Placeholder */
+.cln-search-input::placeholder {
+  color: #94a3b8;
+  font-weight: 400;
+  text-transform: none; /* Para que el placeholder no esté en mayúsculas si no quieres */
+}
+
+/* Ajuste para móviles */
+@media (max-width: 640px) {
+  .cln-search-wrapper {
+    max-width: 100%;
+  }
+}
+
+/* TABLE ALIGNMENT */
 .cln-table-container {
   border: 1px solid #e2e8f0;
   border-radius: 16px;
+  background: #fff;
   overflow: hidden;
 }
 
 .cln-data-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed; /* Ayuda a mantener anchos consistentes */
 }
 
 .cln-data-table th {
   background: #f8fafc;
-  padding: 14px 20px;
+  padding: 16px 20px;
   text-align: left;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: #64748b;
-  text-transform: uppercase;
   border-bottom: 1px solid #e2e8f0;
 }
 
+/* Anchos de columnas */
+.cln-th-id { width: 100px; }
+.cln-th-main { width: auto; }
+.cln-th-razon { width: 180px; }
+.cln-th-actions { width: 120px; text-align: center !important; }
+
 .cln-data-table td {
   padding: 16px 20px;
+  vertical-align: middle;
   border-bottom: 1px solid #f1f5f9;
-}
-
-.cln-tr-row:hover {
-  background: #fcfcfc;
 }
 
 .cln-td-id {
   font-family: 'JetBrains Mono', monospace;
   color: #ec4e53;
   font-weight: 700;
-  font-size: 0.85rem;
 }
 
 .cln-clinic-cell {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  justify-content: center;
+  gap: 2px;
 }
 
 .cln-name-text {
-  color: #0f172a;
+  color: #1e293b;
+  font-weight: 600;
   font-size: 0.95rem;
 }
 
@@ -158,31 +196,46 @@
   color: #64748b;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
-.cln-td-razon {
+.cln-pin-icon { color: #94a3b8; }
+
+.cln-rif-badge {
+  background: #f1f5f9;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
   color: #475569;
-  font-size: 0.9rem;
-  font-weight: 500;
+}
+
+/* ACTIONS BUTTON ALIGNMENT */
+.cln-td-actions {
+  text-align: center;
 }
 
 .cln-options-btn {
-  background: transparent;
-  border: none;
-  color: #94a3b8;
-  padding: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 10px;
   transition: all 0.2s;
 }
 
 .cln-options-btn:hover {
-  background: #f1f5f9;
+  border-color: #ec4e53;
   color: #ec4e53;
+  background: #fef2f2;
 }
 
-/* PAGINACIÓN */
+/* PAGINATION ALIGNMENT */
 .cln-footer-pagination {
   display: flex;
   justify-content: space-between;
@@ -190,120 +243,30 @@
   margin-top: 24px;
 }
 
-.cln-nav-btn {
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 0.75rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #475569;
+.cln-page-counter {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 8px 20px;
+  border-radius: 30px;
 }
 
-.cln-nav-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+.cln-nav-btn {
+  background: white;
+  border: 1px solid #e2e8f0;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
 }
 
 .cln-nav-btn:hover:not(:disabled) {
   border-color: #ec4e53;
   color: #ec4e53;
-}
-
-.cln-page-counter {
-  font-size: 0.85rem;
-  color: #64748b;
-}
-
-/* MODAL ELIMINAR */
-.cln-overlay-delete {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(5px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-}
-
-.cln-delete-card {
-  background: white;
-  padding: 32px;
-  border-radius: 24px;
-  max-width: 400px;
-  width: 90%;
-  text-align: center;
-  animation: clnScaleUp 0.3s ease-out;
-}
-
-.cln-delete-icon-box {
-  background: #fef2f2;
-  color: #ef4444;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 20px;
-}
-
-.cln-delete-card h2 {
-  font-size: 1.25rem;
-  font-weight: 800;
-  margin-bottom: 12px;
-}
-
-.cln-delete-card p {
-  color: #64748b;
-  line-height: 1.5;
-  margin-bottom: 24px;
-}
-
-.cln-delete-footer {
-  display: flex;
-  gap: 12px;
-}
-
-.cln-cancel-btn {
-  flex: 1;
-  background: #f1f5f9;
-  border: none;
-  padding: 12px;
-  border-radius: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.cln-confirm-btn {
-  flex: 1;
-  background: #ef4444;
-  color: white;
-  border: none;
-  padding: 12px;
-  border-radius: 12px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  cursor: pointer;
-}
-
-/* ANIMACIONES */
-.cln-loader-spin { animation: clnSpin 1s linear infinite; }
-@keyframes clnSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-@keyframes clnScaleUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-/* MOBILE ADJUSTS */
-@media (max-width: 768px) {
-  .cln-td-razon { display: none; }
-  .cln-th-razon { display: none; }
-  .cln-top-bar { flex-direction: column; gap: 16px; align-items: flex-start; }
-  .cln-add-button { width: 100%; justify-content: center; }
 }

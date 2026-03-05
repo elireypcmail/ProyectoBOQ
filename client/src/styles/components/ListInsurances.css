@@ -22,7 +22,6 @@
 
 .insurances-view-container {
   width: 90%;
-  max-width: 1200px;
   background: var(--ins-bg);
   padding: 1.75rem;
   border-radius: 14px;

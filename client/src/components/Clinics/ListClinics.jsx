@@ -3,15 +3,12 @@ import { useClinics } from "../../context/ClinicsContext";
 import { useEntity } from "../../context/EntityContext";
 import { 
   Search, Plus, Trash2, AlertTriangle, Loader2, 
-  ChevronLeft, ChevronRight, Building2, MapPin
+  ChevronLeft, ChevronRight, MapPin
 } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
 
-// Componentes UI
 import ClinicFormModal from "./Ui/ClinicFormModal";
 import ModalDetailedClinic from "./Ui/ModalDetailedClinic";
-
-// Estilos
 import "../../styles/components/ListClinics.css";
 
 const ListClinics = () => {
@@ -39,7 +36,6 @@ const ListClinics = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingDetails, setIsLoadingDetails] = useState(null);
 
-  // 🔹 Helper para truncar texto a 50 caracteres
   const truncateText = (text, maxLength = 50) => {
     if (!text) return "SIN DIRECCIÓN";
     const upperText = text.toUpperCase();
@@ -111,12 +107,14 @@ const ListClinics = () => {
   return (
     <div className="cln-main-container">
       
-      {/* HEADER */}
       <div className="cln-top-bar">
         <div className="cln-info-header">
-          <div>
+          <div className="cln-main-icon">
+            <AlertTriangle size={24} />
+          </div>
+          <div className="cln-title-group">
             <h1>GESTIÓN DE CLÍNICAS</h1>
-            <span>{filteredClinics.length} REGISTROS EN TOTAL</span>
+            <span className="cln-stats">{filteredClinics.length} REGISTROS TOTALES</span>
           </div>
         </div>
         
@@ -131,12 +129,12 @@ const ListClinics = () => {
         </button>
       </div>
 
-      {/* FILTROS */}
       <div className="cln-filter-bar">
         <div className="cln-search-wrapper">
           <Search size={18} className="cln-search-icon" />
           <input 
-            placeholder="BUSCAR POR NOMBRE O RAZÓN SOCIAL..." 
+            className="cln-search-input"
+            placeholder="BUSCAR POR NOMBRE O RIF..." 
             value={searchTerm} 
             onChange={(e) => { 
               setSearchTerm(e.target.value.toUpperCase()); 
@@ -146,7 +144,6 @@ const ListClinics = () => {
         </div>
       </div>
 
-      {/* TABLA */}
       <div className="cln-table-container">
         <table className="cln-data-table">
           <thead>
@@ -154,7 +151,7 @@ const ListClinics = () => {
               <th className="cln-th-id">ID</th>
               <th className="cln-th-main">INSTITUCIÓN / DIRECCIÓN</th>
               <th className="cln-th-razon">RIF</th>
-              <th className="cln-th-actions">OPCIONES</th>
+              <th className="cln-th-actions">ACCIONES</th>
             </tr>
           </thead>
           <tbody>
@@ -165,32 +162,18 @@ const ListClinics = () => {
 
                   <td className="cln-td-main">
                     <div className="cln-clinic-cell">
-                      <strong 
-                        className="cln-name-text" 
-                        title={c.nombre?.toUpperCase()}
-                      >
+                      <span className="cln-name-text">
                         {c.nombre?.toUpperCase()}
-                      </strong>
-
-                      <span 
-                        className="cln-address-text" 
-                        title={c.direccion?.toUpperCase()}
-                      >
-                        <MapPin size={12} style={{ flexShrink: 0 }} /> 
-                        <span className="cln-address-truncate">
-                          {truncateText(c.direccion, 50)}
-                        </span>
+                      </span>
+                      <span className="cln-address-text">
+                        <MapPin size={12} className="cln-pin-icon" /> 
+                        {truncateText(c.direccion, 50)}
                       </span>
                     </div>
                   </td>
 
                   <td className="cln-td-razon">
-                    <span 
-                      className="cln-razon-truncate" 
-                      title={c.rif?.toUpperCase()}
-                    >
-                      {c.rif?.toUpperCase()}
-                    </span>
+                    <span className="cln-rif-badge">{c.rif?.toUpperCase() || "N/A"}</span>
                   </td>
 
                   <td className="cln-td-actions">
@@ -202,7 +185,7 @@ const ListClinics = () => {
                       {isLoadingDetails === c.id ? (
                         <Loader2 size={16} className="cln-loader-spin" />
                       ) : (
-                        <SlOptionsVertical size={16} />
+                        <SlOptionsVertical size={14} />
                       )}
                     </button>
                   </td>
@@ -210,7 +193,7 @@ const ListClinics = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="4" className="cln-empty-state">
+                <td colSpan="4" className="cln-td-empty">
                   NO SE ENCONTRARON CLÍNICAS REGISTRADAS
                 </td>
               </tr>
@@ -219,7 +202,6 @@ const ListClinics = () => {
         </table>
       </div>
 
-      {/* PAGINACIÓN */}
       {totalPages > 1 && (
         <div className="cln-footer-pagination">
           <button 
@@ -227,7 +209,7 @@ const ListClinics = () => {
             disabled={currentPage === 1}
             onClick={() => setCurrentPage(prev => prev - 1)}
           >
-            <ChevronLeft size={20} /> ANTERIOR
+            <ChevronLeft size={18} /> ANTERIOR
           </button>
 
           <div className="cln-page-counter">
@@ -239,12 +221,12 @@ const ListClinics = () => {
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage(prev => prev + 1)}
           >
-            SIGUIENTE <ChevronRight size={20} />
+            SIGUIENTE <ChevronRight size={18} />
           </button>
         </div>
       )}
 
-      {/* MODALES */}
+      {/* MODALS (se mantienen igual) */}
       <ClinicFormModal
         isOpen={isFormModalOpen}
         onClose={() => setIsFormModalOpen(false)}
@@ -272,22 +254,16 @@ const ListClinics = () => {
             <div className="cln-delete-icon-box">
               <AlertTriangle size={40} />
             </div>
-            <h2>¿ELIMINAR ESTE REGISTRO?</h2>
+            <h2>¿ELIMINAR REGISTRO?</h2>
             <p>
               ESTA ACCIÓN ELIMINARÁ PERMANENTEMENTE A:<br/>
-              <strong>{selectedClinic?.nombre?.toUpperCase()}</strong>
+              <strong className="cln-delete-target">
+                {selectedClinic?.nombre?.toUpperCase()}
+              </strong>
             </p>
             <div className="cln-delete-footer">
-              <button 
-                className="cln-cancel-btn" 
-                onClick={() => setIsDeleteModalOpen(false)}
-              >
-                CANCELAR
-              </button>
-              <button 
-                className="cln-confirm-btn" 
-                onClick={handleDeleteConfirm}
-              >
+              <button className="cln-cancel-btn" onClick={() => setIsDeleteModalOpen(false)}>CANCELAR</button>
+              <button className="cln-confirm-btn" onClick={handleDeleteConfirm}>
                 <Trash2 size={18} /> CONFIRMAR
               </button>
             </div>
