@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { Search, Plus, Trash2, Edit2, Layers } from "lucide-react";
-import "../../../../styles/Ui/stepsSales/StepProducts.css";
+import "../../../../styles/ui/stepsSales/StepProducts.css";
 
 const StepProducts = ({
   items = [],
