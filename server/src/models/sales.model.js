@@ -607,7 +607,7 @@ static async getSaleById(id) {
                 idDetalle,
                 lote.id_lote,
                 lote.cantidad,
-                lote.fecha_vencimiento
+                lote.fecha_vencimiento || lote.fecha_caducidad 
               ]
             );
 

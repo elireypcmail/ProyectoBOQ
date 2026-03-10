@@ -3,6 +3,9 @@ import '../../../../styles/ui/stepsSales/StepConfirm.css';
 
 const StepConfirm = ({ formData, items, totals }) => {
   
+  console.log("formData")
+  console.log(formData)
+
   // 1. Helper para procesar números (manejando la coma decimal)
   const safeParse = (val) => {
     if (val === null || val === undefined || val === "") return 0;

@@ -18,9 +18,6 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
     deposito_nombre: ""
   });
 
-  console.log(items)
-
-  /* ===================== CARGA DE DATOS ===================== */
   useEffect(() => {
     const loadBatchData = async () => {
       const productId = product?.id || product?.id_producto;
@@ -31,9 +28,8 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
       }
     };
     loadBatchData();
-  }, [product]);
+  }, [product, getAllLotesByProd]);
 
-  /* ===================== CÁLCULOS DE ESTADO ===================== */
   const currentProductEntry = useMemo(() => {
     return items.find(item =>
       (item.id && item.id === product?.id) ||
@@ -43,10 +39,12 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
 
   const displayProduct = currentProductEntry || product;
   const maxQuantity = parseFloat(displayProduct?.cantidad) || 0;
-  const currentBatches = displayProduct?.lotes_compra || [];
+  const currentBatches = useMemo(() => {
+    return displayProduct?.lotes_compra || displayProduct?.lotes || [];
+  }, [displayProduct]);
 
   const allocatedQuantity = currentBatches.reduce((acc, b) => acc + parseFloat(b.cantidad || 0), 0);
-  const remainingQuantity = maxQuantity - allocatedQuantity;
+  const remainingQuantity = Math.max(0, maxQuantity - allocatedQuantity);
 
   const formatNumber = (num) => {
     if (num === undefined || num === null) return "0,00";
@@ -58,7 +56,6 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
 
   const batchOptions = useMemo(() => {
     return (lotes || [])
-      .filter(l => parseFloat(l.cantidad) > 0 || editingId) 
       .map(l => ({
         value: l.id,
         label: `Lote: ${l.nro_lote} - ${l.deposito_nombre} (Stock: ${formatNumber(l.cantidad)})`,
@@ -68,18 +65,44 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
         nro_lote: l.nro_lote,
         vencimiento: l.fecha_vencimiento ? l.fecha_vencimiento.split('T')[0] : ""
       }));
-  }, [lotes, editingId]);
+  }, [lotes]);
+
+  /* ===================== VALIDACIÓN DE LÍMITES ===================== */
+  
+  const getBatchLimits = (loteId) => {
+    const selectedBatch = batchOptions.find(b => b.value === loteId);
+    if (!selectedBatch) return { stockDisponible: 0, maxPermitido: 0 };
+
+    // 1. Cuánto hay de este lote en la tabla actualmente (excluyendo el que se está editando)
+    const yaAsignadoDeEsteLote = currentBatches
+      .filter(l => l.id_lote === loteId && (editingId ? (l.id_temp || l.id_lote) !== editingId : true))
+      .reduce((acc, l) => acc + parseFloat(l.cantidad || 0), 0);
+
+    // 2. Existencia real restante del lote
+    const stockRealRestante = selectedBatch.existencia - yaAsignadoDeEsteLote;
+
+    // 3. Cuánto le falta al producto para completarse
+    const montoEdicion = editingId 
+      ? parseFloat(currentBatches.find(l => (l.id_temp || l.id_lote) === editingId)?.cantidad || 0)
+      : 0;
+    
+    const faltaPorCompletarProducto = remainingQuantity + montoEdicion;
+
+    // El límite es el menor entre lo que tiene el lote y lo que requiere el producto
+    return {
+      stockDisponible: Math.max(0, stockRealRestante),
+      maxPermitido: Math.min(stockRealRestante, faltaPorCompletarProducto)
+    };
+  };
 
   /* ===================== MANEJADORES ===================== */
+
   const handleBatchSelect = (opt) => {
     if (!opt) {
       setFormData({ id_lote: "", id_deposito: "", nro_lote: "", cantidad: "", fecha_vencimiento: "", deposito_nombre: "" });
       return;
     }
-
-    // Calculamos cuánto falta por asignar para sugerir la cantidad
-    const sugerido = Math.min(opt.existencia, remainingQuantity);
-
+    const { maxPermitido } = getBatchLimits(opt.value);
     setFormData({
       ...formData,
       id_lote: opt.value,
@@ -87,121 +110,93 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
       nro_lote: opt.nro_lote,
       deposito_nombre: opt.nombre_deposito,
       fecha_vencimiento: opt.vencimiento,
-      cantidad: sugerido > 0 ? sugerido.toString() : ""
+      cantidad: maxPermitido > 0 ? maxPermitido.toString() : ""
     });
-  };
-
-  const handleEditClick = (lote) => {
-    setFormData({
-      id_lote: lote.id_lote,
-      id_deposito: lote.id_deposito,
-      nro_lote: lote.nro_lote,
-      deposito_nombre: lote.deposito_nombre,
-      cantidad: lote.cantidad,
-      fecha_vencimiento: lote.fecha_vencimiento,
-    });
-    setEditingId(lote.id_temp);
   };
 
   const handleQuantityChange = (e) => {
     const val = e.target.value;
-    if (val.length > 9) return;
-    
-    const numVal = parseFloat(val);
-    const selectedBatch = batchOptions.find(b => b.value === formData.id_lote);
-    
-    // Límite: No puede exceder la existencia del lote NI lo que falta por asignar
-    const stockDisponible = selectedBatch ? selectedBatch.existencia : 0;
-    const pendienteReal = editingId 
-      ? remainingQuantity + parseFloat(currentBatches.find(l => l.id_temp === editingId)?.cantidad || 0)
-      : remainingQuantity;
-
-    const limit = Math.min(stockDisponible, pendienteReal);
-
-    if (!isNaN(numVal) && numVal > limit) {
-        setFormData({ ...formData, cantidad: limit.toString() });
-        return;
+    if (val === "") {
+      setFormData({ ...formData, cantidad: "" });
+      return;
     }
-    setFormData({ ...formData, cantidad: val });
+
+    const numVal = parseFloat(val);
+    const { maxPermitido } = getBatchLimits(formData.id_lote);
+
+    if (numVal > maxPermitido) {
+      setFormData({ ...formData, cantidad: maxPermitido.toString() });
+    } else {
+      setFormData({ ...formData, cantidad: val });
+    }
   };
 
   const handleAddLoteLocal = (e) => {
     e.preventDefault();
     const { id_lote, cantidad } = formData;
-
-    if (!id_lote || !cantidad) return alert("Seleccione un lote e ingrese la cantidad.");
+    if (!id_lote || !cantidad) return alert("Datos incompletos.");
 
     const numCantidad = parseFloat(cantidad);
-    const selectedBatch = batchOptions.find(b => b.value === id_lote);
+    const { maxPermitido, stockDisponible } = getBatchLimits(id_lote);
 
-    if (numCantidad <= 0) return alert("La cantidad debe ser mayor a 0.");
-
-    // Validación de existencia física
-    if (numCantidad > (selectedBatch?.existencia + 0.0001)) {
-      return alert(`Error: Solo hay ${formatNumber(selectedBatch.existencia)} disponibles en este lote.`);
+    if (numCantidad > stockDisponible + 0.0001) {
+      return alert(`Error: Solo quedan ${formatNumber(stockDisponible)} en este lote.`);
     }
 
-    // Validación de requerimiento de producto
-    const pendienteReal = editingId 
-      ? remainingQuantity + parseFloat(currentBatches.find(l => l.id_temp === editingId)?.cantidad || 0)
-      : remainingQuantity;
-
-    if (numCantidad > (pendienteReal + 0.0001)) {
-      return alert(`Error: No puede asignar más de lo pendiente (${formatNumber(pendienteReal)}).`);
+    if (numCantidad > maxPermitido + 0.0001) {
+      return alert(`Error: No puede asignar más de lo requerido (${formatNumber(maxPermitido)}).`);
     }
 
     let updatedLotesCompra;
+    const currentIdTemp = editingId || Date.now();
 
     if (editingId) {
       updatedLotesCompra = currentBatches.map(l => 
-        l.id_temp === editingId ? { ...formData, id_temp: editingId } : l
+        (l.id_temp || l.id_lote) === editingId ? { ...formData, id_temp: currentIdTemp } : l
       );
       setEditingId(null);
     } else {
+      // Si el lote ya existe en la lista, sumamos (siempre validando el stock)
       const existingIndex = currentBatches.findIndex(l => l.id_lote === id_lote);
-
       if (existingIndex !== -1) {
         updatedLotesCompra = [...currentBatches];
-        const existing = updatedLotesCompra[existingIndex];
-        const nuevaCantTotal = parseFloat(existing.cantidad) + numCantidad;
-        
-        if (nuevaCantTotal > selectedBatch.existencia) {
-            return alert("Error: La suma excede la existencia física del lote.");
-        }
-
-        updatedLotesCompra[existingIndex] = {
-          ...existing,
-          cantidad: nuevaCantTotal.toString()
-        };
+        const newTotal = parseFloat(updatedLotesCompra[existingIndex].cantidad) + numCantidad;
+        updatedLotesCompra[existingIndex].cantidad = newTotal.toString();
       } else {
-        updatedLotesCompra = [...currentBatches, { ...formData, id_temp: Date.now() }];
+        updatedLotesCompra = [...currentBatches, { ...formData, id_temp: currentIdTemp }];
       }
     }
 
-    const updatedItems = items.map((item) => {
-      const isSameProduct = (item.id === product.id) || (item.id_producto === product.id_producto);
-      return isSameProduct ? { ...item, lotes_compra: updatedLotesCompra } : item;
-    });
+    setItems(items.map(item => {
+      const isSame = (item.id === product.id) || (item.id_producto === product.id_producto);
+      return isSame ? { ...item, lotes_compra: updatedLotesCompra } : item;
+    }));
 
-    setItems(updatedItems);
     setFormData({ id_lote: "", id_deposito: "", nro_lote: "", cantidad: "", fecha_vencimiento: "", deposito_nombre: "" });
   };
 
-  const removeLoteLocal = (idTemp) => {
-    if (editingId === idTemp) setEditingId(null);
-    const updatedItems = items.map((item) => {
-      const isSameProduct = (item.id === product.id) || (item.id_producto === product.id_producto);
-      return isSameProduct ? { ...item, lotes_compra: (item.lotes_compra || []).filter(l => l.id_temp !== idTemp) } : item;
-    });
-    setItems(updatedItems);
+  const removeLoteLocal = (idTarget) => {
+    if (editingId === idTarget) setEditingId(null);
+    setItems(items.map(item => {
+      const isSame = (item.id === product.id) || (item.id_producto === product.id_producto);
+      return isSame ? { 
+        ...item, 
+        lotes_compra: (item.lotes_compra || item.lotes || []).filter(l => (l.id_temp || l.id_lote) !== idTarget),
+        lotes: (item.lotes || []).filter(l => l.id_lote !== idTarget) 
+      } : item;
+    }));
   };
 
-  const handleFinalizeDistribution = () => {
-    if (currentBatches.length === 0) return alert("Debe asignar al menos un lote.");
-    if (remainingQuantity > 0.01) {
-       if(!window.confirm(`Quedan ${formatNumber(remainingQuantity)} por asignar. ¿Confirmar?`)) return;
-    }
-    onClose();
+  const handleEditClick = (lote) => {
+    setEditingId(lote.id_temp || lote.id_lote);
+    setFormData({
+      id_lote: lote.id_lote,
+      id_deposito: lote.id_deposito,
+      nro_lote: lote.nro_lote,
+      deposito_nombre: lote.deposito_nombre || lote.deposito,
+      cantidad: lote.cantidad.toString(),
+      fecha_vencimiento: lote.fecha_vencimiento ? lote.fecha_vencimiento.split('T')[0] : "",
+    });
   };
 
   if (!product) return null;
@@ -212,7 +207,7 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
         <header className="bm-header">
           <div className="bm-header-info">
             <h3 className="bm-title">Distribución por Lotes</h3>
-            <span className="bm-product-name">{displayProduct.descripcion || displayProduct.nombre}</span>
+            <span className="bm-product-name">{displayProduct.descripcion || displayProduct.producto}</span>
           </div>
           <button className="bm-btn-close" onClick={onClose}><X size={24} /></button>
         </header>
@@ -221,7 +216,7 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
           <div className="bm-card">
             <h4 className="bm-card-title">
               {editingId ? <Edit3 size={18} /> : <Plus size={18} />} 
-              {editingId ? "Editar Selección" : "Seleccionar Lote de Origen"}
+              {editingId ? "Editar Selección" : "Añadir Lote"}
             </h4>
             
             <div className="bm-form-grid">
@@ -242,6 +237,7 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
                 <input
                   className="bm-input"
                   type="number"
+                  step="any"
                   value={formData.cantidad}
                   onChange={handleQuantityChange}
                   placeholder="0,00"
@@ -263,7 +259,7 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
             <button
               className={`bm-btn-add ${editingId ? 'is-editing' : ''}`}
               onClick={handleAddLoteLocal}
-              disabled={(remainingQuantity <= 0 && !editingId) || isLoading || !formData.id_lote}
+              disabled={isLoading || !formData.id_lote || remainingQuantity <= 0 && !editingId}
               style={{ marginTop: "15px" }}
             >
               {editingId ? "Actualizar Lote" : "Añadir a la Lista"}
@@ -273,10 +269,10 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
           <div className="bm-card">
             <h4 className="bm-card-title"><Info size={18} /> Resumen</h4>
             <div className="bm-summary-item bm-summary-info">
-              <span>Total Requerido:</span> <strong>{formatNumber(maxQuantity)}</strong>
+              <span>Requerido:</span> <strong>{formatNumber(maxQuantity)}</strong>
             </div>
             <div className="bm-summary-item bm-summary-success">
-              <span>Total Asignado:</span> <strong>{formatNumber(allocatedQuantity)}</strong>
+              <span>Asignado:</span> <strong>{formatNumber(allocatedQuantity)}</strong>
             </div>
             <div className="bm-summary-item">
               <span>Pendiente:</span>
@@ -292,18 +288,18 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
             <thead>
               <tr>
                 <th>Lote / Depósito</th>
-                <th className="bm-text-center">Cant. Seleccionada</th>
+                <th className="bm-text-center">Cant.</th>
                 <th className="bm-text-center">Vencimiento</th>
                 <th className="bm-text-center">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {currentBatches.map((l) => (
-                <tr key={l.id_temp} className={editingId === l.id_temp ? "row-editing" : ""}>
+                <tr key={l.id_temp || l.id_lote} className={editingId === (l.id_temp || l.id_lote) ? "row-editing" : ""}>
                   <td>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <strong>{l.nro_lote}</strong>
-                        <small style={{ color: '#64748b' }}>{l.deposito_nombre}</small>
+                        <small style={{ color: '#64748b' }}>{l.deposito_nombre || l.deposito}</small>
                     </div>
                   </td>
                   <td className="bm-text-center"><strong>{formatNumber(parseFloat(l.cantidad))}</strong></td>
@@ -313,7 +309,7 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
                   <td className="bm-text-center">
                     <div className="bm-actions-container">
                       <button className="bm-btn-icon bm-btn-edit" onClick={() => handleEditClick(l)} title="Editar"><Edit3 size={16} /></button>
-                      <button className="bm-btn-icon bm-btn-delete" onClick={() => removeLoteLocal(l.id_temp)} title="Eliminar"><Trash2 size={16} /></button>
+                      <button className="bm-btn-icon bm-btn-delete" onClick={() => removeLoteLocal(l.id_temp || l.id_lote)} title="Eliminar"><Trash2 size={16} /></button>
                     </div>
                   </td>
                 </tr>
@@ -326,7 +322,7 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
         </div>
 
         <footer className="bm-footer">
-          <button className="bm-btn-save" onClick={handleFinalizeDistribution} disabled={currentBatches.length === 0}>
+          <button className="bm-btn-save" onClick={onClose} disabled={currentBatches.length === 0}>
             <Save size={18} /> Confirmar Selección
           </button>
         </footer>

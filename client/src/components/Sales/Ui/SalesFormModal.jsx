@@ -28,9 +28,11 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
   const initialFormState = {
     nro_factura: "",
     id_paciente: "",
-    id_personal: "",
+    personal_asignado: [], // Replaced id_personal with personal_asignado
     id_vendedor: "",
     id_oficina: "",
+    id_clinica: "", // Added
+    id_deposito: "", // Added
     id_seguro: "",
     id_presupuesto: "",
   };
@@ -60,34 +62,61 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
   // --- EFECTO: CARGAR DATA PARA EDICIÓN ---
   useEffect(() => {
     if (isOpen && editData) {
+      // 1. Mapeamos el formData incluyendo los NOMBRES para la visualización
       setFormData({
         id: editData.id,
         nro_factura: editData.nro_factura || "",
         id_paciente: editData.id_paciente || "",
-        id_personal: editData.id_personal || "",
+        nombre_paciente: editData.paciente_nombre || "", // Cargar nombre para el resumen
+        
+        personal_asignado: editData.personal?.map((p) => ({
+          id: p.id_medico,
+          nombre: p.medico,
+          tipo: p.tipo_medico,
+        })) || [],
+
         id_vendedor: editData.id_vendedor || "",
+        nombre_vendedor: editData.vendedor_nombre || "", // Cargar nombre para el resumen
         id_oficina: editData.id_oficina || "",
+        nombre_oficina: editData.oficina_nombre || "", // Cargar nombre para el resumen
+        id_clinica: editData.id_clinica || "",
+        nombre_clinica: editData.clinica_nombre || "", // Cargar nombre para el resumen
+        id_deposito: editData.id_deposito || "",
+        nombre_deposito: editData.deposito_nombre || "", // Cargar nombre para el resumen
         id_seguro: editData.id_seguro || "",
+        nombre_seguro: editData.seguro_nombre || "",
         id_presupuesto: editData.id_presupuesto || "",
       });
-      // Normalizamos los items para que coincidan con la estructura del formulario
+
+      // 2. Normalizamos items incluyendo la descripción y los LOTES ya asignados
       setItems(editData.items?.map(item => ({
         ...item,
-        id: item.id_producto, // El formulario usa 'id' para la referencia
+        id: item.id_producto,
+        descripcion: item.producto || item.descripcion, // Asegurar que tenga texto
+        sku: item.sku || "",
         cantidad: item.cantidad,
-        precio_venta: item.precio_venta
+        precio_venta: item.precio_venta,
+        // IMPORTANTE: Pasamos los lotes que ya tiene la venta al estado local
+        lotes_compra: item.lotes || [] 
       })) || []);
+
+      // 3. Ajustamos totales (asegurando que las llaves coincidan con lo que esperan los sub-pasos)
       setTotals({
         subtotal: parseFloat(editData.subtotal) || 0,
         porcentaje_impuesto: parseFloat(editData.porcentaje_impuesto) || 0,
-        impuesto: parseFloat(editData.impuesto) || 0,
+        impuesto: parseFloat(editData.impuesto) || 0, // o impuestos_monto según StepConfirm
         total: parseFloat(editData.total) || 0,
         abonado: parseFloat(editData.abonado) || 0,
         notas_abono: editData.notas_abono || "",
         estado_pago: editData.estado_pago || "Pendiente",
+        
+        // Agregamos estas llaves extras si StepConfirm las usa específicamente
+        impuestos_monto: parseFloat(editData.impuesto) || 0,
+        monto_abonado: parseFloat(editData.abonado) || 0,
+        monto_descuento_fijo: 0 // Si manejas descuentos globales
       });
     } else if (isOpen && !editData) {
-      handleReset(); // Limpiar si es creación nueva
+      handleReset();
     }
   }, [isOpen, editData]);
 
@@ -106,33 +135,44 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
     );
   };
 
-  /* =========================
-      CALCULO AUTOMATICO
-  ==========================*/
-  useEffect(() => {
-    const subtotal = items.reduce(
-      (acc, item) =>
-        acc + safeParse(item.cantidad) * safeParse(item.precio_venta),
-      0,
-    );
+/* =========================
+    CALCULO AUTOMATICO
+==========================*/
+useEffect(() => {
+  // 1. Calculamos subtotal base de productos (Esto siempre es derivado de los items)
+  const subtotalProductos = items.reduce(
+    (acc, item) => acc + safeParse(item.cantidad) * safeParse(item.precio_venta),
+    0,
+  );
 
-    const porcentaje = safeParse(totals.porcentaje_impuesto);
-    const impuesto = subtotal * (porcentaje / 100);
-    const total = subtotal + impuesto;
-    const abonado = safeParse(totals.abonado);
+  // 2. Extraemos valores actuales del estado
+  const descuentoManual = safeParse(totals.monto_descuento_fijo);
+  const impuestoManual  = safeParse(totals.impuestos_monto);
+  const abonadoManual   = safeParse(totals.monto_abonado); // El valor numérico real
 
-    let estado_pago = "Pendiente";
-    if (abonado >= total && total > 0) estado_pago = "Pagado";
-    else if (abonado > 0) estado_pago = "Abono Parcial";
+  // 3. Calculamos Total Final
+  const totalFactura = (subtotalProductos - descuentoManual) + impuestoManual;
 
-    setTotals((prev) => ({
-      ...prev,
-      subtotal,
-      impuesto,
-      total,
-      estado_pago,
-    }));
-  }, [items, totals.abonado, totals.porcentaje_impuesto]);
+  // 4. Determinamos estado de pago comparando con el abonado que ya está en el estado
+  let estado_pago = "Pendiente";
+  if (abonadoManual >= totalFactura && totalFactura > 0) {
+    estado_pago = "Pagado";
+  } else if (abonadoManual > 0) {
+    estado_pago = "Abono Parcial";
+  }
+
+  // 5. Solo actualizamos los campos DERIVADOS para no entrar en bucle con los inputs
+  setTotals((prev) => ({
+    ...prev,
+    subtotal: subtotalProductos,
+    total: totalFactura,
+    estado_pago,
+    // Aseguramos que 'abonado' (llave de envío) sea igual a 'monto_abonado' (llave de input)
+    abonado: abonadoManual 
+  }));
+// Quitamos 'totals.monto_abonado' de las dependencias si queremos evitar saltos, 
+// o lo dejamos asegurándonos de que setTotals use el valor previo correctamente.
+}, [items, totals.monto_descuento_fijo, totals.impuestos_monto, totals.monto_abonado]);
 
   /* =========================
       ENVIO FINAL
@@ -148,7 +188,7 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
 
     try {
       const payload = {
-        ...formData,
+        ...formData, // Note: This will now send 'personal_asignado' (array) instead of 'id_personal'
         subtotal: parseFloat(totals.subtotal.toFixed(2)),
         porcentaje_impuesto: parseFloat(safeParse(totals.porcentaje_impuesto).toFixed(2)),
         impuesto: parseFloat(totals.impuesto.toFixed(2)),
