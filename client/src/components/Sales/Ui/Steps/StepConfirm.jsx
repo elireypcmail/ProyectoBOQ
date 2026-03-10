@@ -2,39 +2,42 @@ import React from 'react';
 import '../../../../styles/ui/stepsSales/StepConfirm.css';
 
 const StepConfirm = ({ formData, items, totals }) => {
+  
+  // 1. Helper para procesar números (manejando la coma decimal)
   const safeParse = (val) => {
-    if (val === null || val === undefined || val === "" || val === false) return 0;
+    if (val === null || val === undefined || val === "") return 0;
     if (typeof val === "number") return val;
-    let sVal = String(val);
-    const cleanVal = sVal.replace(/\./g, "").replace(",", ".");
-    return parseFloat(cleanVal) || 0;
+    // Normalizamos: reemplazamos coma por punto para el parseFloat
+    const normalized = String(val).replace(',', '.');
+    return parseFloat(normalized) || 0;
   };
 
-  const currentDate = () => {
-    const d = new Date();
-    const day = String(d.getDate()).padStart(2, "0");
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const year = d.getFullYear();
-    return `${day}/${month}/${year}`;
-  };
-
+  // 2. Formateo para visualización (estilo Alemán/Venezolano: 1.234,56)
   const formatNum = (val) => {
-    const num = safeParse(val);
-    return num.toLocaleString('de-DE', { 
+    return Number(val || 0).toLocaleString('de-DE', { 
       minimumFractionDigits: 2, 
       maximumFractionDigits: 2 
     });
   };
 
+  const currentDate = () => {
+    const d = new Date();
+    return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+  };
+
+  /* ================= LÓGICA DE CÁLCULO ================= */
   const subtotalBruto = safeParse(totals.subtotal);
-  const impuesto = safeParse(totals.impuesto); 
-  const totalConImpuesto = safeParse(totals.total);
-  const abono = safeParse(totals.abonado);
-  const saldoPendiente = totalConImpuesto - abono;
+  const impuestos       = safeParse(totals.impuestos_monto);
+  const descFijo        = safeParse(totals.monto_descuento_fijo);
+  const abono           = safeParse(totals.monto_abonado);
+
+  // Cálculo de totales según la estructura requerida
+  const totalFactura      = subtotalBruto - descFijo;
+  const totalConImpuestos = totalFactura + impuestos;
+  const saldoPendiente    = totalConImpuestos - abono;
 
   return (
     <div className="stconf-v2-container">
-      
       <div className="stconf-v2-header">
         <h3>Resumen de la Venta</h3>
         <p>Verifique la información antes de finalizar el registro.</p>
@@ -56,7 +59,7 @@ const StepConfirm = ({ formData, items, totals }) => {
         <div className="stconf-v2-info-card">
           <label>Clínica / Ubicación</label>
           <span className="stconf-v2-text-truncate">
-            {formData.nombre_clinica || "-"} <small>({formData.nombre_oficina})</small>
+            {formData.nombre_clinica || "-"} <small>{formData.nombre_oficina}</small>
           </span>
         </div>
         <div className="stconf-v2-info-card">
@@ -90,52 +93,63 @@ const StepConfirm = ({ formData, items, totals }) => {
         <h3>Detalle de Productos</h3>
       </div>
       
-<div className="stconf-v2-table-area">
-  <table className="stconf-v2-table">
-    <thead>
-      <tr>
-        <th className="stconf-v2-txt-left">Descripción</th>
-        <th className="stconf-v2-txt-center">Cant.</th>
-        <th className="stconf-v2-txt-center">Precio</th>
-        <th className="stconf-v2-txt-center">Total</th>
-      </tr>
-    </thead>
-    <tbody>
-      {items.map((item, index) => {
-        const qty = safeParse(item.cantidad);
-        const price = safeParse(item.precio_venta);
-        const itemSubtotal = qty * price;
+      <div className="stconf-v2-table-area">
+        <table className="stconf-v2-table">
+          <thead>
+            <tr>
+              <th className="stconf-v2-txt-left">Descripción</th>
+              <th className="stconf-v2-txt-center">Cant.</th>
+              <th className="stconf-v2-txt-center">Precio</th>
+              <th className="stconf-v2-txt-center">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((item, index) => {
+              const qty = safeParse(item.cantidad);
+              const price = safeParse(item.precio_venta);
+              return (
+                <tr key={index}>
+                  <td className="stconf-v2-td-desc">
+                    <span className="stconf-v2-sku-tag">{item.sku}</span>
+                    <span className="stconf-v2-item-text">{item.descripcion}</span>
+                  </td>
+                  <td className="stconf-v2-txt-center">{qty}</td>
+                  <td className="stconf-v2-txt-center">{formatNum(price)}</td>
+                  <td className="stconf-v2-txt-center">{formatNum(qty * price)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
 
-        return (
-          <tr key={index}>
-            <td className="stconf-v2-td-desc">
-              <span className="stconf-v2-sku-tag">{item.sku}</span>
-              <span className="stconf-v2-item-text">{item.descripcion}</span>
-            </td>
-            <td className="stconf-v2-txt-center">{qty}</td>
-            <td className="stconf-v2-txt-center">{formatNum(price)}</td>
-            <td className="stconf-v2-txt-center">{formatNum(itemSubtotal)}</td>
-          </tr>
-        );
-      })}
-    </tbody>
-  </table>
-</div>
-
+      {/* SECCIÓN DE TOTALES */}
       <div className="stconf-v2-totals-box">
         <div className="stconf-v2-row">
-          <span>Subtotal</span>
+          <span>Subtotal Bruto</span>
           <span className="stconf-v2-val-bold">{formatNum(subtotalBruto)}</span>
         </div>
 
         <div className="stconf-v2-row">
+          <span>Descuento Aplicado</span>
+          <span className="stconf-v2-val-bold" style={{ color: '#e53e3e' }}>
+            - {formatNum(descFijo)}
+          </span>
+        </div>
+
+        <div className="stconf-v2-row" style={{ borderTop: '1px dashed #ccc', paddingTop: '5px' }}>
+          <span style={{ fontSize: '0.9rem', color: '#666' }}>Total Factura (Base)</span>
+          <span style={{ fontWeight: '600' }}>{formatNum(totalFactura)}</span>
+        </div>
+
+        <div className="stconf-v2-row">
           <span>Impuestos</span>
-          <span className="stconf-v2-val-bold">+ {formatNum(impuesto)}</span>
+          <span className="stconf-v2-val-bold">+ {formatNum(impuestos)}</span>
         </div>
 
         <div className="stconf-v2-row stconf-v2-main-total">
-          <span className="stconf-v2-label-lg">TOTAL VENTA</span>
-          <span className="stconf-v2-amount-lg">$ {formatNum(totalConImpuesto)}</span>
+          <span className="stconf-v2-label-lg">TOTAL A PAGAR</span>
+          <span className="stconf-v2-amount-lg">$ {formatNum(totalConImpuestos)}</span>
         </div>
 
         <div className="stconf-v2-row stconf-v2-paid-row">
@@ -144,7 +158,7 @@ const StepConfirm = ({ formData, items, totals }) => {
         </div>
 
         <div className="stconf-v2-row stconf-v2-balance-row">
-          <span>Saldo Final</span>
+          <span>Saldo Pendiente</span>
           <span className={saldoPendiente > 0.01 ? 'stconf-v2-pending' : 'stconf-v2-ok'}>
             $ {formatNum(saldoPendiente)}
           </span>

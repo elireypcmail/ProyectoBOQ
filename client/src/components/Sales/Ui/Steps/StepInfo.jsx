@@ -18,6 +18,8 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
     getAllSeguros
   } = useHealth();
 
+  console.log(formData)
+
   const { sellers, getAllSellers } = useSales();
   const { entities, getAllEntities } = useEntity();
   const { clinics, getAllClinics } = useClinics();

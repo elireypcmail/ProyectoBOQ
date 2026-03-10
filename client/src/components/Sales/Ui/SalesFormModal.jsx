@@ -21,9 +21,9 @@ import BatchModal from "./SubModals/BatchModal";
 
 import "../../../styles/ui/SalesFormModal.css";
 
-const SalesFormModal = ({ isOpen, onClose }) => {
+const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
   const { getAllProducts } = useProducts();
-  const { createNewSale, sales, getAllSales } = useIncExp();
+  const { createNewSale, editSale, sales, getAllSales } = useIncExp();
 
   const initialFormState = {
     nro_factura: "",
@@ -37,13 +37,15 @@ const SalesFormModal = ({ isOpen, onClose }) => {
 
   const initialTotalsState = {
     subtotal: 0,
-    porcentaje_impuesto: 0, // ✅ ahora editable
+    porcentaje_impuesto: 0,
     impuesto: 0,
     total: 0,
     abonado: 0,
+    notas_abono: "",
     estado_pago: "Pendiente",
   };
 
+  // --- ESTADOS ---
   const [step, setStep] = useState(1);
   const [items, setItems] = useState([]);
   const [formData, setFormData] = useState(initialFormState);
@@ -55,20 +57,57 @@ const SalesFormModal = ({ isOpen, onClose }) => {
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
   const [selectedProductForBatch, setSelectedProductForBatch] = useState(null);
 
+  // --- EFECTO: CARGAR DATA PARA EDICIÓN ---
+  useEffect(() => {
+    if (isOpen && editData) {
+      setFormData({
+        id: editData.id,
+        nro_factura: editData.nro_factura || "",
+        id_paciente: editData.id_paciente || "",
+        id_personal: editData.id_personal || "",
+        id_vendedor: editData.id_vendedor || "",
+        id_oficina: editData.id_oficina || "",
+        id_seguro: editData.id_seguro || "",
+        id_presupuesto: editData.id_presupuesto || "",
+      });
+      // Normalizamos los items para que coincidan con la estructura del formulario
+      setItems(editData.items?.map(item => ({
+        ...item,
+        id: item.id_producto, // El formulario usa 'id' para la referencia
+        cantidad: item.cantidad,
+        precio_venta: item.precio_venta
+      })) || []);
+      setTotals({
+        subtotal: parseFloat(editData.subtotal) || 0,
+        porcentaje_impuesto: parseFloat(editData.porcentaje_impuesto) || 0,
+        impuesto: parseFloat(editData.impuesto) || 0,
+        total: parseFloat(editData.total) || 0,
+        abonado: parseFloat(editData.abonado) || 0,
+        notas_abono: editData.notas_abono || "",
+        estado_pago: editData.estado_pago || "Pendiente",
+      });
+    } else if (isOpen && !editData) {
+      handleReset(); // Limpiar si es creación nueva
+    }
+  }, [isOpen, editData]);
+
+  // --- HELPERS ---
   const safeParse = (val) =>
     val !== "" && val !== null && val !== undefined ? parseFloat(val) || 0 : 0;
 
   const isDuplicateInvoice = () => {
     if (!formData.nro_factura || !sales) return false;
+    // Si estamos editando, ignoramos el nro_factura de la venta actual
     return sales.some(
       (s) =>
+        s.id !== editData?.id &&
         s.nro_factura?.toString().trim().toLowerCase() ===
         formData.nro_factura.trim().toLowerCase(),
     );
   };
 
   /* =========================
-     CALCULO AUTOMATICO
+      CALCULO AUTOMATICO
   ==========================*/
   useEffect(() => {
     const subtotal = items.reduce(
@@ -80,7 +119,6 @@ const SalesFormModal = ({ isOpen, onClose }) => {
     const porcentaje = safeParse(totals.porcentaje_impuesto);
     const impuesto = subtotal * (porcentaje / 100);
     const total = subtotal + impuesto;
-
     const abonado = safeParse(totals.abonado);
 
     let estado_pago = "Pendiente";
@@ -97,8 +135,8 @@ const SalesFormModal = ({ isOpen, onClose }) => {
   }, [items, totals.abonado, totals.porcentaje_impuesto]);
 
   /* =========================
-    ENVIO FINAL (SIMULADO)
-==========================*/
+      ENVIO FINAL
+  ==========================*/
   const handleFinalSubmit = async () => {
     if (isDuplicateInvoice()) {
       alert("Esta factura ya existe.");
@@ -109,64 +147,58 @@ const SalesFormModal = ({ isOpen, onClose }) => {
     setIsSubmitting(true);
 
     try {
-      /* // Lógica de guardado (Comentada temporalmente)
-    const payload = {
-      ...formData,
-      subtotal: parseFloat(totals.subtotal.toFixed(2)),
-      porcentaje_impuesto: parseFloat(
-        safeParse(totals.porcentaje_impuesto).toFixed(2)
-      ),
-      impuesto: parseFloat(totals.impuesto.toFixed(2)),
-      total: parseFloat(totals.total.toFixed(2)),
-      abonado: parseFloat(safeParse(totals.abonado).toFixed(2)),
-      estado_pago: totals.estado_pago,
-      detalle: items.map((item) => ({
-        id_inventario: item.id,
-        cantidad: parseInt(item.cantidad),
-        precio_venta: parseFloat(item.precio_venta),
-        descuento1: 0,
-        descuento2: 0,
-        precio_descuento:
-          parseFloat(item.precio_venta) *
-          parseInt(item.cantidad),
-      })),
-    };
+      const payload = {
+        ...formData,
+        subtotal: parseFloat(totals.subtotal.toFixed(2)),
+        porcentaje_impuesto: parseFloat(safeParse(totals.porcentaje_impuesto).toFixed(2)),
+        impuesto: parseFloat(totals.impuesto.toFixed(2)),
+        total: parseFloat(totals.total.toFixed(2)),
+        abonado: parseFloat(safeParse(totals.abonado).toFixed(2)),
+        notas_abono: totals.notas_abono,
+        estado_pago: totals.estado_pago,
+        detalle: items.map((item) => ({
+          id_producto: item.id || item.id_producto,
+          id_inventario: item.inventario_id || item.id_inventario,
+          cantidad: parseInt(item.cantidad),
+          precio_venta: parseFloat(item.precio_venta),
+          precio_descuento: parseFloat(item.precio_venta) * parseInt(item.cantidad),
+          lotes: item.lotes_compra || [],
+        })),
+      };
 
-    const res = await createNewSale(payload);
+      const res = editData 
+        ? await editSale(editData.id, payload)
+        : await createNewSale(payload);
 
-    if (res.success || res.status) {
-      if (getAllSales) await getAllSales();
-      if (getAllProducts) await getAllProducts();
-      setShowSuccessModal(true);
-    }
-    */
-
-      // Simulación de espera de red (1 segundo)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Mostramos el modal de éxito directamente
-      setShowSuccessModal(true);
+      if (res.success || res.status) {
+        if (getAllSales) await getAllSales();
+        if (getAllProducts) await getAllProducts();
+        setShowSuccessModal(true);
+      } else {
+        alert(res.msg || "Ocurrió un error al procesar la venta.");
+      }
     } catch (error) {
-      console.error("Error al simular la venta:", error);
+      console.error("Error al procesar la venta:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  /* =========================
-     RESET
-  ==========================*/
-  const handleClose = () => {
-    if (isSubmitting) return;
+  const handleReset = () => {
     setStep(1);
     setItems([]);
     setFormData(initialFormState);
     setTotals(initialTotalsState);
+  };
+
+  const handleClose = () => {
+    if (isSubmitting) return;
+    handleReset();
     onClose();
   };
 
   const handleSelectProduct = (product) => {
-    if (items.some((i) => i.id === product.id))
+    if (items.some((i) => (i.id || i.id_producto) === product.id))
       return alert("Producto ya agregado");
 
     setItems([
@@ -177,7 +209,6 @@ const SalesFormModal = ({ isOpen, onClose }) => {
         precio_venta: product.precio_venta || 0,
       },
     ]);
-
     setIsSearchModalOpen(false);
   };
 
@@ -188,7 +219,9 @@ const SalesFormModal = ({ isOpen, onClose }) => {
       <div className="sform-main-card">
         <header className="sform-header">
           <div className="sform-header-info">
-            <h1 className="sform-title">Registrar Venta</h1>
+            <h1 className="sform-title">
+              {editData ? "Editar Venta" : "Registrar Venta"}
+            </h1>
             <p className="sform-subtitle">Paso {step} de 4</p>
           </div>
 
@@ -266,7 +299,7 @@ const SalesFormModal = ({ isOpen, onClose }) => {
                 ) : (
                   <>
                     <CheckCircle size={18} />
-                    Finalizar Venta
+                    {editData ? "Guardar Cambios" : "Finalizar Venta"}
                   </>
                 )}
               </button>
@@ -297,8 +330,8 @@ const SalesFormModal = ({ isOpen, onClose }) => {
           setShowSuccessModal(false);
           handleClose();
         }}
-        title="Venta Registrada"
-        message="La venta fue registrada exitosamente."
+        title={editData ? "Venta Actualizada" : "Venta Registrada"}
+        message={editData ? "Los cambios se guardaron correctamente." : "La venta fue registrada exitosamente."}
       />
     </div>
   );

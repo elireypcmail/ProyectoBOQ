@@ -10,7 +10,7 @@ const ListSales = () => {
   const { sales, getAllSales, getSaleById, loading } = useIncExp();
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedSale, setSelectedSale] = useState(null);
+  const [selectedSale, setSelectedSale] = useState(null); // Venta seleccionada (para detalle o edición)
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [fetchingId, setFetchingId] = useState(null);
@@ -38,12 +38,14 @@ const ListSales = () => {
     if (!sales) return [];
     return sales.filter((s) =>
       s.nro_factura?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.cliente?.toLowerCase().includes(searchTerm.toLowerCase())
+      s.paciente?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [sales, searchTerm]);
 
+  // Requerimiento: Decimales con coma
   const formatCurrency = (value) => {
-    return parseFloat(value).toLocaleString("es-ES", {
+    const num = parseFloat(value) || 0;
+    return num.toLocaleString("de-DE", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
@@ -68,7 +70,7 @@ const ListSales = () => {
         <button
           className="btn-primary"
           onClick={() => {
-            setSelectedSale(null);
+            setSelectedSale(null); // Limpiamos para nueva venta
             setIsFormOpen(true);
           }}
         >
@@ -104,9 +106,9 @@ const ListSales = () => {
                 <tr key={s.id}>
                   <td className="id">#{s.id}</td>
                   <td className="bold">{s.nro_factura}</td>
-                  <td>{s.cliente}</td>
+                  <td>{s.paciente}</td>
                   <td className="right bold">
-                    $ {formatCurrency(s.total)}
+                    {formatCurrency(s.total)}
                   </td>
                   <td className="center">
                     <button
@@ -126,9 +128,7 @@ const ListSales = () => {
             ) : (
               <tr>
                 <td colSpan="5" className="center py-10">
-                  {loading
-                    ? "Cargando..."
-                    : "No se encontraron registros de ventas."}
+                  {loading ? "Cargando..." : "No se encontraron registros de ventas."}
                 </td>
               </tr>
             )}
@@ -136,12 +136,17 @@ const ListSales = () => {
         </table>
       </div>
 
+      {/* Modal de Formulario para Crear o Editar */}
       <SaleFormModal
         isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        initialData={selectedSale}
+        onClose={() => {
+          setIsFormOpen(false);
+          setSelectedSale(null);
+        }}
+        editData={selectedSale} // Propiedad corregida para el formulario
       />
 
+      {/* Modal de Detalle */}
       <SaleDetailModal
         isOpen={isDetailOpen}
         sale={selectedSale}
@@ -149,7 +154,8 @@ const ListSales = () => {
           setIsDetailOpen(false);
           setSelectedSale(null);
         }}
-        onEdit={() => {
+        onEdit={(saleToEdit) => {
+          setSelectedSale(saleToEdit); // Cargamos la venta para editar
           setIsDetailOpen(false);
           setIsFormOpen(true);
         }}

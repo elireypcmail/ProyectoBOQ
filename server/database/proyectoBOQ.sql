@@ -250,12 +250,7 @@ CREATE TABLE vendedores (
   fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE personal (
-  id SERIAL PRIMARY KEY,
-  id_medico INT REFERENCES medicos(id) ON DELETE CASCADE,
-  estatus BOOLEAN NOT NULL DEFAULT TRUE,
-  fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-);
+
 
 CREATE TABLE presupuestos (
   id SERIAL PRIMARY KEY,
@@ -271,14 +266,21 @@ CREATE TABLE presupuestos (
   fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE personal (
+  id SERIAL PRIMARY KEY,
+  id_medico INT REFERENCES medicos(id) ON DELETE CASCADE,
+  estatus BOOLEAN NOT NULL DEFAULT TRUE,
+  fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
 -- Ventas ( Ingresos )
 
 CREATE TABLE ventas (
   id SERIAL PRIMARY KEY,
   id_paciente INT NOT NULL REFERENCES pacientes(id) ON DELETE CASCADE,
-  id_personal INT NOT NULL REFERENCES personal(id) ON DELETE CASCADE,
+  id_clinica INT REFERENCES clinicas(id) ON DELETE CASCADE,
   id_vendedor INT NOT NULL REFERENCES vendedores(id) ON DELETE CASCADE,
-  id_oficina INT NOT NULL REFERENCES oficinas(id) ON DELETE CASCADE,
+  id_oficina INT REFERENCES oficinas(id) ON DELETE CASCADE,
   id_seguro INT REFERENCES seguros(id) ON DELETE CASCADE,
   id_presupuesto INT REFERENCES presupuestos(id) ON DELETE CASCADE,
   nro_factura VARCHAR(100) NOT NULL,
@@ -289,6 +291,14 @@ CREATE TABLE ventas (
   notas_abono TEXT,
   estado_pago TEXT NOT NULL,
   estatus BOOLEAN NOT NULL DEFAULT TRUE,
+  estado_venta TEXT NOT NULL DEFAULT 'PENDIENTE',
+  fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE venta_personal (
+  id SERIAL PRIMARY KEY,
+  id_venta INT NOT NULL REFERENCES ventas(id) ON DELETE CASCADE,
+  id_personal INT NOT NULL REFERENCES personal(id) ON DELETE CASCADE,
   fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 

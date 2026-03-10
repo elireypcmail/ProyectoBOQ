@@ -11,6 +11,8 @@ export const deleteShopping = (id) => instanceApp.delete(`/compras/${id}`);
 // -------------------- Ventas --------------------
 export const getAllSales = () => instanceApp.get("/ventas");
 export const getSalesById = (id) => instanceApp.get(`/ventas/${id}`);
+export const confirmSales = (id) => instanceApp.put(`/ventas/confirmar/${id}`);
 export const createSales = (data) => instanceApp.post("/ventas", data);
+export const editSales = (id, data) => instanceApp.put(`/ventas/${id}`, data);
 export const updateSales = (id, data) => instanceApp.put(`/ventas/${id}`, data);
 export const deleteSales = (id) => instanceApp.delete(`/ventas/${id}`);

@@ -102,6 +102,25 @@ export const IncExpProvider = ({ children }) => {
     }
   };
 
+  const confirmSale = async (id) => {
+    try {
+      const res = await ShoppingAPI.confirmSales(id);
+      // Si es 200, devolvemos los datos
+      return res.data;
+    } catch (error) {
+      // Si el servidor respondió con un error (400, 404, 500...)
+      if (error.response && error.response.data) {
+        console.log("Error del servidor:", error.response.data);
+        // Devolvemos el objeto de error que enviamos desde el modelo (status, code, msg)
+        return error.response.data;
+      }
+      
+      // Si es un error de red o algo más grave
+      setErrors((prev) => [...prev, "Error de conexión con el servidor"]);
+      return { status: false, msg: "Error de red", code: 500 };
+    }
+  };
+
   const createNewSale = async (saleData) => {
     try {
       const res = await ShoppingAPI.createSales(saleData);
@@ -110,7 +129,26 @@ export const IncExpProvider = ({ children }) => {
         await getAllSales();
       }
 
-      return { status: true };
+      return res.data
+    } catch (error) {
+      const errorDetail =
+        error.response?.data?.msg ||
+        "Error en el servidor al procesar la venta";
+
+      setErrors((prev) => [...prev, errorDetail]);
+      return { status: false, error: errorDetail };
+    }
+  };
+
+  const editSale = async (id, saleData) => {
+    try {
+      const res = await ShoppingAPI.editSales(id, saleData);
+
+      if (res.data?.status) {
+        await getAllSales();
+      }
+
+      return res.data
     } catch (error) {
       const errorDetail =
         error.response?.data?.msg ||
@@ -153,7 +191,9 @@ export const IncExpProvider = ({ children }) => {
         // Ventas
         getAllSales,
         getSaleById,
+        confirmSale,
         createNewSale,
+        editSale,
         deleteSaleById
       }}
     >

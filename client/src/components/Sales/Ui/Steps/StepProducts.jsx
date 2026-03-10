@@ -185,7 +185,7 @@ const StepProducts = ({
                 return (
                   <tr key={item.id} className={hasError ? "step-prod-row-error" : "step-prod-row-valid"}>
                     <td className="step-prod-sku">{item.sku?.substring(0, 10) || "S/C"}</td>
-                    <td className="step-prod-desc">{item.descripcion}</td>
+                    <td className="step-prod-desc">{item.descripcion || item.producto}</td>
 
                     <td className="step-prod-text-right">
                       <input
@@ -218,7 +218,7 @@ const StepProducts = ({
                     </td>
 
                     <td className="step-prod-text-right step-prod-total">
-                      $ {totalLine.toLocaleString("de-DE", {
+                      {totalLine.toLocaleString("de-DE", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}

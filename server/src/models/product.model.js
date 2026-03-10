@@ -10,15 +10,25 @@ export class ProductsModel {
 
       const sql = `
         SELECT 
-          p.id, p.descripcion, p.id_categoria, p.id_marca, p.files, p.estatus, p.fecha_creacion,
+          p.id,
+          p.descripcion,
+          p.id_categoria,
+          p.id_marca,
+          p.files,
+          p.estatus,
+          p.fecha_creacion,
+
           c.nombre AS categoria,
           m.nombre AS marca,
+
           COALESCE(i.existencia_general, 0) AS existencia_general,
+          i.id AS inventario_id,
           i.sku,
           i.costo_unitario,
           i.precio_venta,
           i.margen_ganancia,
           i.stock_minimo_general,
+
           COALESCE(
             json_agg(
               json_build_object(
@@ -30,9 +40,11 @@ export class ProductsModel {
               )
             ) FILTER (WHERE pi.id IS NOT NULL), '[]'
           ) AS images
+
         FROM productos p
         LEFT JOIN categorias c ON p.id_categoria = c.id
         LEFT JOIN marcas m ON p.id_marca = m.id
+
         LEFT JOIN LATERAL (
           SELECT *
           FROM inventario i2
@@ -41,19 +53,36 @@ export class ProductsModel {
           ORDER BY i2.fecha_creacion DESC
           LIMIT 1
         ) i ON true
+
         LEFT JOIN productos_images pi ON pi.product_id = p.id
+
         WHERE p.estatus = TRUE
+
         GROUP BY 
-          p.id, c.nombre, m.nombre, 
-          i.sku, i.existencia_general, i.costo_unitario, i.precio_venta, 
-          i.margen_ganancia, i.stock_minimo_general
+          p.id,
+          p.descripcion,
+          p.id_categoria,
+          p.id_marca,
+          p.files::jsonb,
+          p.estatus,
+          p.fecha_creacion,
+          c.nombre,
+          m.nombre,
+          i.id,
+          i.sku,
+          i.existencia_general,
+          i.costo_unitario,
+          i.precio_venta,
+          i.margen_ganancia,
+          i.stock_minimo_general
+
         ORDER BY p.id DESC
       `;
 
       const result = await connection.query(sql);
       let products = result.rows;
 
-      // 🔹 Reordenar imágenes según el campo JSON 'files' de la tabla productos
+      // 🔹 Reordenar imágenes según JSON files
       products = products.map(p => {
         const filesJson = p.files || [];
         let orderedImages = [];
@@ -75,6 +104,7 @@ export class ProductsModel {
       }
 
       return { status: true, code: 200, data: products };
+
     } catch (error) {
       return {
         status: false,
@@ -94,15 +124,25 @@ export class ProductsModel {
 
       const sql = `
         SELECT 
-          p.id, p.descripcion, p.id_categoria, p.id_marca, p.files, p.estatus, p.fecha_creacion,
+          p.id,
+          p.descripcion,
+          p.id_categoria,
+          p.id_marca,
+          p.files,
+          p.estatus,
+          p.fecha_creacion,
+
           c.nombre AS categoria,
           m.nombre AS marca,
+
+          i.id AS inventario_id,
           i.sku,
           i.existencia_general,
           i.costo_unitario,
           i.precio_venta,
           i.margen_ganancia,
           i.stock_minimo_general,
+
           COALESCE(
             json_agg(
               json_build_object(
@@ -114,9 +154,11 @@ export class ProductsModel {
               )
             ) FILTER (WHERE pi.id IS NOT NULL), '[]'
           ) AS images
+
         FROM productos p
         LEFT JOIN categorias c ON p.id_categoria = c.id
         LEFT JOIN marcas m ON p.id_marca = m.id
+
         LEFT JOIN LATERAL (
           SELECT *
           FROM inventario i2
@@ -125,12 +167,28 @@ export class ProductsModel {
           ORDER BY i2.fecha_creacion DESC
           LIMIT 1
         ) i ON true
+
         LEFT JOIN productos_images pi ON pi.product_id = p.id
+
         WHERE p.id = $1
+
         GROUP BY 
-          p.id, c.nombre, m.nombre, 
-          i.sku, i.existencia_general, i.costo_unitario, i.precio_venta, 
-          i.margen_ganancia, i.stock_minimo_general
+          p.id,
+          p.descripcion,
+          p.id_categoria,
+          p.id_marca,
+          p.files::jsonb,
+          p.estatus,
+          p.fecha_creacion,
+          c.nombre,
+          m.nombre,
+          i.id,
+          i.sku,
+          i.existencia_general,
+          i.costo_unitario,
+          i.precio_venta,
+          i.margen_ganancia,
+          i.stock_minimo_general
       `;
 
       const result = await connection.query(sql, [id]);
@@ -141,8 +199,8 @@ export class ProductsModel {
 
       let p = result.rows[0];
       const filesJson = p.files || [];
-      
-      // 🔹 Aplicar ordenamiento
+
+      // 🔹 Aplicar ordenamiento según JSON files
       if (filesJson.length > 0) {
         p.images = filesJson.map(fj => {
           const match = p.images.find(img => img.id === fj.id);
@@ -151,6 +209,7 @@ export class ProductsModel {
       }
 
       return { status: true, code: 200, data: p };
+
     } catch (error) {
       return {
         status: false,

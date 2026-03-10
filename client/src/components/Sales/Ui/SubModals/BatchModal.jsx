@@ -18,6 +18,8 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
     deposito_nombre: ""
   });
 
+  console.log(items)
+
   /* ===================== CARGA DE DATOS ===================== */
   useEffect(() => {
     const loadBatchData = async () => {
