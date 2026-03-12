@@ -11,8 +11,8 @@ const StepProducts = ({
   onEditProduct,
 }) => {
   
-  console.log("# StepProducts Render")
-  console.log(items)
+  console.log("# StepProducts Render");
+  console.log(items);
 
   /* =========================================
       CONSTANTS & HELPERS
@@ -37,8 +37,6 @@ const StepProducts = ({
     if (value === null || value === undefined || value === "") return 0;
     if (typeof value === "number") return value;
 
-    // Si el string tiene puntos Y comas, es formato "de-DE" (1.234,56)
-    // Si solo tiene coma, es un decimal simple (1234,56)
     let standardNumber = value.toString();
     
     if (standardNumber.includes(",") && standardNumber.includes(".")) {
@@ -125,7 +123,13 @@ const StepProducts = ({
     const updatedItems = items.map((item) => {
       const qty = parseToFloat(item.cantidad);
       const price = parseToFloat(item.precio_venta);
-      const isValid = qty > 0 && price > 0;
+      
+      // Sumamos la cantidad de los lotes asignados (usando lotes_compra o lotes)
+      const lotesAsignados = (item.lotes_compra || item.lotes || []).reduce((acc, l) => acc + parseToFloat(l.cantidad), 0);
+      
+      // Validación: Cantidad y Precio > 0, y la suma de lotes debe coincidir exactamente con la cantidad
+      const lotesCompletos = Math.abs(qty - lotesAsignados) < 0.0001;
+      const isValid = qty > 0 && price > 0 && lotesCompletos;
 
       if (item.isValid !== isValid) {
         return { ...item, isValid };
@@ -180,7 +184,8 @@ const StepProducts = ({
                 const priceVal = parseToFloat(item.precio_venta);
                 const totalLine = round2(qtyVal * priceVal);
                 
-                const hasError = !item.cantidad || !item.precio_venta || qtyVal <= 0 || priceVal <= 0;
+                // Marcamos error visual si no es válido
+                const hasError = !item.isValid;
 
                 return (
                   <tr key={item.id} className={hasError ? "step-prod-row-error" : "step-prod-row-valid"}>
@@ -190,16 +195,15 @@ const StepProducts = ({
                     <td className="step-prod-text-right">
                       <input
                         type="text"
-                        className={`step-prod-input ${!qtyVal ? "step-prod-input-error" : ""}`}
-                        style={{
-                          width: calculateWidth(item.cantidad),
-                        }}
+                        className={`step-prod-input ${hasError ? "step-prod-input-error" : ""}`}
+                        style={{ width: calculateWidth(item.cantidad) }}
                         value={formatInitialValue(item.cantidad)}
                         onChange={(e) => handleInputChange(item.id, "cantidad", e.target.value)}
                         onBlur={(e) => handleBlurFormat(item.id, "cantidad", e.target.value)}
                         placeholder="0,00"
                         inputMode="decimal"
                       />
+                      {hasError && <div style={{ fontSize: '10px', color: '#ec3137' }}>Lotes incompletos</div>}
                     </td>
 
                     <td className="step-prod-text-right">
@@ -207,9 +211,7 @@ const StepProducts = ({
                         <input
                           type="text"
                           className={`step-prod-input step-prod-input-readonly ${!priceVal ? "step-prod-input-error" : ""}`}
-                          style={{
-                            width: calculateWidth(item.precio_venta),
-                          }}
+                          style={{ width: calculateWidth(item.precio_venta) }}
                           value={formatInitialValue(item.precio_venta)}
                           readOnly
                           placeholder="0,00"

@@ -4,18 +4,15 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
-  Pencil,
-  Trash2,
-  Save,
+  Plus,
   AlertTriangle,
-  Plus
+  Trash2
 } from "lucide-react";
-import Select from "react-select"; 
 import { SlOptionsVertical } from "react-icons/sl";
 
-// 1. Importar la dependencia de teléfono y sus estilos
-import PhoneInput from "react-phone-input-2";
-import "react-phone-input-2/lib/style.css";
+// Modals Refactorizados
+import DoctorFormModal from './ui/DoctorFormModal';
+import ModalDetailedDoctor from './ui/ModalDetailedDoctor'; 
 
 import "../../styles/components/ListZone.css";
 
@@ -31,37 +28,21 @@ const ListDoctors = () => {
     createNewTipoMedico
   } = useHealth();
 
+  // Estados de UI
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  // Modales
+  // Estados de Modales
   const [selectedMedico, setSelectedMedico] = useState(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-
-  const [editName, setEditName] = useState("");
-  const [editPhone, setEditPhone] = useState(""); // Aquí se guardará el nro internacional
-  const [selectedTipoId, setSelectedTipoId] = useState("");
-
-  // Crear tipo de médico al vuelo
-  const [isCreatingTipo, setIsCreatingTipo] = useState(false);
-  const [newTipoName, setNewTipoName] = useState("");
 
   useEffect(() => {
     getAllMedicos();
     getAllTipoMedicos();
   }, []);
-
-  // -------------------- Formateo inputs --------------------
-  const handleNameInput = (value, setter) => {
-    const formatted = value
-      .replace(/[^a-zA-ZÁÉÍÓÚÜÑáéíóúüñ\s]/g, "")
-      .toUpperCase();
-    setter(formatted);
-  };
 
   // -------------------- Filtrado y paginación --------------------
   const filteredMedicos = useMemo(() => {
@@ -76,75 +57,28 @@ const ListDoctors = () => {
     currentPage * itemsPerPage
   );
 
-  // -------------------- React-Select opciones --------------------
-  const tipoOptions = useMemo(() =>
-    tipoMedicos.map(tipo => ({ value: tipo.id, label: tipo.nombre })),
-    [tipoMedicos]
-  );
-
-  const selectedTipoOption = tipoOptions.find(
-    opt => opt.value === Number(selectedTipoId)
-  ) || null;
-
-  // -------------------- Acciones --------------------
-  const openEditModal = (medico) => {
-    setSelectedMedico(medico);
-    setEditName(medico.nombre);
-    setEditPhone(medico.telefono || "");
-    setSelectedTipoId(medico.id_tipomedico);
-    setIsEditModalOpen(true);
-    setIsCreatingTipo(false);
-    setNewTipoName("");
-  };
-
-  const openDeleteModal = (medico) => {
-    setSelectedMedico(medico);
-    setIsDeleteModalOpen(true);
-  };
-
-  const handleCreate = async () => {
-    if (!editName.trim() || !selectedTipoId) return;
+  // -------------------- Acciones Core --------------------
+  const handleSaveDoctor = async (formData) => {
     try {
-      const newMedico = {
-        nombre: editName.trim(),
-        telefono: editPhone || "",
-        id_tipoMedico: Number(selectedTipoId),
+      const payload = {
+        nombre: formData.nombre,
+        telefono: formData.telefono,
+        id_tipoMedico: Number(formData.id_tipomedico),
         estatus: true
       };
-      await createNewMedico(newMedico);
-      setIsCreateModalOpen(false);
-      resetStates();
-      getAllMedicos();
-    } catch (error) {
-      console.error("Error creando médico:", error);
-    }
-  };
 
-  const handleUpdate = async () => {
-    if (!editName.trim() || !selectedTipoId || !selectedMedico) return;
-    try {
-      const updatedMedico = {
-        nombre: editName.trim(),
-        telefono: editPhone || "",
-        id_tipoMedico: Number(selectedTipoId),
-        estatus: true
-      };
-      await editedMedico(selectedMedico.id, updatedMedico);
-      setIsEditModalOpen(false);
+      if (selectedMedico) {
+        await editedMedico(selectedMedico.id, payload);
+      } else {
+        await createNewMedico(payload);
+      }
+      
+      setIsFormModalOpen(false);
       setSelectedMedico(null);
-      resetStates();
       getAllMedicos();
     } catch (error) {
-      console.error("Error editando médico:", error);
+      console.error("Error al guardar médico:", error);
     }
-  };
-
-  const resetStates = () => {
-    setEditName("");
-    setEditPhone("");
-    setSelectedTipoId("");
-    setIsCreatingTipo(false);
-    setNewTipoName("");
   };
 
   const handleDelete = async () => {
@@ -159,19 +93,6 @@ const ListDoctors = () => {
     }
   };
 
-  const handleCreateTipo = async () => {
-    if (!newTipoName.trim()) return;
-    try {
-      const res = await createNewTipoMedico({ nombre: newTipoName.trim() });
-      setSelectedTipoId(res.data.id);
-      setIsCreatingTipo(false);
-      setNewTipoName("");
-      getAllTipoMedicos();
-    } catch (error) {
-      console.error("Error creando tipo de médico:", error);
-    }
-  };
-
   return (
     <div className="orders-container">
       {/* HEADER */}
@@ -181,8 +102,8 @@ const ListDoctors = () => {
           <p>Personal médico registrado: {filteredMedicos.length}</p>
         </div>
         <button className="btn-primary" onClick={() => { 
-          resetStates();
-          setIsCreateModalOpen(true); 
+          setSelectedMedico(null); 
+          setIsFormModalOpen(true); 
         }}>
           <Plus size={16} /> Nuevo Médico
         </button>
@@ -247,114 +168,26 @@ const ListDoctors = () => {
         </div>
       )}
 
-      {/* MODAL CREAR / EDITAR */}
-      {(isCreateModalOpen || isEditModalOpen) && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>{isCreateModalOpen ? "Crear Médico" : "Editar Médico"}</h3>
-            
-            <label className="modal-label">Nombre Completo</label>
-            <input
-              className="modal-input"
-              placeholder="Ej: DR. JUAN PÉREZ"
-              value={editName}
-              onChange={(e) => handleNameInput(e.target.value, setEditName)}
-            />
+      {/* MODAL: CREAR / EDITAR */}
+      <DoctorFormModal 
+        isOpen={isFormModalOpen}
+        onClose={() => { setIsFormModalOpen(false); setSelectedMedico(null); }}
+        onSave={handleSaveDoctor}
+        tipoMedicos={tipoMedicos}
+        selectedMedico={selectedMedico}
+        onCreateTipoMedico={createNewTipoMedico}
+      />
 
-            <label className="modal-label">Teléfono</label>
-            <div className="phone-input-container" style={{ marginBottom: '15px' }}>
-              <PhoneInput
-                country={'ve'}
-                value={editPhone}
-                onChange={(value) => setEditPhone(value)}
-                inputStyle={{
-                    width: '100%',
-                    height: '40px',
-                    borderRadius: '8px',
-                    border: '1px solid #ccc'
-                }}
-                buttonStyle={{
-                    borderRadius: '8px 0 0 8px'
-                }}
-              />
-            </div>
+      {/* MODAL: DETALLES */}
+      <ModalDetailedDoctor 
+        isOpen={isDetailsModalOpen}
+        doctor={selectedMedico}
+        onClose={() => setIsDetailsModalOpen(false)}
+        onEdit={() => setIsFormModalOpen(true)}
+        onDelete={() => setIsDeleteModalOpen(true)}
+      />
 
-            <label className="modal-label">Especialidad / Tipo</label>
-            {!isCreatingTipo ? (
-              <div className="select-zone-container">
-                <div style={{ flex: 1 }}>
-                  <Select
-                    placeholder="Selecciona especialidad..."
-                    options={tipoOptions}
-                    value={selectedTipoOption}
-                    onChange={(option) => setSelectedTipoId(option ? option.value : "")}
-                    isClearable
-                    classNamePrefix="react-select"
-                  />
-                </div>
-                <button className="btn-add-zone-primary" onClick={() => setIsCreatingTipo(true)}>
-                  <Plus size={16} /> Nuevo
-                </button>
-              </div>
-            ) : (
-              <div className="new-zone-container">
-                <div className="new-zone-inputs">
-                  <input
-                    className="modal-input"
-                    placeholder="Nombre del nuevo tipo"
-                    value={newTipoName}
-                    onChange={(e) => setNewTipoName(e.target.value.toUpperCase())}
-                  />
-                  <div style={{ display: 'flex', gap: '5px' }}>
-                    <button className="btn-primary" onClick={handleCreateTipo}><Save size={16} /></button>
-                    <button className="btn-secondary" onClick={() => { setIsCreatingTipo(false); setNewTipoName(""); }}>X</button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => {
-                setIsCreateModalOpen(false); 
-                setIsEditModalOpen(false);
-                resetStates();
-              }}>Cancelar</button>
-              <button className="btn-primary" onClick={isCreateModalOpen ? handleCreate : handleUpdate}>
-                <Save size={16} /> {isCreateModalOpen ? "Crear" : "Guardar"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL DETALLES */}
-      {isDetailsModalOpen && selectedMedico && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Detalles del Médico</h3>
-            <div className="modal-info-body">
-              <div className="detail-card"><strong>ID:</strong> <span>#{selectedMedico.id}</span></div>
-              <div className="detail-card"><strong>Nombre:</strong> <span>{selectedMedico.nombre}</span></div>
-              <div className="detail-card"><strong>Tipo:</strong> <span>{selectedMedico.tipo}</span></div>
-              <div className="detail-card"><strong>Teléfono:</strong> <span>{selectedMedico.telefono ? `+${selectedMedico.telefono}` : "-"}</span></div>
-              <div className="detail-card"><strong>Estatus:</strong> <span>Activo</span></div>
-            </div>
-            <div className="modal-footer" style={{ flexDirection: "column", gap: "0.75rem" }}>
-              <button className="btn-primary" onClick={() => { 
-                setIsDetailsModalOpen(false); 
-                openEditModal(selectedMedico); 
-              }}><Pencil size={16} /> Editar</button>
-              <button className="btn-danger" onClick={() => { 
-                setIsDetailsModalOpen(false); 
-                openDeleteModal(selectedMedico); 
-              }}><Trash2 size={16} /> Eliminar</button>
-              <button className="btn-secondary" onClick={() => setIsDetailsModalOpen(false)}>Cerrar</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL ELIMINAR */}
+      {/* MODAL: ELIMINAR */}
       {isDeleteModalOpen && selectedMedico && (
         <div className="modal-overlay">
           <div className="modal-content">

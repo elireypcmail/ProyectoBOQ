@@ -106,7 +106,7 @@ const StepTotals = ({ totals, setTotals }) => {
   return (
     <div className="ptotals-container">
       <div className="ptotals-header">
-        <h3>Finalizar Compra</h3>
+        <h3>Finalizar Venta</h3>
         <p>Revisión de Costos, Pagos e Impuestos</p>
       </div>
 

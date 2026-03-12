@@ -1,11 +1,13 @@
 /* ========================================================= */
-/* STEP INFO COMPONENT - UNIQUE PREFIX (si-)                 */
+/* STEP INFO COMPONENT - MODERN UI                           */
 /* ========================================================= */
 
 .si-container {
   background: #ffffff;
-  border-radius: 16px;
-  padding: 10px;
+  border-radius: 20px;
+  padding: 30px;
+  border: 1px solid #f8fafc;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
   animation: si-fade-in 0.4s ease-out;
 }
 
@@ -31,8 +33,8 @@
 /* Layout Grid */
 .si-grid {
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
-  gap: 30px;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
 }
 
 .si-column {
@@ -41,17 +43,56 @@
   gap: 20px;
 }
 
+/* --------------------------------------------------------- */
+/* MODERN CARDS                                              */
+/* --------------------------------------------------------- */
+
+.si-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  padding: 24px;
+  border-radius: 16px;
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.si-card:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
+}
+
+.si-team-card {
+  border: 1px solid #fee2e2;
+  background: #fffcfc;
+}
+
+.si-card-title {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-top: 0;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* Grupos de entrada */
 .si-field-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-bottom: 16px;
+}
+
+.si-field-group:last-child {
+  margin-bottom: 0;
 }
 
 .si-label {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  color: #4a5568;
+  color: #475569;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -62,21 +103,18 @@
 .si-row-compact {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 15px;
+  gap: 16px;
 }
 
 /* --------------------------------------------------------- */
 /* ESTILOS DEL DROPDOWN (React Select Options)               */
 /* --------------------------------------------------------- */
 
-.si-option-wrapper {
-  padding: 4px 0;
-}
-
 .si-option-info {
   display: flex;
   flex-direction: column;
   line-height: 1.3;
+  padding: 4px 0;
 }
 
 .si-option-label {
@@ -97,21 +135,26 @@
 /* CAJA Y LISTA DE SELECCIONADOS                             */
 /* --------------------------------------------------------- */
 
-.si-personal-box {
-  background: #f8fafc;
-  padding: 16px;
-  border-radius: 12px;
-  border: 1px dashed #cbd5e0;
-}
-
 .si-selected-list {
-  margin-top: 15px;
+  margin-top: 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  max-height: 280px;
+  gap: 8px;
+  max-height: 240px;
   overflow-y: auto;
-  padding-right: 5px;
+  padding-right: 6px;
+}
+
+/* Scrollbar personalizado */
+.si-selected-list::-webkit-scrollbar {
+  width: 6px;
+}
+.si-selected-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.si-selected-list::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 10px;
 }
 
 /* Tarjeta de Miembro */
@@ -120,17 +163,16 @@
   justify-content: space-between;
   align-items: center;
   background: white;
-  padding: 10px 14px;
-  border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
-  border: 1px solid #edf2f7;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid #f1f5f9;
   transition: all 0.2s ease;
 }
 
 .si-member-card:hover {
   transform: translateX(4px);
   border-color: #ec3137;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04);
 }
 
 .si-member-info {
@@ -140,8 +182,8 @@
 }
 
 .si-member-avatar {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   background: #fee2e2;
   color: #ec3137;
   border-radius: 50%;
@@ -160,13 +202,13 @@
 .si-member-name {
   font-size: 0.88rem;
   font-weight: 700;
-  color: #2d3748;
+  color: #1e293b;
 }
 
 .si-member-type {
   font-size: 0.72rem;
-  font-weight: 600;
-  color: #ec3137;
+  font-weight: 700;
+  color: #ef4444;
   text-transform: uppercase;
   letter-spacing: 0.2px;
 }
@@ -175,10 +217,10 @@
 .si-member-remove {
   background: transparent;
   border: none;
-  color: #a0aec0;
+  color: #94a3b8;
   cursor: pointer;
   padding: 6px;
-  border-radius: 6px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -193,10 +235,10 @@
 .si-empty-state {
   text-align: center;
   padding: 24px;
-  color: #a0aec0;
+  color: #94a3b8;
   font-size: 0.85rem;
   font-style: italic;
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.6);
   border-radius: 8px;
 }
 
@@ -209,8 +251,5 @@
 @media (max-width: 900px) {
   .si-grid {
     grid-template-columns: 1fr;
-  }
-  .si-col-side {
-    order: -1;
   }
 }

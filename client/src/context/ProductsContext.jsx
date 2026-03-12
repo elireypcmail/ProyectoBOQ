@@ -307,6 +307,7 @@ export const ProductsProvider = ({ children }) => {
 
   const getAllLotesByProd = async (id_producto) => {
     try {
+      console.log("lotes por producto")
       const res = await ProductsAPI.getAllLotesProd(id_producto);
       console.log(res.data.data);
       setLotes(res.data?.data || []);

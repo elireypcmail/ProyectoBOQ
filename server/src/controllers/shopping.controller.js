@@ -43,6 +43,7 @@ controller.createShopping = async (req, res) => {
     }
 
     const result = await ShoppingModel.createShopping(data);
+    // console.log(result)
     return res.status(result.code).json(result);
 
   } catch (error) {

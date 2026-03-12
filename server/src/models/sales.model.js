@@ -12,11 +12,9 @@ export class SalesModel {
   /* ================= LISTADO ================= */
 
   static async getAllSales() {
-
     let connection;
 
     try {
-
       connection = await pool.connect();
 
       const result = await connection.query(`
@@ -25,28 +23,29 @@ export class SalesModel {
           v.nro_factura,
           v.estado_venta,
           v.estado_pago,
-
+          
+          -- Datos relacionados
           p.nombre AS paciente,
-          u.nombre AS vendedor,
+          vend.nombre AS vendedor,
           c.nombre AS clinica,
           s.nombre AS seguro,
-
-          v.subtotal,
+          
+          -- Montos ajustados a la nueva estructura
+          v.subtotal1,
+          v.descuento,
+          v.subtotal2,
           v.impuesto,
           v.total,
           v.abonado,
-
           (v.total - v.abonado) AS saldo,
-
+          
           v.fecha_creacion
-
         FROM ventas v
-
         LEFT JOIN pacientes p ON p.id = v.id_paciente
-        LEFT JOIN usuarios u ON u.id = v.id_vendedor
+        LEFT JOIN vendedores vend ON vend.id = v.id_vendedor
         LEFT JOIN clinicas c ON c.id = v.id_clinica
         LEFT JOIN seguros s ON s.id = v.id_seguro
-
+        WHERE v.estatus = TRUE
         ORDER BY v.fecha_creacion DESC, v.id DESC
       `);
 
@@ -57,53 +56,57 @@ export class SalesModel {
       };
 
     } catch (error) {
-
       return {
         status: false,
         code: 500,
         msg: "Error al obtener ventas",
         error: error.message
       };
-
     } finally {
-
       if (connection) connection.release();
-
     }
-
   }
 
   /* ================= DETALLE ================= */
 
 static async getSaleById(id) {
-
   let connection;
 
   try {
-
     connection = await pool.connect();
 
     const result = await connection.query(`
       SELECT 
-        v.*,
+        v.id,
+        v.nro_factura,
+        v.estado_venta,
+        v.estado_pago,
+        v.notas_abono,
 
-        /* PACIENTE */
+        v.id_paciente,
+        v.id_clinica,
+        v.id_vendedor,
+        v.id_oficina,
+        v.id_seguro,
+        v.id_presupuesto,
+        v.id_deposito,
+
+        v.subtotal1,
+        v.descuentoPor,
+        v.descuento,
+        v.subtotal2,
+        v.impuesto,
+        v.total,
+        v.abonado,
+        v.fecha_creacion,
+
         pa.nombre AS paciente_nombre,
-
-        /* CLINICA */
         cl.nombre AS clinica_nombre,
-
-        /* VENDEDOR */
         ve.nombre AS vendedor_nombre,
-
-        /* OFICINA */
         ofi.nombre AS oficina_nombre,
-
-        /* SEGURO */
         se.nombre AS seguro_nombre,
-
-        /* PRESUPUESTO */
-        pre.nro_presupuesto AS nro_presupuesto,
+        pre.nro_presupuesto,
+        d.nombre AS deposito_nombre,
 
         /* PERSONAL ASIGNADO */
         COALESCE(
@@ -131,20 +134,19 @@ static async getSaleById(id) {
           (
             SELECT json_agg(
               json_build_object(
-
                 'id_detalle', vd.id,
                 'id_inventario', vd.id_inventario,
-                'id_producto', pr.id,
-                'producto', pr.descripcion,
+                'id', i.id_producto,
                 'sku', i.sku,
-
+                'producto', vd.descripcion,
                 'cantidad', vd.cantidad,
                 'precio_venta', vd.precio_venta,
                 'descuento1', vd.descuento1,
+                'descuento_por1', vd.descuento_por1,
                 'descuento2', vd.descuento2,
-                'precio_descuento', vd.precio_descuento,
+                'descuento_por2', vd.descuento_por2,
+                'precio_unitario_final', vd.precio_unitario_final,
 
-                /* LOTES DEL DETALLE */
                 'lotes',
                 COALESCE(
                   (
@@ -153,48 +155,41 @@ static async getSaleById(id) {
                         'id_lote', l.id,
                         'nro_lote', l.nro_lote,
                         'id_deposito', l.id_deposito,
-                        'deposito', d.nombre,
+                        'deposito', dp.nombre,
                         'cantidad', vdl.cantidad,
                         'fecha_caducidad', vdl.fecha_caducidad
                       )
                     )
                     FROM venta_detalle_lote vdl
-                    INNER JOIN ventas_detalle vd2 ON vd2.id = vdl.id_detalle
                     INNER JOIN lotes l ON l.id = vdl.id_lote
-                    LEFT JOIN depositos d ON d.id = l.id_deposito
-                    WHERE vd2.id = vd.id
+                    LEFT JOIN depositos dp ON dp.id = l.id_deposito
+                    WHERE vdl.id_detalle = vd.id
                   ),
                   '[]'::json
                 )
-
               )
             )
             FROM ventas_detalle vd
             INNER JOIN inventario i ON i.id = vd.id_inventario
-            INNER JOIN productos pr ON pr.id = i.id_producto
             WHERE vd.id_venta = v.id
           ),
           '[]'::json
         ) AS items
 
       FROM ventas v
-
       LEFT JOIN pacientes pa ON pa.id = v.id_paciente
       LEFT JOIN clinicas cl ON cl.id = v.id_clinica
       LEFT JOIN vendedores ve ON ve.id = v.id_vendedor
       LEFT JOIN oficinas ofi ON ofi.id = v.id_oficina
       LEFT JOIN seguros se ON se.id = v.id_seguro
       LEFT JOIN presupuestos pre ON pre.id = v.id_presupuesto
+      LEFT JOIN depositos d ON d.id = v.id_deposito
 
       WHERE v.id = $1
     `, [id]);
 
     if (!result.rows.length) {
-      return {
-        status: false,
-        code: 404,
-        msg: "Venta no encontrada"
-      };
+      return { status: false, code: 404, msg: "Venta no encontrada" };
     }
 
     return {
@@ -204,30 +199,23 @@ static async getSaleById(id) {
     };
 
   } catch (error) {
-
     return {
       status: false,
       code: 500,
       msg: "Error al obtener venta",
       error: error.message
     };
-
   } finally {
-
     if (connection) connection.release();
-
   }
-
 }
 
   /* ================= CREAR VENTA ================= */
 
   static async createSale(data) {
-
     let connection;
 
     try {
-
       connection = await pool.connect();
       await connection.query("BEGIN");
 
@@ -238,9 +226,11 @@ static async getSaleById(id) {
         id_oficina,
         id_seguro,
         id_presupuesto,
+        id_deposito, // 👈 NUEVO
         personal_asignado = [],
         detalle = [],
         subtotal,
+        descuento,
         impuesto,
         total,
         abonado,
@@ -248,30 +238,28 @@ static async getSaleById(id) {
         estado_pago
       } = data;
 
-      /* 1️⃣ GENERAR NUMERO DE FACTURA */
+      /* CALCULOS */
+      const subtotal1 = parseMonto(subtotal);
+      const m_descuento = parseMonto(descuento);
+      const subtotal2 = subtotal1 - m_descuento;
+      const descPorcentaje = subtotal1 > 0 ? (m_descuento / subtotal1) * 100 : 0;
 
+      /* 1️⃣ GENERAR NUMERO DE FACTURA */
       const lastFactura = await connection.query(`
-        SELECT nro_factura
-        FROM ventas
-        ORDER BY id DESC
-        LIMIT 1
+        SELECT nro_factura FROM ventas ORDER BY id DESC LIMIT 1
       `);
 
       let correlativo = 1;
 
       if (lastFactura.rows.length) {
-
-        const last = lastFactura.rows[0].nro_factura; // V000123
+        const last = lastFactura.rows[0].nro_factura;
         const number = parseInt(last.replace("V", ""), 10);
-
         correlativo = number + 1;
-
       }
 
       const nroFactura = `V${String(correlativo).padStart(6, "0")}`;
 
       /* 2️⃣ CREAR VENTA */
-
       const ventaRes = await connection.query(
         `INSERT INTO ventas (
           id_paciente,
@@ -280,26 +268,33 @@ static async getSaleById(id) {
           id_oficina,
           id_seguro,
           id_presupuesto,
+          id_deposito,
           nro_factura,
-          subtotal,
+          subtotal1,
+          descuentoPor,
+          descuento,
+          subtotal2,
           impuesto,
           total,
           abonado,
           notas_abono,
           estado_pago,
           estado_venta
-        )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'PENDIENTE')
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,'PENDIENTE')
         RETURNING id`,
         [
           id_paciente,
           id_clinica || null,
-          id_vendedor ,
+          id_vendedor,
           id_oficina || null,
           id_seguro || null,
           id_presupuesto || null,
+          id_deposito || null, // 👈 NUEVO
           nroFactura,
-          parseMonto(subtotal),
+          subtotal1,
+          descPorcentaje,
+          m_descuento,
+          subtotal2,
           parseMonto(impuesto),
           parseMonto(total),
           parseMonto(abonado),
@@ -310,65 +305,57 @@ static async getSaleById(id) {
 
       const idVenta = ventaRes.rows[0].id;
 
-      /* 3️⃣ REGISTRAR PERSONAL MEDICO */
-
+      /* 3️⃣ PERSONAL MEDICO */
       for (const medico of personal_asignado) {
 
-        let idPersonal;
-
-        const personalRes = await connection.query(
+        let personalRes = await connection.query(
           `SELECT id FROM personal WHERE id_medico = $1 LIMIT 1`,
           [medico.id]
         );
 
+        let idPersonal;
+
         if (personalRes.rows.length) {
-
           idPersonal = personalRes.rows[0].id;
-
         } else {
-
           const newPersonal = await connection.query(
-            `INSERT INTO personal (id_medico)
-            VALUES ($1)
-            RETURNING id`,
+            `INSERT INTO personal (id_medico) VALUES ($1) RETURNING id`,
             [medico.id]
           );
-
           idPersonal = newPersonal.rows[0].id;
-
         }
 
         await connection.query(
-          `INSERT INTO venta_personal (id_venta,id_personal)
+          `INSERT INTO venta_personal (id_venta, id_personal)
           VALUES ($1,$2)`,
           [idVenta, idPersonal]
         );
-
       }
 
       /* 4️⃣ DETALLE */
-
       for (const item of detalle) {
 
         const detRes = await connection.query(
           `INSERT INTO ventas_detalle (
             id_venta,
             id_inventario,
+            descripcion,
             cantidad,
             precio_venta,
             descuento1,
-            descuento2,
-            precio_descuento
+            descuento_unitario,
+            precio_unitario_final
           )
-          VALUES ($1,$2,$3,$4,$5,$6,$7)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
           RETURNING id`,
           [
             idVenta,
             item.id_inventario,
+            item.descripcion || "Producto",
             parseMonto(item.cantidad),
             parseMonto(item.precio_venta),
             parseMonto(item.descuento1),
-            parseMonto(item.descuento2),
+            parseMonto(item.descuento_unitario),
             parseMonto(item.precio_descuento)
           ]
         );
@@ -376,26 +363,40 @@ static async getSaleById(id) {
         const idDetalle = detRes.rows[0].id;
 
         /* 5️⃣ LOTES */
-
         if (item.lotes && Array.isArray(item.lotes)) {
 
           for (const lote of item.lotes) {
 
-            console.log(lote)
-
             await connection.query(
-              `INSERT INTO venta_detalle_lote (
-                id_detalle,
-                id_lote,
-                cantidad,
-                fecha_caducidad
-              )
+              `INSERT INTO venta_detalle_lote
+              (id_detalle, id_lote, cantidad, fecha_caducidad)
               VALUES ($1,$2,$3,$4)`,
               [
                 idDetalle,
                 lote.id_lote,
-                lote.cantidad,
+                parseMonto(lote.cantidad),
                 lote.fecha_vencimiento
+              ]
+            );
+
+            /* ACTUALIZAR LOTE */
+            await connection.query(
+              `UPDATE lotes
+              SET cantidad = cantidad - $1
+              WHERE id = $2`,
+              [parseMonto(lote.cantidad), lote.id_lote]
+            );
+
+            /* ACTUALIZAR STOCK DEPOSITO */
+            await connection.query(
+              `UPDATE edeposito
+              SET existencia_deposito = existencia_deposito - $1
+              WHERE id_deposito = $2
+              AND id_producto = $3`,
+              [
+                parseMonto(lote.cantidad),
+                lote.id_deposito || id_deposito,
+                item.id_producto
               ]
             );
 
@@ -410,7 +411,7 @@ static async getSaleById(id) {
       return {
         status: true,
         code: 201,
-        msg: "Venta creada en estado PENDIENTE",
+        msg: "Venta creada",
         data: {
           id_venta: idVenta,
           nro_factura: nroFactura
@@ -433,15 +434,12 @@ static async getSaleById(id) {
       if (connection) connection.release();
 
     }
-
   }
 
   static async editSale(id, data) {
-
     let connection;
 
     try {
-
       connection = await pool.connect();
       await connection.query("BEGIN");
 
@@ -452,9 +450,11 @@ static async getSaleById(id) {
         id_oficina,
         id_seguro,
         id_presupuesto,
+        id_deposito, // 👈 NUEVO
         personal_asignado = [],
         detalle = [],
         subtotal,
+        descuento,
         impuesto,
         total,
         abonado,
@@ -462,8 +462,13 @@ static async getSaleById(id) {
         estado_pago
       } = data;
 
-      /* 1️⃣ ACTUALIZAR VENTA */
+      /* CALCULOS */
+      const subtotal1 = parseMonto(subtotal);
+      const m_descuento = parseMonto(descuento);
+      const subtotal2 = subtotal1 - m_descuento;
+      const descPorcentaje = subtotal1 > 0 ? (m_descuento / subtotal1) * 100 : 0;
 
+      /* 1️⃣ ACTUALIZAR CABECERA DE VENTA */
       await connection.query(
         `UPDATE ventas SET
           id_paciente = $1,
@@ -472,13 +477,17 @@ static async getSaleById(id) {
           id_oficina = $4,
           id_seguro = $5,
           id_presupuesto = $6,
-          subtotal = $7,
-          impuesto = $8,
-          total = $9,
-          abonado = $10,
-          notas_abono = $11,
-          estado_pago = $12
-        WHERE id = $13`,
+          id_deposito = $7,
+          subtotal1 = $8,
+          descuentoPor = $9,
+          descuento = $10,
+          subtotal2 = $11,
+          impuesto = $12,
+          total = $13,
+          abonado = $14,
+          notas_abono = $15,
+          estado_pago = $16
+        WHERE id = $17`,
         [
           id_paciente,
           id_clinica || null,
@@ -486,7 +495,11 @@ static async getSaleById(id) {
           id_oficina || null,
           id_seguro || null,
           id_presupuesto || null,
-          parseMonto(subtotal),
+          id_deposito || null, // 👈 NUEVO
+          subtotal1,
+          descPorcentaje,
+          m_descuento,
+          subtotal2,
           parseMonto(impuesto),
           parseMonto(total),
           parseMonto(abonado),
@@ -496,125 +509,82 @@ static async getSaleById(id) {
         ]
       );
 
-      /* 2️⃣ LIMPIAR PERSONAL ANTERIOR */
+      /* 2️⃣ LIMPIAR PERSONAL Y DETALLE ANTERIOR */
+      await connection.query(`DELETE FROM venta_personal WHERE id_venta = $1`, [id]);
 
-      await connection.query(
-        `DELETE FROM venta_personal WHERE id_venta = $1`,
-        [id]
-      );
+      // venta_detalle_lote se borra automáticamente por CASCADE
+      await connection.query(`DELETE FROM ventas_detalle WHERE id_venta = $1`, [id]);
 
-      /* 3️⃣ REGISTRAR PERSONAL MEDICO */
-
+      /* 3️⃣ REGISTRAR PERSONAL */
       for (const medico of personal_asignado) {
-
-        let idPersonal;
-
-        const personalRes = await connection.query(
+        let personalRes = await connection.query(
           `SELECT id FROM personal WHERE id_medico = $1 LIMIT 1`,
           [medico.id]
         );
 
+        let idPersonal;
+
         if (personalRes.rows.length) {
-
           idPersonal = personalRes.rows[0].id;
-
         } else {
-
           const newPersonal = await connection.query(
-            `INSERT INTO personal (id_medico)
-            VALUES ($1)
-            RETURNING id`,
+            `INSERT INTO personal (id_medico) VALUES ($1) RETURNING id`,
             [medico.id]
           );
-
           idPersonal = newPersonal.rows[0].id;
-
         }
 
         await connection.query(
-          `INSERT INTO venta_personal (id_venta,id_personal)
+          `INSERT INTO venta_personal (id_venta, id_personal)
           VALUES ($1,$2)`,
           [id, idPersonal]
         );
-
       }
 
-      /* 4️⃣ ELIMINAR DETALLE ANTERIOR */
-
-      const oldDetalles = await connection.query(
-        `SELECT id FROM ventas_detalle WHERE id_venta = $1`,
-        [id]
-      );
-
-      for (const det of oldDetalles.rows) {
-
-        await connection.query(
-          `DELETE FROM venta_detalle_lote WHERE id_detalle = $1`,
-          [det.id]
-        );
-
-      }
-
-      await connection.query(
-        `DELETE FROM ventas_detalle WHERE id_venta = $1`,
-        [id]
-      );
-
-      /* 5️⃣ INSERTAR NUEVO DETALLE */
-
+      /* 4️⃣ INSERTAR DETALLE */
       for (const item of detalle) {
-
         const detRes = await connection.query(
           `INSERT INTO ventas_detalle (
             id_venta,
             id_inventario,
+            descripcion,
             cantidad,
             precio_venta,
             descuento1,
-            descuento2,
-            precio_descuento
-          )
-          VALUES ($1,$2,$3,$4,$5,$6,$7)
+            descuento_unitario,
+            precio_unitario_final
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
           RETURNING id`,
           [
             id,
             item.id_inventario,
+            item.descripcion || "Producto",
             parseMonto(item.cantidad),
             parseMonto(item.precio_venta),
             parseMonto(item.descuento1),
-            parseMonto(item.descuento2),
+            parseMonto(item.descuento_unitario),
             parseMonto(item.precio_descuento)
           ]
         );
 
         const idDetalle = detRes.rows[0].id;
 
-        /* 6️⃣ LOTES */
-
+        /* 5️⃣ LOTES */
         if (item.lotes && Array.isArray(item.lotes)) {
-
           for (const lote of item.lotes) {
-
             await connection.query(
-              `INSERT INTO venta_detalle_lote (
-                id_detalle,
-                id_lote,
-                cantidad,
-                fecha_caducidad
-              )
+              `INSERT INTO venta_detalle_lote
+              (id_detalle, id_lote, cantidad, fecha_caducidad)
               VALUES ($1,$2,$3,$4)`,
               [
                 idDetalle,
                 lote.id_lote,
-                lote.cantidad,
-                lote.fecha_vencimiento || lote.fecha_caducidad 
+                parseMonto(lote.cantidad),
+                lote.fecha_vencimiento || lote.fecha_caducidad
               ]
             );
-
           }
-
         }
-
       }
 
       await connection.query("COMMIT");
@@ -637,11 +607,8 @@ static async getSaleById(id) {
       };
 
     } finally {
-
       if (connection) connection.release();
-
     }
-
   }
 
   /* ================= CONFIRMAR VENTA ================= */
@@ -660,29 +627,26 @@ static async getSaleById(id) {
       );
 
       if (!ventaQuery.rows.length) {
-        await connection.query("ROLLBACK");
-        return { status: false, code: 404, msg: "La venta solicitada no existe." };
+        throw new Error("La venta solicitada no existe.");
       }
 
       const venta = ventaQuery.rows[0];
 
       if (venta.estado_venta !== "PENDIENTE") {
-        await connection.query("ROLLBACK");
-        return { status: false, code: 400, msg: "Esta venta ya fue confirmada o procesada previamente." };
+        throw new Error("Esta venta ya fue confirmada o procesada previamente.");
       }
 
-      /* 2️⃣ OBTENER DETALLE */
+      /* 2️⃣ OBTENER DETALLE (Ajustado a la nueva estructura) */
       const detalles = await connection.query(
         `SELECT * FROM ventas_detalle WHERE id_venta = $1`,
         [idVenta]
       );
 
       if (!detalles.rows.length) {
-        await connection.query("ROLLBACK");
-        return { status: false, code: 400, msg: "La venta no tiene productos asignados." };
+        throw new Error("La venta no tiene productos asignados.");
       }
 
-      /* 3️⃣ VALIDAR LOTES (Con nombre de producto y nro de lote) */
+      /* 3️⃣ VALIDAR LOTES */
       const lotes = await connection.query(`
         SELECT 
           vdl.cantidad AS cantidad_pedida,
@@ -702,63 +666,35 @@ static async getSaleById(id) {
 
       for (const lote of lotes.rows) {
         if (lote.stock_actual_lote < lote.cantidad_pedida) {
-          await connection.query("ROLLBACK");
-          return { 
-            status: false, 
-            code: 400, 
-            msg: `Stock insuficiente en Lote: ${lote.nro_lote} para el producto ${lote.nombre_producto}. (Disponible: ${lote.stock_actual_lote}, Requerido: ${lote.cantidad_pedida})` 
-          };
+          throw new Error(`Stock insuficiente en Lote: ${lote.nro_lote} para ${lote.nombre_producto}. (Disp: ${lote.stock_actual_lote}, Req: ${lote.cantidad_pedida})`);
         }
       }
 
-      /* 4️⃣ VALIDAR INVENTARIO GENERAL (Con nombre de producto) */
-      for (const item of detalles.rows) {
-        const invQuery = await connection.query(`
-          SELECT i.*, p.descripcion AS nombre_producto 
-          FROM inventario i
-          INNER JOIN productos p ON p.id = i.id_producto
-          WHERE i.id = $1 FOR UPDATE`,
-          [item.id_inventario]
-        );
-
-        if (!invQuery.rows.length) {
-          await connection.query("ROLLBACK");
-          return { status: false, code: 404, msg: "No se encontró el registro de inventario para uno de los productos." };
-        }
-
-        const inv = invQuery.rows[0];
-
-        if (inv.existencia_general < item.cantidad) {
-          await connection.query("ROLLBACK");
-          return { 
-            status: false, 
-            code: 400, 
-            msg: `Stock general insuficiente para: ${inv.nombre_producto}. (Disponible: ${inv.existencia_general})` 
-          };
-        }
-      }
-
-      /* 5️⃣ DESCONTAR INVENTARIO + KARDEX GENERAL */
+      /* 4️⃣ DESCONTAR INVENTARIO GENERAL + KARDEX GENERAL */
       for (const item of detalles.rows) {
         const invQuery = await connection.query(
-          `SELECT * FROM inventario WHERE id = $1`, [item.id_inventario]
+          `SELECT * FROM inventario WHERE id = $1 FOR UPDATE`, [item.id_inventario]
         );
+        
+        if (!invQuery.rows.length) throw new Error("Producto no encontrado en inventario.");
+        
         const inv = invQuery.rows[0];
-        const nuevoStock = inv.existencia_general - item.cantidad;
+        const nuevoStock = Number(inv.existencia_general) - Number(item.cantidad);
 
         await connection.query(
           `UPDATE inventario SET existencia_general = $1 WHERE id = $2`,
           [nuevoStock, inv.id]
         );
 
+        // Kardex General: Se usan las columnas de la nueva estructura de ventas
         await connection.query(
           `INSERT INTO kardexg (id_producto, fecha, existencia_inicial, entrada, salida, existencia_final, costo, precio, detalle, documento, tipo)
           VALUES ($1, NOW(), $2, 0, $3, $4, $5, $6, $7, $8, 'VENTA')`,
-          [inv.id_producto, inv.existencia_general, item.cantidad, nuevoStock, inv.costo_unitario, inv.precio_venta, `Venta Factura: ${venta.nro_factura}`, venta.nro_factura]
+          [inv.id_producto, inv.existencia_general, item.cantidad, nuevoStock, inv.costo_unitario, item.precio_unitario_final, `Venta Factura: ${venta.nro_factura}`, venta.nro_factura]
         );
       }
 
-      /* 6️⃣ DESCONTAR LOTES + DEPÓSITO + KARDEX DEPÓSITO */
+      /* 5️⃣ DESCONTAR LOTES + DEPÓSITO + KARDEX DEPÓSITO */
       for (const lote of lotes.rows) {
         // Descontar del lote
         await connection.query(
@@ -766,7 +702,7 @@ static async getSaleById(id) {
           [lote.cantidad_pedida, lote.id_lote]
         );
 
-        // Descontar de edeposito (Stock por almacén)
+        // Descontar de edeposito
         const depQuery = await connection.query(
           `SELECT existencia_deposito FROM edeposito WHERE id_producto=$1 AND id_deposito=$2 FOR UPDATE`,
           [lote.id_producto, lote.id_deposito]
@@ -790,7 +726,7 @@ static async getSaleById(id) {
         }
       }
 
-      /* 7️⃣ FINALIZAR VENTA */
+      /* 6️⃣ FINALIZAR VENTA */
       await connection.query(
         `UPDATE ventas SET estado_venta = 'CONFIRMADA' WHERE id = $1`,
         [idVenta]
@@ -801,17 +737,15 @@ static async getSaleById(id) {
       return {
         status: true,
         code: 200,
-        msg: "Venta confirmada exitosamente. Inventario y Kardex actualizados."
+        msg: "Venta confirmada exitosamente."
       };
 
     } catch (error) {
       if (connection) await connection.query("ROLLBACK");
-      console.error("Error en confirmSale:", error);
       return {
         status: false,
         code: 500,
-        msg: "Error interno procesando la transacción.",
-        error: error.message
+        msg: error.message || "Error al confirmar venta."
       };
     } finally {
       if (connection) connection.release();

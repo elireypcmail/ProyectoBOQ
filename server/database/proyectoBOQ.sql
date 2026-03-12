@@ -281,6 +281,7 @@ CREATE TABLE ventas (
   id_clinica INT REFERENCES clinicas(id) ON DELETE CASCADE,
   id_vendedor INT NOT NULL REFERENCES vendedores(id) ON DELETE CASCADE,
   id_oficina INT REFERENCES oficinas(id) ON DELETE CASCADE,
+  id_deposito INT REFERENCES depositos(id) ON DELETE CASCADE,
   id_seguro INT REFERENCES seguros(id) ON DELETE CASCADE,
   id_presupuesto INT REFERENCES presupuestos(id) ON DELETE CASCADE,
   nro_factura VARCHAR(100) NOT NULL,
@@ -307,15 +308,27 @@ CREATE TABLE venta_personal (
 
 CREATE TABLE ventas_detalle (
   id SERIAL PRIMARY KEY,
-  id_venta INT NOT NULL REFERENCES ventas(id) ON DELETE CASCADE,
-  id_inventario INT NOT NULL REFERENCES inventario(id) ON DELETE CASCADE,
-  cantidad INT NOT NULL,
-  precio_venta DECIMAL(10,2) NOT NULL,
-  descuento1 DECIMAL(10,2) NOT NULL,
-  descuento2 DECIMAL(10,2) NOT NULL,
-  precio_descuento DECIMAL(10,2) NOT NULL,
+  id_venta INT NOT NULL
+    REFERENCES ventas(id) ON DELETE CASCADE,
+  id_inventario INT NOT NULL
+    REFERENCES inventario(id) ON DELETE RESTRICT,
+  descripcion TEXT NOT NULL,
+  cantidad NUMERIC(14,4) NOT NULL CHECK (cantidad > 0),
+  precio_venta NUMERIC(14,6) NOT NULL CHECK (precio_venta >= 0),
+  subtotal1 NUMERIC(14,6)
+    GENERATED ALWAYS AS (cantidad * precio_venta) STORED,
+  descuento1 NUMERIC(14,6) DEFAULT 0,
+  descuento_por1 NUMERIC(7,4) DEFAULT 0,
+  descuento2 NUMERIC(14,6) DEFAULT 0,
+  descuento_por2 NUMERIC(7,4) DEFAULT 0,
+  subtotal2 NUMERIC(14,6) DEFAULT 0,
+  cargo_unitario NUMERIC(14,6) DEFAULT 0,
+  total_cargos NUMERIC(14,6) DEFAULT 0,
+  descuento_unitario NUMERIC(14,6) DEFAULT 0,
+  total_descuentos NUMERIC(14,6) DEFAULT 0,
+  precio_unitario_final NUMERIC(14,6) DEFAULT 0,
   estatus BOOLEAN NOT NULL DEFAULT TRUE,
-  fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+  fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE venta_detalle_lote (

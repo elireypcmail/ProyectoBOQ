@@ -64,108 +64,108 @@ static async getAllShoping() {
   }
 }
 
-static async getShoppingById(id) {
-  let connection;
-  try {
-    connection = await pool.connect();
+  static async getShoppingById(id) {
+    let connection;
+    try {
+      connection = await pool.connect();
 
-    const result = await connection.query(`
-      SELECT 
-        c.id_proveedor,
-        c.nro_factura,
-        c.fecha_emision,
-        c.dias_plazo,
-        c.fecha_vencimiento,
+      const result = await connection.query(`
+        SELECT 
+          c.id_proveedor,
+          c.nro_factura,
+          c.fecha_emision,
+          c.dias_plazo,
+          c.fecha_vencimiento,
 
-        -- ==============================
-        -- Totales y cargos
-        -- ==============================
-        json_build_object(
-          'subtotal', c.subtotal1,
-          'porcentaje_descuento_global', c.descuentoPor,
-          'monto_descuento_fijo', c.descuento,
-          'monto_descuento_extra', 0,
-          'cargos_monto', c.cargo,
-          'monto_abonado', c.abonado,
-          'total', c.total,
-          'saldo_pendiente', (c.total - c.abonado)
-        ) AS totales_cargos,
+          -- ==============================
+          -- Totales y cargos
+          -- ==============================
+          json_build_object(
+            'subtotal', c.subtotal1,
+            'porcentaje_descuento_global', c.descuentoPor,
+            'monto_descuento_fijo', c.descuento,
+            'monto_descuento_extra', 0,
+            'cargos_monto', c.cargo,
+            'monto_abonado', c.abonado,
+            'total', c.total,
+            'saldo_pendiente', (c.total - c.abonado)
+          ) AS totales_cargos,
 
-        -- ==============================
-        -- Items de la compra
-        -- ==============================
-        COALESCE((
-          SELECT json_agg(
-            json_build_object(
-              'id_producto', i.id_producto,
-              'Producto', cd.descripcion,
-              'Cant', cd.cantidad,
-              'Costo_Base', cd.costo_compra,
-              'Descuento_Unitario', cd.descuento_unitario,
-              'Cargo_Unitario', cd.cargo_unitario,
-              'Costo_Ficha', cd.costo_unitario_final,
-              'Subtotal_Linea', cd.subtotal2
+          -- ==============================
+          -- Items de la compra
+          -- ==============================
+          COALESCE((
+            SELECT json_agg(
+              json_build_object(
+                'id_producto', i.id_producto,
+                'Producto', cd.descripcion,
+                'Cant', cd.cantidad,
+                'Costo_Base', cd.costo_compra,
+                'Descuento_Unitario', cd.descuento_unitario,
+                'Cargo_Unitario', cd.cargo_unitario,
+                'Costo_Ficha', cd.costo_unitario_final,
+                'Subtotal_Linea', cd.subtotal2
+              )
             )
-          )
-          FROM compras_detalle cd
-          INNER JOIN inventario i ON cd.id_inventario = i.id
-          WHERE cd.id_compra = c.id
-        ), '[]') AS items,
+            FROM compras_detalle cd
+            INNER JOIN inventario i ON cd.id_inventario = i.id
+            WHERE cd.id_compra = c.id
+          ), '[]') AS items,
 
-        -- ==============================
-        -- Lotes de la compra
-        -- ==============================
-        COALESCE((
-          SELECT json_agg(
-            json_build_object(
-              'id_producto', l.id_producto,
-              'Producto', cd.descripcion,
-              'nro_lote', l.nro_lote,
-              'id_deposito', l.id_deposito,
-              'Deposito', d.nombre,
-              'fecha_vencimiento', l.fecha_vencimiento,
-              'cantidad', cdl.cantidad,
-              'costo_lote', cd.costo_unitario_final
+          -- ==============================
+          -- Lotes de la compra
+          -- ==============================
+          COALESCE((
+            SELECT json_agg(
+              json_build_object(
+                'id_producto', l.id_producto,
+                'Producto', cd.descripcion,
+                'nro_lote', l.nro_lote,
+                'id_deposito', l.id_deposito,
+                'Deposito', d.nombre,
+                'fecha_vencimiento', l.fecha_vencimiento,
+                'cantidad', cdl.cantidad,
+                'costo_lote', cd.costo_unitario_final
+              )
+              ORDER BY l.id_producto, l.nro_lote
             )
-            ORDER BY l.id_producto, l.nro_lote
-          )
-          FROM compras_detalle cd
-          INNER JOIN compras_detalle_lote cdl ON cd.id = cdl.id_detalle
-          INNER JOIN lotes l ON cdl.id_lote = l.id
-          INNER JOIN depositos d ON l.id_deposito = d.id
-          WHERE cd.id_compra = c.id
-        ), '[]') AS detalle_lotes
+            FROM compras_detalle cd
+            INNER JOIN compras_detalle_lote cdl ON cd.id = cdl.id_detalle
+            INNER JOIN lotes l ON cdl.id_lote = l.id
+            INNER JOIN depositos d ON l.id_deposito = d.id
+            WHERE cd.id_compra = c.id
+          ), '[]') AS detalle_lotes
 
-      FROM compras c
-      WHERE c.id = $1
-    `, [id]);
+        FROM compras c
+        WHERE c.id = $1
+      `, [id]);
 
-    if (result.rows.length === 0) {
+      if (result.rows.length === 0) {
+        return { 
+          status: false, 
+          code: 404, 
+          msg: "Compra no encontrada" 
+        };
+      }
+
       return { 
-        status: false, 
-        code: 404, 
-        msg: "Compra no encontrada" 
+        status: true, 
+        code: 200, 
+        data: result.rows[0] 
       };
+
+    } catch (error) {
+      console.error("Error en getShoppingById:", error);
+      return {
+        status: false,
+        code: 500,
+        msg: "Error al obtener el detalle de la compra",
+        error: error.message,
+      };
+    } finally {
+      if (connection) connection.release();
     }
-
-    return { 
-      status: true, 
-      code: 200, 
-      data: result.rows[0] 
-    };
-
-  } catch (error) {
-    console.error("Error en getShoppingById:", error);
-    return {
-      status: false,
-      code: 500,
-      msg: "Error al obtener el detalle de la compra",
-      error: error.message,
-    };
-  } finally {
-    if (connection) connection.release();
   }
-}
 
 // Helpers internos
 

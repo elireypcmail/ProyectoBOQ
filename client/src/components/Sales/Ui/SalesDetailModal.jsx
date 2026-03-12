@@ -10,9 +10,6 @@ import "../../../styles/ui/SalesDetailModal.css";
 const SaleDetailModal = ({ isOpen, sale, onClose, onEdit }) => {
   const { confirmSale, getAllSales, deleteSaleById } = useIncExp();
   
-  console.log("SALE")
-  console.log(sale)
-
   const [isProcessing, setIsProcessing] = useState(false);
   const [showModalResult, setShowModalResult] = useState(false);
   const [modalConfig, setModalConfig] = useState({ title: "", message: "", type: "success" });
@@ -20,9 +17,9 @@ const SaleDetailModal = ({ isOpen, sale, onClose, onEdit }) => {
   if (!isOpen || !sale) return null;
 
   // --- HELPERS ---
+  // Formato para moneda con coma decimal
   const formatNum = (val) => {
-    const num = parseFloat(String(val).replace(",", ".")) || 0;
-    // Decimales con coma según preferencia
+    const num = parseFloat(val) || 0;
     return num.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
@@ -93,17 +90,16 @@ const SaleDetailModal = ({ isOpen, sale, onClose, onEdit }) => {
         </header>
 
         <div className="sdm-body">
-          {/* Cuadrícula de Estados */}
           <div className="sdm-stats-grid">
             <div className="sdm-stat-card">
               <label><Activity size={14} /> Estado de Venta</label>
-              <span className={`sdm-status-pill ${isPending ? 'pending' : 'confirmed'}`}>
+              <span className={`sdm-status-pill isPending ? 'pending' : 'confirmed'}`}>
                 {sale.estado_venta}
               </span>
             </div>
             <div className="sdm-stat-card">
               <label><CreditCard size={14} /> Pago</label>
-              <span className={`sdm-status-pill ${sale.estado_pago === 'Pagado' ? 'success' : 'warning'}`}>
+              <span className={`sdm-status-pill sale.estado_pago === 'Pagado' ? 'success' : 'warning'}`}>
                 {sale.estado_pago}
               </span>
             </div>
@@ -117,7 +113,6 @@ const SaleDetailModal = ({ isOpen, sale, onClose, onEdit }) => {
             </div>
           </div>
 
-          {/* Personal Asignado */}
           {sale.personal?.length > 0 && (
             <section className="sdm-sub-section">
               <h4 className="sdm-sub-title">Personal Asignado</h4>
@@ -132,7 +127,6 @@ const SaleDetailModal = ({ isOpen, sale, onClose, onEdit }) => {
             </section>
           )}
 
-          {/* Tabla de Items */}
           <section className="sdm-sub-section">
             <h4 className="sdm-sub-title"><Package size={16} /> Detalle del Pedido</h4>
             <div className="sdm-table-container">
@@ -141,7 +135,7 @@ const SaleDetailModal = ({ isOpen, sale, onClose, onEdit }) => {
                   <tr>
                     <th>Descripción</th>
                     <th className="text-center">Cant.</th>
-                    <th className="text-right">Precio Unit.</th>
+                    <th className="text-right">Precio</th>
                     <th className="text-right">Total</th>
                   </tr>
                 </thead>
@@ -150,11 +144,11 @@ const SaleDetailModal = ({ isOpen, sale, onClose, onEdit }) => {
                     <tr key={idx}>
                       <td>
                         <div className="item-main">{item.producto}</div>
-                        <div className="item-sub">SKU: {item.sku}</div>
+                        <div className="item-sub">SKU: {item.sku || "N/A"}</div>
                       </td>
                       <td className="text-center">{item.cantidad}</td>
-                      <td className="text-right">$ {formatNum(item.precio_venta)}</td>
-                      <td className="text-right bold">$ {formatNum(item.precio_descuento)}</td>
+                      <td className="text-right">{formatNum(item.precio_venta)}</td>
+                      <td className="text-right bold">{formatNum(item.precio_unitario_final)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -162,7 +156,6 @@ const SaleDetailModal = ({ isOpen, sale, onClose, onEdit }) => {
             </div>
           </section>
 
-          {/* Área de Resumen */}
           <div className="sdm-summary-grid">
             <div className="sdm-notes">
               {sale.notas_abono && (
@@ -176,16 +169,24 @@ const SaleDetailModal = ({ isOpen, sale, onClose, onEdit }) => {
             <div className="sdm-totals">
               <div className="sdm-total-line">
                 <span>Subtotal</span>
-                <span>$ {formatNum(sale.subtotal)}</span>
+                <span>{formatNum(sale.subtotal1)}</span>
+              </div>
+              <div className="sdm-total-line">
+                <span>Descuento ({sale.descuentopor}%)</span>
+                <span>- {formatNum(sale.descuento)}</span>
+              </div>
+              <div className="sdm-total-line">
+                <span>Base Imponible</span>
+                <span>{formatNum(sale.subtotal2)}</span>
               </div>
               <div className="sdm-total-line highlight">
                 <span>Monto Total</span>
-                <span className="price-big">$ {formatNum(sale.total)}</span>
+                <span className="price-big">{formatNum(sale.total)}</span>
               </div>
               <div className="sdm-total-line balance">
                 <span>Saldo Pendiente</span>
                 <span className={saldoPendiente > 0 ? "text-red" : "text-green"}>
-                  $ {formatNum(saldoPendiente)}
+                  {formatNum(saldoPendiente)}
                 </span>
               </div>
             </div>

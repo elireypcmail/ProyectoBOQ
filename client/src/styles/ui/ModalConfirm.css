@@ -61,6 +61,7 @@
 .mconf-btn-success {
     background-color: #10b981;
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+    justify-content: center;
 }
 
 .mconf-btn-success:hover {
@@ -73,6 +74,7 @@
 .mconf-btn-error {
     background-color: #ef4444;
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+    justify-content: center;
 }
 
 .mconf-btn-error:hover {
