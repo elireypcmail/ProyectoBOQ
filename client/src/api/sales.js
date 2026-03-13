@@ -23,4 +23,11 @@ export const saveFileSeller = (id, files, filesJson) => {
     },
   })
 }
+// -------------------- Presupuestos --------------------
+export const getAllBudgets = () => instanceApp.get("/presupuestos");
+export const getBudgetById = (id) => instanceApp.get(`/presupuestos/${id}`);
+export const createBudget = (data) => instanceApp.post("/presupuestos", data);
+export const updateBudget = (id, data) => instanceApp.put(`/presupuestos/${id}`, data);
+export const deleteBudget = (id) => instanceApp.delete(`/presupuestos/${id}`);
+
 

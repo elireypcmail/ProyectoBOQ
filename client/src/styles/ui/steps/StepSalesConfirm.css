@@ -1,0 +1,113 @@
+/* --- Estilos de Factura Estilo Minimalista (Small Hero) --- */
+.invoice-container {
+  animation: invoice-fadeIn 0.5s ease;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 900px; /* Opcional: para mantener proporciones de hoja */
+  margin: 0 auto;
+  padding: 3rem;
+  background: #ffffff;
+  color: #1e293b;
+  box-sizing: border-box;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+/* --- Encabezado Superior --- */
+.invoice-top-header {
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 25px;
+  margin-bottom: 30px;
+}
+
+.invoice-brand h2 {
+  font-size: 1.8rem;
+  color: #0f172a;
+}
+
+/* --- Tabla de Productos --- */
+.invoice-table-container {
+  margin: 40px 0;
+  overflow-x: auto;
+}
+
+.invoice-items-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-top: 2px solid #1e293b; /* Línea gruesa superior estilo factura */
+}
+
+.invoice-items-table th {
+  padding: 15px 10px;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.invoice-items-table td {
+  padding: 18px 10px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: top;
+}
+
+/* --- Sección de Totales --- */
+.invoice-totals-section {
+  width: 100%;
+  max-width: 320px;
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.invoice-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+}
+
+.invoice-grand-total {
+  border-top: 1px solid #1e293b;
+  margin-top: 5px;
+  padding-top: 15px;
+  color: #0f172a;
+}
+
+/* --- Utilidades Visuales --- */
+.font-mono {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.invoice-amount-large {
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+
+.text-right { text-align: right; }
+.text-left { text-align: left; }
+.text-red { color: #e11d48; font-weight: 600; }
+.text-green { color: #059669; font-weight: 600; }
+.bold { font-weight: 700; }
+
+/* --- Animación --- */
+@keyframes invoice-fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Ajustes para Impresión */
+@media print {
+  .invoice-container {
+    padding: 0;
+    border: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .invoice-container { padding: 1.5rem; }
+  .invoice-totals-section { max-width: 100%; }
+}

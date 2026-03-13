@@ -148,7 +148,7 @@ const SaleDetailModal = ({ isOpen, sale, onClose, onEdit }) => {
                       </td>
                       <td className="text-center">{item.cantidad}</td>
                       <td className="text-right">{formatNum(item.precio_venta)}</td>
-                      <td className="text-right bold">{formatNum(item.precio_unitario_final)}</td>
+                      <td className="text-right bold">{formatNum(item.precio_venta)}</td>
                     </tr>
                   ))}
                 </tbody>

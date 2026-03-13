@@ -636,7 +636,7 @@ static async getSaleById(id) {
         throw new Error("Esta venta ya fue confirmada o procesada previamente.");
       }
 
-      /* 2️⃣ OBTENER DETALLE (Ajustado a la nueva estructura) */
+      /* 2️⃣ OBTENER DETALLE */
       const detalles = await connection.query(
         `SELECT * FROM ventas_detalle WHERE id_venta = $1`,
         [idVenta]
@@ -647,7 +647,8 @@ static async getSaleById(id) {
       }
 
       /* 3️⃣ VALIDAR LOTES */
-      const lotes = await connection.query(`
+      const lotes = await connection.query(
+        `
         SELECT 
           vdl.cantidad AS cantidad_pedida,
           l.id AS id_lote,
@@ -662,66 +663,107 @@ static async getSaleById(id) {
         INNER JOIN productos p ON p.id = l.id_producto
         WHERE vd.id_venta = $1
         FOR UPDATE
-      `, [idVenta]);
+        `,
+        [idVenta]
+      );
 
       for (const lote of lotes.rows) {
-        if (lote.stock_actual_lote < lote.cantidad_pedida) {
-          throw new Error(`Stock insuficiente en Lote: ${lote.nro_lote} para ${lote.nombre_producto}. (Disp: ${lote.stock_actual_lote}, Req: ${lote.cantidad_pedida})`);
+        const stock = Number(lote.stock_actual_lote);
+        const pedido = Number(lote.cantidad_pedida);
+
+        if (stock < pedido) {
+          throw new Error(
+            `Stock insuficiente en Lote: ${lote.nro_lote} para ${lote.nombre_producto}. (Disp: ${stock}, Req: ${pedido})`
+          );
         }
       }
 
       /* 4️⃣ DESCONTAR INVENTARIO GENERAL + KARDEX GENERAL */
       for (const item of detalles.rows) {
+        const cantidad = Number(item.cantidad);
+
         const invQuery = await connection.query(
-          `SELECT * FROM inventario WHERE id = $1 FOR UPDATE`, [item.id_inventario]
+          `SELECT * FROM inventario WHERE id = $1 FOR UPDATE`,
+          [item.id_inventario]
         );
-        
-        if (!invQuery.rows.length) throw new Error("Producto no encontrado en inventario.");
-        
+
+        if (!invQuery.rows.length) {
+          throw new Error("Producto no encontrado en inventario.");
+        }
+
         const inv = invQuery.rows[0];
-        const nuevoStock = Number(inv.existencia_general) - Number(item.cantidad);
+
+        const existenciaInicial = Number(inv.existencia_general);
+        const costo = Number(inv.costo_unitario);
+        const precio = Number(item.precio_unitario_final);
+
+        const nuevoStock = existenciaInicial - cantidad;
 
         await connection.query(
           `UPDATE inventario SET existencia_general = $1 WHERE id = $2`,
           [nuevoStock, inv.id]
         );
 
-        // Kardex General: Se usan las columnas de la nueva estructura de ventas
         await connection.query(
-          `INSERT INTO kardexg (id_producto, fecha, existencia_inicial, entrada, salida, existencia_final, costo, precio, detalle, documento, tipo)
+          `INSERT INTO kardexg
+          (id_producto, fecha, existencia_inicial, entrada, salida, existencia_final, costo, precio, detalle, documento, tipo)
           VALUES ($1, NOW(), $2, 0, $3, $4, $5, $6, $7, $8, 'VENTA')`,
-          [inv.id_producto, inv.existencia_general, item.cantidad, nuevoStock, inv.costo_unitario, item.precio_unitario_final, `Venta Factura: ${venta.nro_factura}`, venta.nro_factura]
+          [
+            inv.id_producto,
+            existenciaInicial,
+            cantidad,
+            nuevoStock,
+            costo,
+            precio,
+            `Venta Factura: ${venta.nro_factura}`,
+            venta.nro_factura
+          ]
         );
       }
 
       /* 5️⃣ DESCONTAR LOTES + DEPÓSITO + KARDEX DEPÓSITO */
       for (const lote of lotes.rows) {
-        // Descontar del lote
+        const cantidad = Number(lote.cantidad_pedida);
+
+        /* descontar lote */
         await connection.query(
           `UPDATE lotes SET cantidad = cantidad - $1 WHERE id = $2`,
-          [lote.cantidad_pedida, lote.id_lote]
+          [cantidad, lote.id_lote]
         );
 
-        // Descontar de edeposito
+        /* descontar deposito */
         const depQuery = await connection.query(
-          `SELECT existencia_deposito FROM edeposito WHERE id_producto=$1 AND id_deposito=$2 FOR UPDATE`,
+          `SELECT existencia_deposito
+          FROM edeposito
+          WHERE id_producto = $1 AND id_deposito = $2
+          FOR UPDATE`,
           [lote.id_producto, lote.id_deposito]
         );
 
         if (depQuery.rows.length > 0) {
-          const existenciaInicial = depQuery.rows[0].existencia_deposito;
-          const existenciaFinal = existenciaInicial - lote.cantidad_pedida;
+          const existenciaInicial = Number(depQuery.rows[0].existencia_deposito);
+          const existenciaFinal = existenciaInicial - cantidad;
 
           await connection.query(
-            `UPDATE edeposito SET existencia_deposito = $1 WHERE id_producto=$2 AND id_deposito=$3`,
+            `UPDATE edeposito
+            SET existencia_deposito = $1
+            WHERE id_producto = $2 AND id_deposito = $3`,
             [existenciaFinal, lote.id_producto, lote.id_deposito]
           );
 
-          // Kardex Almacén
           await connection.query(
-            `INSERT INTO kardexdep (id_producto, id_deposito, fecha, existencia_inicial, entrada, salida, existencia_final, costo, precio, detalle, documento, tipo)
+            `INSERT INTO kardexdep
+            (id_producto, id_deposito, fecha, existencia_inicial, entrada, salida, existencia_final, costo, precio, detalle, documento, tipo)
             VALUES ($1, $2, NOW(), $3, 0, $4, $5, 0, 0, $6, $7, 'VENTA')`,
-            [lote.id_producto, lote.id_deposito, existenciaInicial, lote.cantidad_pedida, existenciaFinal, `Venta Factura: ${venta.nro_factura}`, venta.nro_factura]
+            [
+              lote.id_producto,
+              lote.id_deposito,
+              existenciaInicial,
+              cantidad,
+              existenciaFinal,
+              `Venta Factura: ${venta.nro_factura}`,
+              venta.nro_factura
+            ]
           );
         }
       }
@@ -742,6 +784,7 @@ static async getSaleById(id) {
 
     } catch (error) {
       if (connection) await connection.query("ROLLBACK");
+
       return {
         status: false,
         code: 500,

@@ -1,0 +1,90 @@
+// controllers/Budgets.controller.js
+import { BudgetsModel } from "../models/budgets.model.js";
+
+export const controller = {};
+
+/* ================= Budgets ================= */
+
+// Obtener todos los presupuestos
+controller.getAllBudgets = async (req, res) => {
+  try {
+    const result = await BudgetsModel.getAllBudgets();
+    return res.status(result.code).json(result);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+// Obtener presupuesto por ID
+controller.getBudgetById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id)
+      return res.status(400).json({ error: "Budget id required" });
+
+    const result = await BudgetsModel.getBudgetById(id);
+    return res.status(result.code).json(result);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+// Crear presupuesto
+controller.createBudget = async (req, res) => {
+  try {
+    const data = req.body;
+
+    if (!data.nombre || !data.direccion)
+      return res.status(400).json({
+        error: "nombre y direccion son obligatorios",
+      });
+
+    const result = await BudgetsModel.createBudget(data);
+    return res.status(result.code).json(result);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+// Actualizar presupuesto
+controller.updateBudget = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const data = req.body;
+
+    if (!id)
+      return res.status(400).json({
+        error: "El id del budget es requerido",
+      });
+
+    console.log(data);
+
+    if (Object.keys(data).length === 0)
+      return res.status(400).json({
+        error: "No data to update",
+      });
+
+    const result = await BudgetsModel.updateBudget(id, data);
+    return res.status(result.code).json(result);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+// Eliminar (desactivar) presupuesto
+controller.deleteBudget = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id)
+      return res.status(400).json({
+        error: "Budget id required",
+      });
+
+    const result = await BudgetsModel.deleteBudget(id);
+    return res.status(result.code).json(result);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};

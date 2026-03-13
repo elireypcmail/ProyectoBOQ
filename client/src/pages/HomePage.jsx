@@ -17,6 +17,7 @@ import ListOffices      from "../components/Entities/ListOffices"
 import ListDoctors      from "../components/Patients/ListDoctors"
 import ListTypesDoctor  from "../components/Patients/ListTypesDoctor"
 import ListClinics      from "../components/Clinics/ListClinics"
+import ListBudgets      from "../components/Budegts/ListBudgets"
 
 import { EntityProvider } from "../context/EntityContext"
 import { Menu, X } from "lucide-react"
@@ -103,6 +104,7 @@ export default function HomePage() {
             {activeComponent === "sellers" && <ListSellers />}
             {activeComponent === "sales" && <ListSales />}
             {activeComponent === "clinics" && <ListClinics />}
+            {activeComponent === "budgets" && <ListBudgets />}
           </section>
         </main>
 
