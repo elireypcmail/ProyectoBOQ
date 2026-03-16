@@ -112,7 +112,7 @@ const ListTypesDoctor = () => {
         <table className="orders-table">
           <thead>
             <tr>
-              <th className="hide-mobile">ID</th>
+              {/* <th className="hide-mobile">ID</th> */}
               <th>Nombre</th>
               <th className="center">Acciones</th>
             </tr>
@@ -120,7 +120,7 @@ const ListTypesDoctor = () => {
           <tbody>
             {currentTipos.length > 0 ? currentTipos.map(tipo => (
               <tr key={tipo.id}>
-                <td className="id hide-mobile">#{tipo.id}</td>
+                {/* <td className="id hide-mobile">#{tipo.id}</td> */}
                 <td>{tipo.nombre}</td>
                 <td className="center">
                   <button className="icon-btn" onClick={() => { setSelectedTipo(tipo); setIsDetailsModalOpen(true); }}>

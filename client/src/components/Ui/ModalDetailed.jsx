@@ -199,6 +199,13 @@ const ModalDetailed = ({
                     <strong>{formatCurrency(product.precio_venta)}</strong>
                   </div>
                 </div>
+                <div className="pdm-stat-card finance">
+                  <div className="pdm-stat-icon"><TrendingUp size={18} /></div>
+                  <div className="pdm-stat-content">
+                    <small>Margen de Ganancia</small>
+                    <strong>{formatCurrency(product.margen_ganancia)}</strong>
+                  </div>
+                </div>
               </div>
             </div>
           )}

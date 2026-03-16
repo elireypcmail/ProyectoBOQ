@@ -47,11 +47,13 @@
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
+    flex-shrink: 0;
+    padding: 0;
 }
 
-.spm-btn-close:hover {
-    background: #fee2e2;
-    color: #ef4444;
+.spm-btn-close svg {
+    display: block;
+    color: inherit;
 }
 
 /* Buscador */

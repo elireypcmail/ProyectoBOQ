@@ -94,7 +94,7 @@ const ListPurchases = () => {
         <table className="orders-table">
           <thead>
             <tr>
-              <th>ID</th>
+              {/* <th>ID</th> */}
               <th>Factura</th>
               <th>Proveedor</th>
               <th className="right">Total</th>
@@ -105,11 +105,11 @@ const ListPurchases = () => {
             {filteredPurchases.length > 0 ? (
               filteredPurchases.map((p) => (
                 <tr key={p.id}>
-                  <td className="id">#{p.id}</td>
+                  {/* <td className="id">#{p.id}</td> */}
                   <td className="bold">{p.nro_factura}</td>
                   <td>{p.proveedor}</td>
                   <td className="right bold">
-                    $ {formatCurrency(p.total)}
+                    {formatCurrency(p.total)}
                   </td>
                   <td className="center">
                     <button 

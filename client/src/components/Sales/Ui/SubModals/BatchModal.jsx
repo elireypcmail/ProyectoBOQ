@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useMemo } from "react";
-import Select from "react-select";
-import { X, Plus, Calendar, Trash2, Package, Save, Info, Edit3, Hash } from "lucide-react";
-import { useProducts } from "../../../../context/ProductsContext";
-import "../../../../styles/ui/subModals/BatchModal.css";
+import React, { useState, useEffect, useMemo } from "react"
+import Select from "react-select"
+import { X, Plus, Calendar, Trash2, Package, Save, Edit3, Hash } from "lucide-react"
+import { useProducts } from "../../../../context/ProductsContext"
+import "../../../../styles/ui/subModals/BatchModal.css"
 
 const BatchModal = ({ product, onClose, items = [], setItems }) => {
-  const { lotes, getAllLotesByProd } = useProducts();
-  const [isLoading, setIsLoading] = useState(true);
-  const [editingId, setEditingId] = useState(null);
+  const { lotes, getAllLotesByProd } = useProducts()
+  const [isLoading, setIsLoading] = useState(true)
+  const [editingId, setEditingId] = useState(null)
 
   const [formData, setFormData] = useState({
     id_lote: "",
@@ -16,212 +16,141 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
     cantidad: "",
     fecha_vencimiento: "",
     deposito_nombre: ""
-  });
+  })
 
-  console.log("lotes")
   console.log(lotes)
+  console.log(items)
 
-  const getRowId = (l) => l.id_temp || l.id_lote;
+  const getRowId = (l) => l.id_temp || l.id_lote
 
-  // CORREGIDO: Se añadió [product] como dependencia para recargar datos al cambiar producto
   useEffect(() => {
     const loadBatchData = async () => {
-      const productId = product?.id || product?.id_producto;
-      if (productId) {
-        setIsLoading(true);
-        await getAllLotesByProd(productId);
-        setIsLoading(false);
+      const catalogId = product?.id_producto || product?.id
+      if (catalogId) {
+        setIsLoading(true)
+        await getAllLotesByProd(catalogId)
+        setIsLoading(false)
       }
-    };
-    loadBatchData();
-  }, [product]);
+    }
+    loadBatchData()
+  }, [product])
 
-  const currentProductEntry = useMemo(() => {
-    return items.find(item =>
-      (item.id && item.id === product?.id) ||
-      (item.id_producto && item.id_producto === product?.id_producto)
-    );
-  }, [items, product]);
+  const displayProduct = useMemo(() => {
+    return items.find(item => item.id === product.id) || product
+  }, [items, product])
 
-  const displayProduct = currentProductEntry || product;
-  const maxQuantity = parseFloat(displayProduct?.cantidad) || 0;
-  const currentBatches = useMemo(() => {
-    return displayProduct?.lotes_compra || displayProduct?.lotes || [];
-  }, [displayProduct]);
+  const parseNum = (val) => {
+    if (!val) return 0
+    if (typeof val === "number") return val
+    return parseFloat(val.toString().replace(/\./g, "").replace(",", ".")) || 0
+  }
 
-  const allocatedQuantity = currentBatches.reduce((acc, b) => acc + parseFloat(b.cantidad || 0), 0);
-  const remainingQuantity = Math.max(0, maxQuantity - allocatedQuantity);
+  const maxQuantity = parseNum(displayProduct?.cantidad)
+  const currentBatches = useMemo(() => displayProduct?.lotes_compra || [], [displayProduct])
+  const allocatedQuantity = currentBatches.reduce((acc, b) => acc + parseNum(b.cantidad), 0)
+  const remainingQuantity = Math.max(0, maxQuantity - allocatedQuantity)
 
   const formatNumber = (num) => {
-    if (num === undefined || num === null) return "0,00";
-    return Number(num).toLocaleString('es-VE', { 
+    return Number(num || 0).toLocaleString('de-DE', { 
       minimumFractionDigits: 2, 
       maximumFractionDigits: 2 
-    });
-  };
+    })
+  }
 
   const batchOptions = useMemo(() => {
-    return (lotes || [])
-      .map(l => ({
-        value: l.id,
-        label: `Lote: ${l.nro_lote} - ${l.deposito_nombre || l.deposito} (Stock: ${formatNumber(l.cantidad)})`,
-        existencia: parseFloat(l.cantidad || 0),
-        nombre_deposito: l.deposito_nombre || l.deposito,
-        id_deposito: l.id_deposito,
-        nro_lote: l.nro_lote,
-        vencimiento: l.fecha_vencimiento || l.fecha_caducidad || ""
-      }));
-  }, [lotes]);
+    return (lotes || []).map(l => ({
+      value: l.id,
+      label: `Lote: ${l.nro_lote} - ${l.deposito_nombre || l.deposito} (Stock: ${formatNumber(l.cantidad)})`,
+      existencia: parseNum(l.cantidad),
+      nombre_deposito: l.deposito_nombre || l.deposito,
+      id_deposito: l.id_deposito,
+      nro_lote: l.nro_lote,
+      vencimiento: l.fecha_vencimiento || l.fecha_caducidad || ""
+    }))
+  }, [lotes])
 
-  // CORREGIDO: Lógica de límites ahora considera lo que ya está en la fila de edición
-  const getBatchLimits = (loteId) => {
-    const selectedBatch = batchOptions.find(b => b.value === loteId);
-    if (!selectedBatch) return { stockDisponible: 0, maxPermitido: 0 };
-
-    const yaAsignadoEnOtrasFilas = currentBatches
-      .filter(l => l.id_lote === loteId && getRowId(l) !== editingId)
-      .reduce((acc, l) => acc + parseFloat(l.cantidad || 0), 0);
-
-    const loteEditando = currentBatches.find(l => getRowId(l) === editingId);
-    const cantidadEnEdicion = loteEditando ? parseFloat(loteEditando.cantidad || 0) : 0;
-
-    // Stock real restante excluyendo la fila actual
-    const stockRealDisponible = selectedBatch.existencia - yaAsignadoEnOtrasFilas;
-    
-    // El límite es el stock libre + lo que ya está en esta fila, limitado por el pendiente global
-    const maxPermitido = Math.min(stockRealDisponible + cantidadEnEdicion, remainingQuantity + cantidadEnEdicion);
-
-    return {
-      stockDisponible: Math.max(0, stockRealDisponible),
-      maxPermitido: Math.max(0, maxPermitido)
-    };
-  };
-
-const handleBatchSelect = (opt) => {
+  const handleBatchSelect = (opt) => {
     if (!opt) {
-      setFormData({ id_lote: "", id_deposito: "", nro_lote: "", cantidad: "", fecha_vencimiento: "", deposito_nombre: "" });
-      return;
+      setFormData({ id_lote: "", id_deposito: "", nro_lote: "", cantidad: "", fecha_vencimiento: "", deposito_nombre: "" })
+      return
     }
-    
-    // Extraer solo YYYY-MM-DD del string completo
-    const fechaLimpia = opt.vencimiento ? opt.vencimiento.substring(0, 10) : "";
-    
-    const { maxPermitido } = getBatchLimits(opt.value);
     setFormData({
       ...formData,
       id_lote: opt.value,
       id_deposito: opt.id_deposito,
       nro_lote: opt.nro_lote,
       deposito_nombre: opt.nombre_deposito,
-      fecha_vencimiento: fechaLimpia, // Aquí está el cambio
-      cantidad: maxPermitido > 0 ? maxPermitido.toString().replace('.', ',') : ""
-    });
-  };
-
-  const handleQuantityChange = (e) => {
-    const val = e.target.value;
-    if (val === "") {
-      setFormData({ ...formData, cantidad: "" });
-      return;
-    }
-
-    const numVal = parseFloat(val.replace(',', '.'));
-    const { maxPermitido } = getBatchLimits(formData.id_lote);
-
-    if (numVal > maxPermitido) {
-      setFormData({ ...formData, cantidad: maxPermitido.toString().replace('.', ',') });
-    } else {
-      setFormData({ ...formData, cantidad: val });
-    }
-  };
+      fecha_vencimiento: opt.vencimiento ? opt.vencimiento.substring(0, 10) : ""
+    })
+  }
 
   const handleAddLoteLocal = (e) => {
-    e.preventDefault();
-    const { id_lote, cantidad } = formData;
-    if (!id_lote || !cantidad) return alert("Datos incompletos.");
+    e.preventDefault()
+    const numCantidad = parseNum(formData.cantidad)
+    if (!formData.id_lote || numCantidad <= 0) return
 
-    const numCantidad = parseFloat(cantidad.replace(',', '.'));
-    const { stockDisponible } = getBatchLimits(id_lote);
-    
-    const loteEditando = currentBatches.find(l => getRowId(l) === editingId);
-    const montoAnterior = loteEditando ? parseFloat(loteEditando.cantidad || 0) : 0;
-
-    if (numCantidad > (stockDisponible + montoAnterior) + 0.0001) {
-      return alert(`Error: Solo quedan ${formatNumber(stockDisponible + montoAnterior)} disponibles en este lote.`);
-    }
-
-    let updatedLotesCompra;
-    const currentIdTemp = editingId || Date.now();
+    let updatedLotesCompra
 
     if (editingId) {
       updatedLotesCompra = currentBatches.map(l => 
-        getRowId(l) == editingId ? { ...formData, cantidad: numCantidad.toString(), id_temp: currentIdTemp } : l
-      );
-      setEditingId(null);
+        getRowId(l) === editingId ? { ...formData, cantidad: numCantidad, id_temp: editingId } : l
+      )
     } else {
-      updatedLotesCompra = [...currentBatches, { ...formData, cantidad: numCantidad.toString(), id_temp: currentIdTemp }];
+      const existingIndex = currentBatches.findIndex(l => l.id_lote === formData.id_lote)
+      if (existingIndex !== -1) {
+        updatedLotesCompra = [...currentBatches]
+        updatedLotesCompra[existingIndex].cantidad += numCantidad
+      } else {
+        updatedLotesCompra = [...currentBatches, { ...formData, cantidad: numCantidad, id_temp: Date.now() }]
+      }
     }
 
-    setItems(items.map(item => {
-      const isSame = (item.id === product.id) || (item.id_producto === product.id_producto);
-      return isSame ? { ...item, lotes_compra: updatedLotesCompra } : item;
-    }));
-
-    setFormData({ id_lote: "", id_deposito: "", nro_lote: "", cantidad: "", fecha_vencimiento: "", deposito_nombre: "" });
-  };
+    setItems(prev => prev.map(item => (item.id === product.id) ? { ...item, lotes_compra: updatedLotesCompra } : item))
+    setEditingId(null)
+    setFormData({ id_lote: "", id_deposito: "", nro_lote: "", cantidad: "", fecha_vencimiento: "", deposito_nombre: "" })
+  }
 
   const removeLoteLocal = (idTarget) => {
-    if (editingId === idTarget) setEditingId(null);
-    setItems(items.map(item => {
-      const isSame = (item.id === product.id) || (item.id_producto === product.id_producto);
-      return isSame ? { 
-        ...item, 
-        lotes_compra: (item.lotes_compra || item.lotes || []).filter(l => getRowId(l) !== idTarget) 
-      } : item;
-    }));
-  };
+    const updated = currentBatches.filter(l => getRowId(l) !== idTarget)
+    setItems(prev => prev.map(item => (item.id === product.id) ? { ...item, lotes_compra: updated } : item))
+  }
 
   const handleEditClick = (lote) => {
-    setEditingId(getRowId(lote));
+    setEditingId(getRowId(lote))
     setFormData({
       id_lote: lote.id_lote,
       id_deposito: lote.id_deposito,
       nro_lote: lote.nro_lote,
-      deposito_nombre: lote.deposito_nombre || lote.deposito,
+      deposito_nombre: lote.deposito_nombre,
       cantidad: lote.cantidad.toString().replace('.', ','),
-      fecha_vencimiento: lote.fecha_vencimiento || lote.fecha_caducidad ,
-    });
-  };
-
-  if (!product) return null;
+      fecha_vencimiento: (lote.fecha_vencimiento || lote.fecha_caducidad || "").substring(0, 10)
+    })
+  }
 
   return (
     <div className="bm-overlay">
       <div className="bm-container">
         <header className="bm-header">
           <div className="bm-header-info">
-            <h3 className="bm-title">Distribución por Lotes</h3>
-            <span className="bm-product-name">{displayProduct.descripcion || displayProduct.producto}</span>
+            <h3 className="bm-title">{editingId ? "Editando Distribución" : "Fraccionar Lotes"}</h3>
+            <span className="bm-product-name">{displayProduct.descripcion || displayProduct.nombre}</span>
           </div>
           <button className="bm-btn-close" onClick={onClose}><X size={24} /></button>
         </header>
 
         <div className="bm-content-grid">
           <div className="bm-card">
-            <h4 className="bm-card-title">
-              {editingId ? <Edit3 size={18} /> : <Plus size={18} />} 
-              {editingId ? "Editar Selección" : "Añadir Lote"}
-            </h4>
+            <h4 className="bm-card-title">{editingId ? <Edit3 size={18} /> : <Plus size={18} />} {editingId ? "Editar Selección" : "Datos del Lote"}</h4>
             
             <div className="bm-form-grid">
-              <div className="bm-form-group" style={{ gridColumn: "1 / -1", marginBottom: "10px" }}>
+              <div className="bm-form-group" style={{ gridColumn: "1 / -1" }}>
                 <label><Hash size={14} /> Lote Disponible</label>
                 <Select
                   options={batchOptions}
-                  placeholder={isLoading ? "Cargando..." : "Busque por Nro. de Lote..."}
                   isLoading={isLoading}
                   value={batchOptions.find(o => o.value === formData.id_lote) || null}
                   onChange={handleBatchSelect}
+                  placeholder="Seleccionar lote..."
                   isClearable
                 />
               </div>
@@ -232,8 +161,7 @@ const handleBatchSelect = (opt) => {
                   className="bm-input"
                   type="text"
                   value={formData.cantidad}
-                  onChange={handleQuantityChange}
-                  placeholder="0,00"
+                  onChange={(e) => setFormData({...formData, cantidad: e.target.value})}
                 />
               </div>
 
@@ -244,25 +172,24 @@ const handleBatchSelect = (opt) => {
                   type="date"
                   value={formData.fecha_vencimiento}
                   readOnly
-                  style={{ background: '#f8fafc', cursor: 'not-allowed' }}
+                  style={{ background: '#f8fafc' }}
                 />
               </div>
             </div>
 
             <button
-              className={`bm-btn-add ${editingId ? 'is-editing' : ''}`}
+              className="bm-btn-add"
               onClick={handleAddLoteLocal}
-              disabled={isLoading || !formData.id_lote || (remainingQuantity <= 0 && !editingId)}
-              style={{ marginTop: "15px" }}
+              disabled={!formData.id_lote || parseNum(formData.cantidad) > (remainingQuantity + (editingId ? parseNum(currentBatches.find(l => getRowId(l) === editingId)?.cantidad) : 0))}
             >
-              {editingId ? "Actualizar Lote" : "Añadir a la Lista"}
+              {editingId ? "Actualizar" : "Asignar"}
             </button>
           </div>
 
           <div className="bm-card">
-            <h4 className="bm-card-title"><Info size={18} /> Resumen</h4>
-            <div className="bm-summary-item bm-summary-info">
-              <span>Requerido:</span> <strong>{formatNumber(maxQuantity)}</strong>
+            <h4 className="bm-card-title">Resumen</h4>
+            <div className="bm-summary-item">
+              <span>Total Requerido:</span> <strong>{formatNumber(maxQuantity)}</strong>
             </div>
             <div className="bm-summary-item bm-summary-success">
               <span>Asignado:</span> <strong>{formatNumber(allocatedQuantity)}</strong>
@@ -280,32 +207,21 @@ const handleBatchSelect = (opt) => {
           <table className="bm-table">
             <thead>
               <tr>
-                <th>Lote / Depósito</th>
+                <th>Lote</th>
+                <th>Depósito</th>
                 <th className="bm-text-center">Cant.</th>
-                <th className="bm-text-center">Vencimiento</th>
                 <th className="bm-text-center">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {currentBatches.map((l) => (
                 <tr key={getRowId(l)} className={editingId === getRowId(l) ? "row-editing" : ""}>
-                  <td>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <strong>{l.nro_lote}</strong>
-                        <small style={{ color: '#64748b' }}>{l.deposito_nombre || l.deposito}</small>
-                    </div>
-                  </td>
-                  <td className="bm-text-center"><strong>{formatNumber(parseFloat(l.cantidad))}</strong></td>
+                  <td><strong>#{l.nro_lote}</strong></td>
+                  <td>{l.deposito_nombre}</td>
+                  <td className="bm-text-center">{formatNumber(l.cantidad)}</td>
                   <td className="bm-text-center">
-                    {(l.fecha_vencimiento || l.fecha_caducidad) 
-                    ? new Date((l.fecha_vencimiento || l.fecha_caducidad) + 'T00:00:00').toLocaleDateString('es-VE')
-                    : ''}
-                  </td>
-                  <td className="bm-text-center">
-                    <div className="bm-actions-container">
-                      <button className="bm-btn-icon bm-btn-edit" onClick={() => handleEditClick(l)} title="Editar"><Edit3 size={16} /></button>
-                      <button className="bm-btn-icon bm-btn-delete" onClick={() => removeLoteLocal(getRowId(l))} title="Eliminar"><Trash2 size={16} /></button>
-                    </div>
+                    <button className="bm-btn-icon" onClick={() => handleEditClick(l)}><Edit3 size={16} /></button>
+                    <button className="bm-btn-icon" onClick={() => removeLoteLocal(getRowId(l))}><Trash2 size={16} /></button>
                   </td>
                 </tr>
               ))}
@@ -317,15 +233,14 @@ const handleBatchSelect = (opt) => {
           <button 
             className="bm-btn-save" 
             onClick={onClose} 
-            disabled={remainingQuantity > 0.0001}
+            disabled={currentBatches.length === 0 || remainingQuantity > 0.0001}
           >
-            <Save size={18} /> 
-            {remainingQuantity > 0.0001 ? "Debe completar la cantidad" : "Confirmar Selección"}
+            <Save size={18} /> Confirmar Distribución
           </button>
         </footer>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default BatchModal;
+export default BatchModal

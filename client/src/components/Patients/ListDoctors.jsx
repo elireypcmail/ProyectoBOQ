@@ -127,7 +127,6 @@ const ListDoctors = () => {
         <table className="orders-table">
           <thead>
             <tr>
-              <th className="hide-mobile">ID</th>
               <th>Nombre</th>
               <th className="hide-mobile">Teléfono</th>
               <th className="hide-mobile">Tipo</th>
@@ -137,7 +136,7 @@ const ListDoctors = () => {
           <tbody>
             {currentMedicos.length > 0 ? currentMedicos.map(medico => (
               <tr key={medico.id}>
-                <td className="id hide-mobile">#{medico.id}</td>
+                {/* <td className="id hide-mobile">#{medico.id}</td> */}
                 <td>{medico.nombre}</td>
                 <td className="hide-mobile">{medico.telefono ? `+${medico.telefono}` : "-"}</td>
                 <td className="hide-mobile">{medico.tipo}</td>

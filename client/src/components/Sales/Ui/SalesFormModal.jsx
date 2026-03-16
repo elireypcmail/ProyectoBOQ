@@ -27,9 +27,6 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
   const [isStep1Valid, setIsStep1Valid] = useState(false)
   const [processedItems, setProcessedItems] = useState([]);
   
-  console.log("editData")
-  console.log(editData)
-
   const initialFormState = {
     nro_factura: "",
     id_paciente: "",
@@ -279,6 +276,7 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
         ...product,
         cantidad: 1,
         precio_venta: product.precio_venta || 0,
+        lotes_compra: []
       },
     ]);
     setIsSearchModalOpen(false);

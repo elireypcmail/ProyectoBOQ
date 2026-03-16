@@ -22,6 +22,7 @@ export class SalesModel {
           v.id,
           v.nro_factura,
           v.estado_venta,
+          v.estatus,
           v.estado_pago,
           
           -- Datos relacionados
@@ -45,7 +46,6 @@ export class SalesModel {
         LEFT JOIN vendedores vend ON vend.id = v.id_vendedor
         LEFT JOIN clinicas c ON c.id = v.id_clinica
         LEFT JOIN seguros s ON s.id = v.id_seguro
-        WHERE v.estatus = TRUE
         ORDER BY v.fecha_creacion DESC, v.id DESC
       `);
 
@@ -69,146 +69,147 @@ export class SalesModel {
 
   /* ================= DETALLE ================= */
 
-static async getSaleById(id) {
-  let connection;
+  static async getSaleById(id) {
+    let connection;
 
-  try {
-    connection = await pool.connect();
+    try {
+      connection = await pool.connect();
 
-    const result = await connection.query(`
-      SELECT 
-        v.id,
-        v.nro_factura,
-        v.estado_venta,
-        v.estado_pago,
-        v.notas_abono,
+      const result = await connection.query(`
+        SELECT 
+          v.id,
+          v.nro_factura,
+          v.estado_venta,
+          v.estado_pago,
+          v.estatus,
+          v.notas_abono,
 
-        v.id_paciente,
-        v.id_clinica,
-        v.id_vendedor,
-        v.id_oficina,
-        v.id_seguro,
-        v.id_presupuesto,
-        v.id_deposito,
+          v.id_paciente,
+          v.id_clinica,
+          v.id_vendedor,
+          v.id_oficina,
+          v.id_seguro,
+          v.id_presupuesto,
+          v.id_deposito,
 
-        v.subtotal1,
-        v.descuentoPor,
-        v.descuento,
-        v.subtotal2,
-        v.impuesto,
-        v.total,
-        v.abonado,
-        v.fecha_creacion,
+          v.subtotal1,
+          v.descuentoPor,
+          v.descuento,
+          v.subtotal2,
+          v.impuesto,
+          v.total,
+          v.abonado,
+          v.fecha_creacion,
 
-        pa.nombre AS paciente_nombre,
-        cl.nombre AS clinica_nombre,
-        ve.nombre AS vendedor_nombre,
-        ofi.nombre AS oficina_nombre,
-        se.nombre AS seguro_nombre,
-        pre.nro_presupuesto,
-        d.nombre AS deposito_nombre,
+          pa.nombre AS paciente_nombre,
+          cl.nombre AS clinica_nombre,
+          ve.nombre AS vendedor_nombre,
+          ofi.nombre AS oficina_nombre,
+          se.nombre AS seguro_nombre,
+          pre.nro_presupuesto,
+          d.nombre AS deposito_nombre,
 
-        /* PERSONAL ASIGNADO */
-        COALESCE(
-          (
-            SELECT json_agg(
-              json_build_object(
-                'id_personal', p.id,
-                'id_medico', p.id_medico,
-                'medico', m.nombre,
-                'id_tipo_medico', tm.id,
-                'tipo_medico', tm.nombre
-              )
-            )
-            FROM venta_personal vp
-            INNER JOIN personal p ON p.id = vp.id_personal
-            INNER JOIN medicos m ON m.id = p.id_medico
-            LEFT JOIN tipoMedicos tm ON tm.id = m.id_tipoMedico
-            WHERE vp.id_venta = v.id
-          ),
-          '[]'::json
-        ) AS personal,
-
-        /* ITEMS DE VENTA */
-        COALESCE(
-          (
-            SELECT json_agg(
-              json_build_object(
-                'id_detalle', vd.id,
-                'id_inventario', vd.id_inventario,
-                'id', i.id_producto,
-                'sku', i.sku,
-                'producto', vd.descripcion,
-                'cantidad', vd.cantidad,
-                'precio_venta', vd.precio_venta,
-                'descuento1', vd.descuento1,
-                'descuento_por1', vd.descuento_por1,
-                'descuento2', vd.descuento2,
-                'descuento_por2', vd.descuento_por2,
-                'precio_unitario_final', vd.precio_unitario_final,
-
-                'lotes',
-                COALESCE(
-                  (
-                    SELECT json_agg(
-                      json_build_object(
-                        'id_lote', l.id,
-                        'nro_lote', l.nro_lote,
-                        'id_deposito', l.id_deposito,
-                        'deposito', dp.nombre,
-                        'cantidad', vdl.cantidad,
-                        'fecha_caducidad', vdl.fecha_caducidad
-                      )
-                    )
-                    FROM venta_detalle_lote vdl
-                    INNER JOIN lotes l ON l.id = vdl.id_lote
-                    LEFT JOIN depositos dp ON dp.id = l.id_deposito
-                    WHERE vdl.id_detalle = vd.id
-                  ),
-                  '[]'::json
+          /* PERSONAL ASIGNADO */
+          COALESCE(
+            (
+              SELECT json_agg(
+                json_build_object(
+                  'id_personal', p.id,
+                  'id_medico', p.id_medico,
+                  'medico', m.nombre,
+                  'id_tipo_medico', tm.id,
+                  'tipo_medico', tm.nombre
                 )
               )
-            )
-            FROM ventas_detalle vd
-            INNER JOIN inventario i ON i.id = vd.id_inventario
-            WHERE vd.id_venta = v.id
-          ),
-          '[]'::json
-        ) AS items
+              FROM venta_personal vp
+              INNER JOIN personal p ON p.id = vp.id_personal
+              INNER JOIN medicos m ON m.id = p.id_medico
+              LEFT JOIN tipoMedicos tm ON tm.id = m.id_tipoMedico
+              WHERE vp.id_venta = v.id
+            ),
+            '[]'::json
+          ) AS personal,
 
-      FROM ventas v
-      LEFT JOIN pacientes pa ON pa.id = v.id_paciente
-      LEFT JOIN clinicas cl ON cl.id = v.id_clinica
-      LEFT JOIN vendedores ve ON ve.id = v.id_vendedor
-      LEFT JOIN oficinas ofi ON ofi.id = v.id_oficina
-      LEFT JOIN seguros se ON se.id = v.id_seguro
-      LEFT JOIN presupuestos pre ON pre.id = v.id_presupuesto
-      LEFT JOIN depositos d ON d.id = v.id_deposito
+          /* ITEMS DE VENTA */
+          COALESCE(
+            (
+              SELECT json_agg(
+                json_build_object(
+                  'id_detalle', vd.id,
+                  'id_inventario', vd.id_inventario,
+                  'id', i.id_producto,
+                  'sku', i.sku,
+                  'producto', vd.descripcion,
+                  'cantidad', vd.cantidad,
+                  'precio_venta', vd.precio_venta,
+                  'descuento1', vd.descuento1,
+                  'descuento_por1', vd.descuento_por1,
+                  'descuento2', vd.descuento2,
+                  'descuento_por2', vd.descuento_por2,
+                  'precio_unitario_final', vd.precio_unitario_final,
 
-      WHERE v.id = $1
-    `, [id]);
+                  'lotes',
+                  COALESCE(
+                    (
+                      SELECT json_agg(
+                        json_build_object(
+                          'id_lote', l.id,
+                          'nro_lote', l.nro_lote,
+                          'id_deposito', l.id_deposito,
+                          'deposito_nombre', dp.nombre,
+                          'cantidad', vdl.cantidad,
+                          'fecha_vencimiento', vdl.fecha_caducidad
+                        )
+                      )
+                      FROM venta_detalle_lote vdl
+                      INNER JOIN lotes l ON l.id = vdl.id_lote
+                      LEFT JOIN depositos dp ON dp.id = l.id_deposito
+                      WHERE vdl.id_detalle = vd.id
+                    ),
+                    '[]'::json
+                  )
+                )
+              )
+              FROM ventas_detalle vd
+              INNER JOIN inventario i ON i.id = vd.id_inventario
+              WHERE vd.id_venta = v.id
+            ),
+            '[]'::json
+          ) AS items
 
-    if (!result.rows.length) {
-      return { status: false, code: 404, msg: "Venta no encontrada" };
+        FROM ventas v
+        LEFT JOIN pacientes pa ON pa.id = v.id_paciente
+        LEFT JOIN clinicas cl ON cl.id = v.id_clinica
+        LEFT JOIN vendedores ve ON ve.id = v.id_vendedor
+        LEFT JOIN oficinas ofi ON ofi.id = v.id_oficina
+        LEFT JOIN seguros se ON se.id = v.id_seguro
+        LEFT JOIN presupuestos pre ON pre.id = v.id_presupuesto
+        LEFT JOIN depositos d ON d.id = v.id_deposito
+
+        WHERE v.id = $1
+      `, [id]);
+
+      if (!result.rows.length) {
+        return { status: false, code: 404, msg: "Venta no encontrada" };
+      }
+
+      return {
+        status: true,
+        code: 200,
+        data: result.rows[0]
+      };
+
+    } catch (error) {
+      return {
+        status: false,
+        code: 500,
+        msg: "Error al obtener venta",
+        error: error.message
+      };
+    } finally {
+      if (connection) connection.release();
     }
-
-    return {
-      status: true,
-      code: 200,
-      data: result.rows[0]
-    };
-
-  } catch (error) {
-    return {
-      status: false,
-      code: 500,
-      msg: "Error al obtener venta",
-      error: error.message
-    };
-  } finally {
-    if (connection) connection.release();
   }
-}
 
   /* ================= CREAR VENTA ================= */
 
@@ -378,28 +379,6 @@ static async getSaleById(id) {
                 lote.fecha_vencimiento
               ]
             );
-
-            /* ACTUALIZAR LOTE */
-            await connection.query(
-              `UPDATE lotes
-              SET cantidad = cantidad - $1
-              WHERE id = $2`,
-              [parseMonto(lote.cantidad), lote.id_lote]
-            );
-
-            /* ACTUALIZAR STOCK DEPOSITO */
-            await connection.query(
-              `UPDATE edeposito
-              SET existencia_deposito = existencia_deposito - $1
-              WHERE id_deposito = $2
-              AND id_producto = $3`,
-              [
-                parseMonto(lote.cantidad),
-                lote.id_deposito || id_deposito,
-                item.id_producto
-              ]
-            );
-
           }
 
         }
@@ -572,6 +551,8 @@ static async getSaleById(id) {
         /* 5️⃣ LOTES */
         if (item.lotes && Array.isArray(item.lotes)) {
           for (const lote of item.lotes) {
+            console.log(lote)
+
             await connection.query(
               `INSERT INTO venta_detalle_lote
               (id_detalle, id_lote, cantidad, fecha_caducidad)
@@ -797,61 +778,119 @@ static async getSaleById(id) {
 
   /* ================= ELIMINAR ================= */
 
-  static async deleteSale(id) {
+  // static async deleteSale(id) {
 
+  //   let connection;
+
+  //   try {
+
+  //     connection = await pool.connect();
+  //     await connection.query("BEGIN");
+
+  //     /* 1️⃣ Verificar venta */
+
+  //     const sale = await connection.query(
+  //       `SELECT id FROM ventas WHERE id = $1`,
+  //       [id]
+  //     );
+
+  //     if (!sale.rowCount) {
+
+  //       await connection.query("ROLLBACK");
+
+  //       return {
+  //         status: false,
+  //         code: 404,
+  //         msg: "Venta no encontrada"
+  //       };
+
+  //     }
+
+  //     /* 2️⃣ Eliminar lotes */
+
+  //     await connection.query(`
+  //       DELETE FROM venta_detalle_lote
+  //       WHERE id_detalle IN (
+  //         SELECT id FROM ventas_detalle WHERE id_venta = $1
+  //       )
+  //     `, [id]);
+
+  //     /* 3️⃣ Eliminar detalle */
+
+  //     await connection.query(
+  //       `DELETE FROM ventas_detalle WHERE id_venta = $1`,
+  //       [id]
+  //     );
+
+  //     /* 4️⃣ Eliminar personal asignado */
+
+  //     await connection.query(
+  //       `DELETE FROM venta_personal WHERE id_venta = $1`,
+  //       [id]
+  //     );
+
+  //     /* 5️⃣ Eliminar venta */
+
+  //     await connection.query(
+  //       `DELETE FROM ventas WHERE id = $1`,
+  //       [id]
+  //     );
+
+  //     await connection.query("COMMIT");
+
+  //     return {
+  //       status: true,
+  //       code: 200,
+  //       msg: "Venta eliminada correctamente"
+  //     };
+
+  //   } catch (error) {
+
+  //     if (connection) await connection.query("ROLLBACK");
+
+  //     return {
+  //       status: false,
+  //       code: 500,
+  //       msg: "Error al eliminar venta",
+  //       error: error.message
+  //     };
+
+  //   } finally {
+
+  //     if (connection) connection.release();
+
+  //   }
+
+  // }
+
+  static async deleteSale(id) {
     let connection;
 
     try {
-
       connection = await pool.connect();
       await connection.query("BEGIN");
 
-      /* 1️⃣ Verificar venta */
-
+      /* 1️⃣ Verificar si la venta existe */
       const sale = await connection.query(
         `SELECT id FROM ventas WHERE id = $1`,
         [id]
       );
 
       if (!sale.rowCount) {
-
         await connection.query("ROLLBACK");
-
         return {
           status: false,
           code: 404,
           msg: "Venta no encontrada"
         };
-
       }
 
-      /* 2️⃣ Eliminar lotes */
-
-      await connection.query(`
-        DELETE FROM venta_detalle_lote
-        WHERE id_detalle IN (
-          SELECT id FROM ventas_detalle WHERE id_venta = $1
-        )
-      `, [id]);
-
-      /* 3️⃣ Eliminar detalle */
-
+      /* 2️⃣ Cambiar estatus a false (Anulación)
+        No eliminamos los registros de ventas_detalle ni de personal 
+        para que la información siga siendo visible en el sistema.
+      */
       await connection.query(
-        `DELETE FROM ventas_detalle WHERE id_venta = $1`,
-        [id]
-      );
-
-      /* 4️⃣ Eliminar personal asignado */
-
-      await connection.query(
-        `DELETE FROM venta_personal WHERE id_venta = $1`,
-        [id]
-      );
-
-      /* 5️⃣ Eliminar venta */
-
-      await connection.query(
-        `DELETE FROM ventas WHERE id = $1`,
+        `UPDATE ventas SET estatus = false WHERE id = $1`,
         [id]
       );
 
@@ -860,26 +899,22 @@ static async getSaleById(id) {
       return {
         status: true,
         code: 200,
-        msg: "Venta eliminada correctamente"
+        msg: "Venta marcada como cancelada correctamente"
       };
 
     } catch (error) {
-
       if (connection) await connection.query("ROLLBACK");
 
       return {
         status: false,
         code: 500,
-        msg: "Error al eliminar venta",
+        msg: "Error al cancelar la venta",
         error: error.message
       };
 
     } finally {
-
       if (connection) connection.release();
-
     }
-
   }
 
 }

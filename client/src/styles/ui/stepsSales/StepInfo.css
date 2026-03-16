@@ -1,255 +1,572 @@
 /* ========================================================= */
-/* STEP INFO COMPONENT - MODERN UI                           */
+/* ESTILOS ESPECÍFICOS PARA EL PASO DE INFORMACIÓN           */
 /* ========================================================= */
 
-.si-container {
-  background: #ffffff;
-  border-radius: 20px;
-  padding: 30px;
-  border: 1px solid #f8fafc;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
-  animation: si-fade-in 0.4s ease-out;
-}
-
-.si-header {
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.si-title {
-  font-size: 1.4rem;
-  font-weight: 800;
-  color: #1a202c;
-  margin: 0;
-}
-
-.si-subtitle {
-  font-size: 0.9rem;
-  color: #718096;
-  margin-top: 4px;
-}
-
-/* Layout Grid */
-.si-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-}
-
-.si-column {
+.supplier-select-container {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
+  gap: 8px;
 }
 
-/* --------------------------------------------------------- */
-/* MODERN CARDS                                              */
-/* --------------------------------------------------------- */
+.supplier-select-wrapper {
+  flex: 1;
+}
 
-.si-card {
-  background: #ffffff;
+.btn-add-supplier {
+  padding: 0 12px;
+  border-radius: 8px;
   border: 1px solid #e2e8f0;
-  padding: 24px;
-  border-radius: 16px;
-  transition: box-shadow 0.3s ease, transform 0.2s ease;
-}
-
-.si-card:hover {
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
-}
-
-.si-team-card {
-  border: 1px solid #fee2e2;
-  background: #fffcfc;
-}
-
-.si-card-title {
-  font-size: 0.85rem;
-  color: #64748b;
-  margin-top: 0;
-  margin-bottom: 16px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 800;
+  background: #fff;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  transition: all .2s;
 }
 
-/* Grupos de entrada */
-.si-field-group {
+.btn-add-supplier:hover {
+  background-color: #f8fafc;
+}
+
+/* ========================================================= */
+/* MODAL CONTROLS                                            */
+/* ========================================================= */
+
+.modal-content-body {
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.si-field-group:last-child {
-  margin-bottom: 0;
-}
-
-.si-label {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #475569;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.si-row-compact {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-/* --------------------------------------------------------- */
-/* ESTILOS DEL DROPDOWN (React Select Options)               */
-/* --------------------------------------------------------- */
-
-.si-option-info {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.3;
-  padding: 4px 0;
-}
-
-.si-option-label {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #2d3748;
-}
-
-.si-option-sublabel {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: #ec3137;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-}
-
-/* --------------------------------------------------------- */
-/* CAJA Y LISTA DE SELECCIONADOS                             */
-/* --------------------------------------------------------- */
-
-.si-selected-list {
-  margin-top: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-height: 240px;
-  overflow-y: auto;
-  padding-right: 6px;
-}
-
-/* Scrollbar personalizado */
-.si-selected-list::-webkit-scrollbar {
-  width: 6px;
-}
-.si-selected-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-.si-selected-list::-webkit-scrollbar-thumb {
-  background-color: #cbd5e1;
-  border-radius: 10px;
-}
-
-/* Tarjeta de Miembro */
-.si-member-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: white;
-  padding: 12px 16px;
-  border-radius: 12px;
-  border: 1px solid #f1f5f9;
-  transition: all 0.2s ease;
-}
-
-.si-member-card:hover {
-  transform: translateX(4px);
-  border-color: #ec3137;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04);
-}
-
-.si-member-info {
-  display: flex;
-  align-items: center;
   gap: 12px;
 }
 
-.si-member-avatar {
-  width: 36px;
-  height: 36px;
-  background: #fee2e2;
-  color: #ec3137;
+.modal-input-custom {
+  padding: 11px 12px;
+  border-radius: 10px;
+  border: 1px solid #e5e5e5;
+  font-size: .9rem;
+  transition: all .2s;
+}
+
+.modal-input-custom:focus{
+  border-color:#ec3137;
+  box-shadow:0 0 0 3px rgba(236,49,55,.1);
+}
+
+.modal-footer-custom {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* ========================================================= */
+/* OVERLAY + CARD                                            */
+/* ========================================================= */
+
+.pform-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.35);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  z-index: 1000;
+  padding: 40px 20px;
+  overflow-y: auto;
+}
+
+.pform-card {
+  background: #fff;
+  width: 80vw;
+  max-height: 90vh;
+  border-radius: 18px;
+  box-shadow: 0 20px 45px rgba(0,0,0,.15);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: pform-slideIn .35s ease;
+}
+
+/* ========================================================= */
+/* HEADER                                                    */
+/* ========================================================= */
+
+.pform-header-main {
+  padding: 30px 40px 10px;
+  position: relative;
+}
+
+.pform-header-main h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #111;
+  margin: 0;
+}
+
+.pform-header-main p {
+  color: #777;
+  font-size: 1rem;
+  margin-top: 4px;
+}
+
+.pform-close-x {
+  position: absolute;
+  top: 30px;
+  right: 40px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #999;
+  transition: .2s;
+}
+
+.pform-close-x:hover {
+  color: #333;
+}
+
+/* ========================================================= */
+/* STEPPER                                                   */
+/* ========================================================= */
+
+.pform-stepper-container {
+  margin: 20px 40px;
+  padding: 22px;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.pform-stepper-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.step-badge {
+  background: #ec3137;
+  color: #fff;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  font-size: .85rem;
+  font-weight: bold;
 }
 
-.si-member-text {
+.step-percentage {
+  margin-left: auto;
+  color: #ec3137;
+  font-weight: 600;
+  font-size: .85rem;
+}
+
+.pform-progress-bar {
+  height: 6px;
+  background: #eee;
+  border-radius: 3px;
+  margin-bottom: 14px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #ec3137;
+  border-radius: 3px;
+  transition: width .35s ease;
+}
+
+.pform-step-names {
+  display: flex;
+  justify-content: space-between;
+}
+
+.pform-step-names span {
+  font-size: .75rem;
+  color: #999;
+}
+
+.pform-step-names span.active {
+  color: #ec3137;
+  font-weight: 600;
+  border-bottom: 2px solid #ec3137;
+}
+
+/* ========================================================= */
+/* BODY                                                      */
+/* ========================================================= */
+
+.pform-body {
+  padding: 0 40px 30px;
+}
+
+/* ========================================================= */
+/* SECTION CARD                                              */
+/* ========================================================= */
+
+.pform-section-white {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 14px;
+  padding: 32px;
+  box-shadow: 0 4px 10px rgba(0,0,0,.03);
+}
+
+/* ========================================================= */
+/* SECTION HEADER                                            */
+/* ========================================================= */
+
+.section-header {
   display: flex;
   flex-direction: column;
-  line-height: 1.25;
+  gap: 4px;
+  margin-bottom: 28px;
 }
 
-.si-member-name {
-  font-size: 0.88rem;
+.section-header h3 {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #111;
+}
+
+.section-header p {
+  font-size: .9rem;
+  color: #777;
+}
+
+/* ========================================================= */
+/* GRID                                                      */
+/* ========================================================= */
+
+.pform-form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 22px;
+}
+
+/* Using a 4-column base gives precise control */
+.col-span-1 { grid-column: span 1; } /* 25% width */
+.col-span-2 { grid-column: span 2; } /* 50% width */
+.col-span-3 { grid-column: span 3; } /* 75% width */
+.col-span-4 { grid-column: span 4; } /* 100% width */
+
+/* ========================================================= */
+/* FORM GROUP                                                */
+/* ========================================================= */
+
+.pform-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.pform-group label {
+  font-size: .75rem;
   font-weight: 700;
-  color: #1e293b;
+  letter-spacing: .4px;
+  color: #444;
 }
 
-.si-member-type {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #ef4444;
-  text-transform: uppercase;
-  letter-spacing: 0.2px;
+.required {
+  color: #ec3137;
 }
 
-/* Botón eliminar */
-.si-member-remove {
-  background: transparent;
-  border: none;
-  color: #94a3b8;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 8px;
+/* ========================================================= */
+/* INPUTS                                                    */
+/* ========================================================= */
+
+.pform-group input,
+.pform-group select {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #e6e6e6;
+  font-size: .9rem;
+  background: #fff;
+  transition: all .2s;
+}
+
+.pform-group input:focus{
+  border-color:#ec3137;
+  box-shadow:0 0 0 3px rgba(236,49,55,.1);
+}
+
+.input-disabled {
+  background-color: #f7f7f7 !important;
+  color: #999;
+  cursor: not-allowed;
+}
+
+/* ========================================================= */
+/* ICON INPUT                                                */
+/* ========================================================= */
+
+.input-with-icon {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
 }
 
-.si-member-remove:hover {
+.input-with-icon svg {
+  position: absolute;
+  left: 12px;
+  color: #999;
+}
+
+.input-with-icon input {
+  padding-left: 38px;
+}
+
+/* ========================================================= */
+/* MEDICAL TEAM                                              */
+/* ========================================================= */
+
+.si-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.si-btn-add-inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .8rem;
+  font-weight: 600;
+  color: #ec3137;
+  border: 1px solid #ffd6d6;
   background: #fff5f5;
-  color: #e53e3e;
-}
-
-.si-empty-state {
-  text-align: center;
-  padding: 24px;
-  color: #94a3b8;
-  font-size: 0.85rem;
-  font-style: italic;
-  background: rgba(255, 255, 255, 0.6);
+  padding: 5px 10px;
   border-radius: 8px;
+  cursor: pointer;
+  transition: .2s;
 }
 
-/* Animaciones y Media Queries */
-@keyframes si-fade-in {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+.si-btn-add-inline:hover {
+  background: #ec3137;
+  color: #fff;
 }
 
-@media (max-width: 900px) {
-  .si-grid {
-    grid-template-columns: 1fr;
+/* ========================================================= */
+/* DOCTOR LIST (CHIPS)                                       */
+/* ========================================================= */
+
+.si-linear-list {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.si-linear-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #e5e5e5;
+  padding: 6px 10px;
+  border-radius: 20px;
+  font-size: .82rem;
+  transition: .2s;
+}
+
+.si-linear-item:hover {
+  border-color: #ec3137;
+}
+
+.si-item-name {
+  font-weight: 600;
+  color: #333;
+}
+
+.si-item-badge {
+  background: #ec3137;
+  color: #fff;
+  margin-left: 10px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  font-size: .68rem;
+}
+
+.si-item-delete {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #999;
+  display: flex;
+  align-items: center;
+}
+
+.si-item-delete:hover {
+  color: #ec3137;
+}
+
+.si-empty-text {
+  font-size: .8rem;
+  color: #999;
+}
+
+/* ========================================================= */
+/* FOOTER                                                    */
+/* ========================================================= */
+
+.pform-footer-actions-alt {
+  padding: 24px 40px;
+  background: #fff;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-cancel-flat {
+  padding: 12px 30px;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 8px;
+  font-weight: 600;
+  color: #555;
+  cursor: pointer;
+}
+
+.btn-prev-outline {
+  padding: 12px 25px;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 8px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.btn-next-step {
+  padding: 12px 35px;
+  background-color: #ec3137;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.btn-next-step:hover {
+  background: #d6282f;
+}
+
+.btn-next-step.disabled {
+  background-color: #f2a5a8;
+  cursor: not-allowed;
+}
+
+/* ========================================================= */
+/* SUMMARY PANEL                                             */
+/* ========================================================= */
+
+.pform-final-summary-pane {
+  margin-top: 30px;
+  background: #fff;
+  border: 2px solid #ec3137;
+  border-radius: 12px;
+  padding: 25px;
+  max-width: 420px;
+  margin-left: auto;
+  box-shadow: 0 4px 15px rgba(0,0,0,.05);
+}
+
+.final-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px dashed #eee;
+}
+
+.final-row span:last-child {
+  color: #333;
+  font-weight: 700;
+}
+
+.final-row.total-text span:last-child {
+  color: #ec3137;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+/* ========================================================= */
+/* RESPONSIVE                                                */
+/* ========================================================= */
+
+@media (max-width: 1024px) {
+  /* Prevent inputs from becoming too small on tablets */
+  .col-span-1 { 
+    grid-column: span 2; 
+  }
+  .col-span-3 { 
+    grid-column: span 4; 
+  }
+  /* col-span-2 remains taking up 2 out of 4 columns (50%) */
+}
+
+@media (max-width: 768px) {
+  .pform-overlay {
+    padding: 10px;
+  }
+
+  .pform-body {
+    padding: 0 20px 20px;
+  }
+
+  .pform-form-grid {
+    grid-template-columns: 1fr; /* Switch to a strict single column */
+  }
+
+  /* Force all grid items to span exactly 1 column on mobile */
+  .col-span-1,
+  .col-span-2,
+  .col-span-3,
+  .col-span-4 {
+    grid-column: span 1;
+  }
+
+  .pform-footer-actions-alt {
+    flex-direction: column-reverse;
+    gap: 15px;
+  }
+
+  .nav-buttons {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .btn-cancel-flat,
+  .btn-next-step {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ========================================================= */
+/* ANIMATIONS                                                */
+/* ========================================================= */
+
+@keyframes pform-slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

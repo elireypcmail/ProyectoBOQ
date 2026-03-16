@@ -163,7 +163,7 @@ const StepTotals = ({ totals, setTotals }) => {
             </div>
           </div>
 
-          <div className="ptotals-card ptotals-card-logistics">
+          {/* <div className="ptotals-card ptotals-card-logistics">
             <h4 className="ptotals-card-title">🚚 Impuestos</h4>
             <div className="ptotals-group">
               <label className="ptotals-label">Monto de Impuesto</label>
@@ -176,7 +176,7 @@ const StepTotals = ({ totals, setTotals }) => {
                 className="ptotals-input"
               />
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* COLUMNA DERECHA: RESUMEN DE FACTURA */}
@@ -226,12 +226,12 @@ const StepTotals = ({ totals, setTotals }) => {
               borderTop: '1px solid #f1f5f9', 
               borderBottom: '1px solid #f1f5f9' 
             }}>
-              <div className="ptotals-summary-row" style={{ marginBottom: '12px' }}>
+              {/* <div className="ptotals-summary-row" style={{ marginBottom: '12px' }}>
                 <span>Impuestos</span>
                 <span style={{ color: '#ec3137', fontWeight: '700' }}>
                   + {formatCurrency(impuestos)}
                 </span>
-              </div>
+              </div> */}
 
               <div className="ptotals-summary-row">
                 <span>Abonado</span>
