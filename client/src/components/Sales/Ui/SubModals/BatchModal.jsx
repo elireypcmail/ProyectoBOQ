@@ -18,9 +18,6 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
     deposito_nombre: ""
   })
 
-  console.log(lotes)
-  console.log(items)
-
   const getRowId = (l) => l.id_temp || l.id_lote
 
   useEffect(() => {
@@ -50,12 +47,39 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
   const allocatedQuantity = currentBatches.reduce((acc, b) => acc + parseNum(b.cantidad), 0)
   const remainingQuantity = Math.max(0, maxQuantity - allocatedQuantity)
 
+  // Calcular el límite máximo permitido para el input actual
+  const currentInputLimit = useMemo(() => {
+    const editingQty = editingId 
+      ? parseNum(currentBatches.find(l => getRowId(l) === editingId)?.cantidad) 
+      : 0
+    return remainingQuantity + editingQty
+  }, [remainingQuantity, editingId, currentBatches])
+
   const formatNumber = (num) => {
     return Number(num || 0).toLocaleString('de-DE', { 
       minimumFractionDigits: 2, 
       maximumFractionDigits: 2 
     })
   }
+
+  // Manejador para restringir la escritura
+  const handleQtyChange = (e) => {
+    let val = e.target.value;
+    
+    if (val === "" || val === ",") {
+      setFormData({ ...formData, cantidad: val });
+      return;
+    }
+
+    const numericVal = parseNum(val);
+    
+    // Si lo que intenta escribir supera el máximo pendiente, lo seteamos al máximo
+    if (numericVal > currentInputLimit) {
+      setFormData({ ...formData, cantidad: currentInputLimit.toString().replace(".", ",") });
+    } else {
+      setFormData({ ...formData, cantidad: val });
+    }
+  };
 
   const batchOptions = useMemo(() => {
     return (lotes || []).map(l => ({
@@ -99,7 +123,11 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
       const existingIndex = currentBatches.findIndex(l => l.id_lote === formData.id_lote)
       if (existingIndex !== -1) {
         updatedLotesCompra = [...currentBatches]
-        updatedLotesCompra[existingIndex].cantidad += numCantidad
+        const currentQty = parseNum(updatedLotesCompra[existingIndex].cantidad)
+        updatedLotesCompra[existingIndex] = {
+          ...updatedLotesCompra[existingIndex],
+          cantidad: currentQty + numCantidad
+        }
       } else {
         updatedLotesCompra = [...currentBatches, { ...formData, cantidad: numCantidad, id_temp: Date.now() }]
       }
@@ -152,6 +180,7 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
                   onChange={handleBatchSelect}
                   placeholder="Seleccionar lote..."
                   isClearable
+                  isDisabled={!!editingId}
                 />
               </div>
 
@@ -161,7 +190,8 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
                   className="bm-input"
                   type="text"
                   value={formData.cantidad}
-                  onChange={(e) => setFormData({...formData, cantidad: e.target.value})}
+                  onChange={handleQtyChange}
+                  placeholder={`Máx: ${formatNumber(currentInputLimit)}`}
                 />
               </div>
 
@@ -180,10 +210,18 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
             <button
               className="bm-btn-add"
               onClick={handleAddLoteLocal}
-              disabled={!formData.id_lote || parseNum(formData.cantidad) > (remainingQuantity + (editingId ? parseNum(currentBatches.find(l => getRowId(l) === editingId)?.cantidad) : 0))}
+              disabled={!formData.id_lote || parseNum(formData.cantidad) <= 0}
             >
               {editingId ? "Actualizar" : "Asignar"}
             </button>
+            {editingId && (
+              <button className="bm-btn-cancel" onClick={() => {
+                setEditingId(null);
+                setFormData({ id_lote: "", id_deposito: "", nro_lote: "", cantidad: "", fecha_vencimiento: "", deposito_nombre: "" });
+              }}>
+                Cancelar Edición
+              </button>
+            )}
           </div>
 
           <div className="bm-card">
@@ -220,8 +258,14 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
                   <td>{l.deposito_nombre}</td>
                   <td className="bm-text-center">{formatNumber(l.cantidad)}</td>
                   <td className="bm-text-center">
-                    <button className="bm-btn-icon" onClick={() => handleEditClick(l)}><Edit3 size={16} /></button>
-                    <button className="bm-btn-icon" onClick={() => removeLoteLocal(getRowId(l))}><Trash2 size={16} /></button>
+                    <div className="bm-actions-flex">
+                      <button className="bm-btn-icon" title="Editar" onClick={() => handleEditClick(l)}>
+                        <Edit3 size={16} />
+                      </button>
+                      <button className="bm-btn-delete" title="Eliminar" onClick={() => removeLoteLocal(getRowId(l))}>
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

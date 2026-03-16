@@ -75,7 +75,9 @@
     border: none;
     color: var(--slate-400);
     cursor: pointer;
-    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: color 0.2s;
 }
 .bm-btn-close:hover { color: var(--danger); }
@@ -124,6 +126,9 @@
     font-size: 0.8rem;
     font-weight: 700;
     color: var(--slate-900);
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .bm-input {
@@ -135,7 +140,6 @@
     width: 100%;
     transition: border 0.2s;
 }
-
 .bm-input:focus { border-color: var(--primary); }
 
 /* --- Botones de Acción Formulario --- */
@@ -151,30 +155,26 @@
     cursor: pointer;
     transition: all 0.2s;
 }
-
 .bm-btn-add:hover:not(:disabled) { background: var(--primary-hover); }
 .bm-btn-add:disabled { background: var(--slate-200); cursor: not-allowed; }
 
-.bm-btn-add.is-editing {
-    background: var(--edit);
-}
-
-.bm-btn-cancel-edit {
+/* Cancel Edit button specific style */
+.bm-btn-cancel {
     width: 100%;
     margin-top: 8px;
-    background: transparent;
-    border: 1px solid var(--slate-200);
-    color: var(--slate-600);
-    padding: 8px;
+    background: transparent !important;
+    border: 1px solid var(--slate-200) !important;
+    color: var(--slate-600) !important;
+    padding: 8px !important;
     border-radius: 8px;
     font-size: 0.85rem;
     cursor: pointer;
     font-weight: 600;
+    transition: all 0.2s;
 }
-
-.bm-btn-cancel-edit:hover {
-    background: var(--slate-50);
-    border-color: var(--slate-400);
+.bm-btn-cancel:hover {
+    background: var(--slate-50) !important;
+    border-color: var(--slate-400) !important;
 }
 
 /* --- Resumen --- */
@@ -185,12 +185,11 @@
     border-radius: 8px;
     margin-bottom: 8px;
     font-size: 0.9rem;
+    background: var(--slate-50);
 }
-
-.bm-summary-info { background: #f0f9ff; color: #0369a1; border-left: 4px solid #0369a1; }
 .bm-summary-success { background: #f0fdd4; color: #15803d; border-left: 4px solid #15803d; }
-.bm-text-danger { color: var(--danger); }
-.bm-text-success { color: var(--success); }
+.bm-text-danger { color: var(--danger); font-weight: 700; }
+.bm-text-success { color: var(--success); font-weight: 700; }
 
 /* --- Tabla y Botones de Fila --- */
 .bm-table-wrapper {
@@ -199,7 +198,6 @@
 
 .bm-table {
     width: 100%;
-    min-width: 550px;
     border-collapse: collapse;
 }
 
@@ -214,26 +212,27 @@
 }
 
 .bm-table td {
-    padding: 10px 12px;
+    padding: 12px;
     border-bottom: 1px solid var(--slate-100);
     font-size: 0.9rem;
     vertical-align: middle;
 }
 
-.row-editing {
-    background-color: #f0f7ff;
-}
+.bm-text-center { text-align: center; }
 
-.bm-actions-container {
+.row-editing { background-color: #f0f7ff; }
+
+/* --- Fix for Edit/Delete Buttons Layout --- */
+.bm-actions-flex {
     display: flex;
     justify-content: center;
     gap: 8px;
 }
 
-.bm-btn-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
+.bm-btn-icon, .bm-btn-delete {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -242,11 +241,25 @@
     transition: all 0.2s;
 }
 
-.bm-btn-edit { background: #eff6ff; color: var(--edit); }
-.bm-btn-edit:hover { background: var(--edit); color: white; }
+/* Edit button style */
+.bm-btn-icon {
+    background: #eff6ff;
+    color: var(--edit);
+}
+.bm-btn-icon:hover {
+    background: var(--edit);
+    color: white;
+}
 
-.bm-btn-delete { background: #fef2f2; color: var(--danger); }
-.bm-btn-delete:hover { background: var(--danger); color: white; }
+/* Delete button style */
+.bm-btn-delete {
+    background: #fef2f2;
+    color: var(--danger);
+}
+.bm-btn-delete:hover {
+    background: var(--danger);
+    color: white;
+}
 
 /* --- Footer --- */
 .bm-footer {
@@ -269,7 +282,9 @@
     align-items: center;
     gap: 8px;
     cursor: pointer;
+    transition: opacity 0.2s;
 }
+.bm-btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* --- Responsive --- */
 @media (max-width: 768px) {

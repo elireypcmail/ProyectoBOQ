@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Search, Plus, Loader2 } from "lucide-react";
+import { Search, Plus, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
 import { useIncExp } from "../../context/IncExpContext"; 
 import PurchaseFormModal from "./Ui/PurchaseFormModal";
@@ -14,14 +14,22 @@ const ListPurchases = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   
-  // Estado local para manejar la carga individual de un detalle
+  // Local state for fetching individual details
   const [fetchingId, setFetchingId] = useState(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   useEffect(() => {
     getAllShoppings();
   }, []);
 
-  // Función para obtener el detalle por ID antes de abrir el modal
+  // Reset pagination to page 1 whenever the user types a new search term
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   const handleOpenDetail = async (id) => {
     try {
       setFetchingId(id);
@@ -45,12 +53,18 @@ const ListPurchases = () => {
     );
   }, [shoppings, searchTerm]);
 
-  // Formato: 1.250,50
+  // Pagination Calculations
+  const totalPages = Math.ceil(filteredPurchases.length / ITEMS_PER_PAGE);
+  const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
+  const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
+  const currentItems = filteredPurchases.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Formats to: $ 1.250,50 
   const formatCurrency = (value) => {
-    return parseFloat(value).toLocaleString("es-ES", {
+    return `$ ${parseFloat(value).toLocaleString("es-ES", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    });
+    })}`;
   };
 
   return (
@@ -69,7 +83,7 @@ const ListPurchases = () => {
           </p>
         </div>
         <button 
-          className="btn-primary" 
+          className="btn-primary flex items-center gap-2" 
           onClick={() => { 
             setSelectedPurchase(null); 
             setIsFormOpen(true); 
@@ -80,7 +94,7 @@ const ListPurchases = () => {
       </div>
 
       <div className="orders-toolbar">
-        <div className="search-box">
+        <div className="search-box flex items-center gap-2">
           <Search size={16} />
           <input
             placeholder="Buscar por factura o proveedor..."
@@ -102,8 +116,8 @@ const ListPurchases = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredPurchases.length > 0 ? (
-              filteredPurchases.map((p) => (
+            {currentItems.length > 0 ? (
+              currentItems.map((p) => (
                 <tr key={p.id}>
                   {/* <td className="id">#{p.id}</td> */}
                   <td className="bold">{p.nro_factura}</td>
@@ -136,6 +150,33 @@ const ListPurchases = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="pagination-controls flex items-center justify-between" style={{ marginTop: '1rem', padding: '0.5rem 0' }}>
+          <button 
+            className="btn-secondary flex items-center gap-1"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            style={{ opacity: currentPage === 1 ? 0.5 : 1, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+          >
+            <ChevronLeft size={16} /> Previous
+          </button>
+          
+          <span className="text-sm">
+            Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
+          </span>
+
+          <button 
+            className="btn-secondary flex items-center gap-1"
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            style={{ opacity: currentPage === totalPages ? 0.5 : 1, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+          >
+            Next <ChevronRight size={16} />
+          </button>
+        </div>
+      )}
 
       <PurchaseFormModal 
         isOpen={isFormOpen} 
