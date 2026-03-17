@@ -10,7 +10,7 @@ import {
   Plus
 } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
-import DepositsFormModal from "./ui/DepositsFormModal"; // IMPORTACIÓN NUEVA
+import DepositsFormModal from "./ui/DepositsFormModal";
 import "../../styles/components/ListZone.css";
 
 const ListDeposits = () => {
@@ -36,10 +36,23 @@ const ListDeposits = () => {
     getAllEntities("depositos");
   }, []);
 
+  // -------------------- Filtrado y Ordenación Alfabética --------------------
   const filteredDeposits = useMemo(() => {
-    return deposits.filter(d =>
+    const list = deposits || [];
+
+    // 1. Filtrar
+    const filtered = list.filter(d =>
       d.nombre.toUpperCase().includes(searchTerm.toUpperCase())
     );
+
+    // 2. Ordenar A-Z
+    return [...filtered].sort((a, b) => {
+      const nameA = (a.nombre || "").toUpperCase();
+      const nameB = (b.nombre || "").toUpperCase();
+      if (nameA < nameB) return -1;
+      if (nameA > nameB) return 1;
+      return 0;
+    });
   }, [deposits, searchTerm]);
 
   const totalPages = Math.ceil(filteredDeposits.length / itemsPerPage);
@@ -90,9 +103,13 @@ const ListDeposits = () => {
           <Search size={16} />
           <input
             type="text"
-            placeholder="Buscar depósito..."
+            placeholder="BUSCAR DEPÓSITO..."
             value={searchTerm}
-            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+            style={{ textTransform: 'uppercase' }}
+            onChange={(e) => { 
+              setSearchTerm(e.target.value.toUpperCase()); 
+              setCurrentPage(1); 
+            }}
           />
         </div>
       </div>
@@ -113,9 +130,9 @@ const ListDeposits = () => {
               currentDeposits.map(deposit => (
                 <tr key={deposit.id}>
                   <td className="id hide-mobile">#{deposit.id}</td>
-                  <td style={{ textTransform: 'uppercase' }}>{deposit.nombre}</td>
+                  <td className="bold">{deposit.nombre.toUpperCase()}</td>
                   <td className="hide-mobile">
-                    <span className="badge active">Activo</span>
+                    <span className="badge active">ACTIVO</span>
                   </td>
                   <td className="center">
                     <button className="icon-btn edit" onClick={() => { setSelectedDeposit(deposit); setIsDetailsModalOpen(true); }}>
@@ -161,7 +178,7 @@ const ListDeposits = () => {
               <AlertTriangle size={28} />
               <h3>¿Eliminar depósito?</h3>
             </div>
-            <p>Confirma que deseas eliminar <strong>{selectedDeposit.nombre}</strong></p>
+            <p>Confirma que deseas eliminar <strong>{selectedDeposit.nombre.toUpperCase()}</strong></p>
             <div className="modal-footer">
               <button className="btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
               <button className="btn-danger" onClick={handleDelete}><Trash2 size={16} /> Eliminar</button>
@@ -174,10 +191,11 @@ const ListDeposits = () => {
       {isDetailsModalOpen && selectedDeposit && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Opciones de Depósito</h3>
+            <h3>DETALLES DE DEPÓSITO</h3>
             <div className="modal-info-body">
               <div className="detail-card"><strong>ID:</strong> <span>#{selectedDeposit.id}</span></div>
-              <div className="detail-card"><strong>Nombre:</strong> <span style={{ textTransform: 'uppercase' }}>{selectedDeposit.nombre}</span></div>
+              <div className="detail-card"><strong>Nombre:</strong> <span className="bold">{selectedDeposit.nombre.toUpperCase()}</span></div>
+              <div className="detail-card"><strong>Estatus:</strong> <span>ACTIVO</span></div>
             </div>
 
             <div className="modal-footer" style={{ flexDirection: "column", gap: "0.75rem" }}>

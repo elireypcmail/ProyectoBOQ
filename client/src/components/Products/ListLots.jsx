@@ -10,7 +10,7 @@ import {
   Warehouse,
   Calendar,
   Tag,
-  Lock // 1. Importamos el ícono de candado
+  Lock
 } from "lucide-react";
 import "../../styles/components/ListLots.css";
 
@@ -49,19 +49,27 @@ const ListLots = ({ id_producto, onRefreshProducts }) => {
   }, [id_producto]);
 
   const depositOptions = useMemo(() => {
-    return (deposits || []).map(d => ({
-      value: d.id,
-      label: d.nombre
-    }));
+    return (deposits || [])
+      .map(d => ({
+        value: d.id,
+        label: d.nombre.toUpperCase()
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label));
   }, [deposits]);
 
+  // -------------------- Filtrado y Ordenación --------------------
   const filteredLotes = useMemo(() => {
     const base = Array.isArray(lotes) ? lotes : [];
-    return base
+    const filtered = base
       .filter(l => l.id_producto === id_producto)
       .filter(l =>
-        l.nro_lote?.toLowerCase().includes(searchTerm.toLowerCase())
+        (l.nro_lote ?? "").toUpperCase().includes(searchTerm.toUpperCase())
       );
+
+    // Ordenar por número de lote alfabéticamente
+    return [...filtered].sort((a, b) => 
+      (a.nro_lote || "").localeCompare(b.nro_lote || "")
+    );
   }, [lotes, searchTerm, id_producto]);
 
   const currentLotes = filteredLotes.slice(
@@ -69,11 +77,12 @@ const ListLots = ({ id_producto, onRefreshProducts }) => {
     currentPage * itemsPerPage
   );
 
+  // -------------------- Acciones --------------------
   const handleOpenForm = (lote = null) => {
     if (lote) {
       setSelectedLote(lote);
       setFormData({
-        nro_lote: lote.nro_lote,
+        nro_lote: lote.nro_lote.toUpperCase(),
         id_deposito: lote.id_deposito,
         cantidad: lote.cantidad ?? "",
         fecha_vencimiento: lote.fecha_vencimiento?.split("T")[0] || "",
@@ -95,46 +104,52 @@ const ListLots = ({ id_producto, onRefreshProducts }) => {
   const handleSubmit = async () => {
     const { nro_lote, id_deposito, cantidad, fecha_vencimiento } = formData;
 
-    // 1. Validaciones básicas de campos vacíos
     if (!nro_lote || !id_deposito || !fecha_vencimiento || cantidad === "") {
-      alert("Por favor, complete todos los campos obligatorios.");
+      alert("POR FAVOR, COMPLETE TODOS LOS CAMPOS OBLIGATORIOS.");
       return;
     }
 
-    // 2. Validación de coherencia de datos
     if (Number(cantidad) < 0) {
-      alert("La cantidad no puede ser negativa.");
+      alert("LA CANTIDAD NO PUEDE SER NEGATIVA.");
       return;
     }
 
-    if (fecha_vencimiento <= today) {
-      alert("La fecha de caducidad debe ser posterior a la fecha actual.");
+    if (fecha_vencimiento <= today && !selectedLote) {
+      alert("LA FECHA DE CADUCIDAD DEBE SER POSTERIOR A LA FECHA ACTUAL.");
       return;
     }
 
     const payload = { 
       ...formData, 
+      nro_lote: nro_lote.trim().toUpperCase(),
       id_producto,
       id_deposito: Number(id_deposito)
     };
 
-    if (selectedLote) {
-      await editLote(selectedLote.id, payload);
-    } else {
-      await createNewLote(payload);
+    try {
+      if (selectedLote) {
+        await editLote(selectedLote.id, payload);
+      } else {
+        await createNewLote(payload);
+      }
+      setIsFormModalOpen(false);
+      await getAllLotesByProd(id_producto);
+      if (onRefreshProducts) await onRefreshProducts();
+    } catch (error) {
+      console.error("Error al procesar lote:", error);
     }
-
-    setIsFormModalOpen(false);
-    await getAllLotesByProd(id_producto);
-    if (onRefreshProducts) await onRefreshProducts();
   };
 
   const handleDeleteLote = async () => {
-    await deleteLoteById(selectedLote.id);
-    setIsDeleteModalOpen(false);
-    await getAllLotesByProd(id_producto);
-    if (onRefreshProducts) await onRefreshProducts();
-    setSelectedLote(null);
+    try {
+      await deleteLoteById(selectedLote.id);
+      setIsDeleteModalOpen(false);
+      await getAllLotesByProd(id_producto);
+      if (onRefreshProducts) await onRefreshProducts();
+      setSelectedLote(null);
+    } catch (error) {
+      console.error("Error al eliminar lote:", error);
+    }
   };
 
   const selectStyles = {
@@ -144,7 +159,12 @@ const ListLots = ({ id_producto, onRefreshProducts }) => {
       borderColor: "#e2e8f0",
       minHeight: "42px",
       boxShadow: "none",
+      textTransform: "uppercase",
       "&:hover": { borderColor: "#cbd5e1" }
+    }),
+    option: (base) => ({
+      ...base,
+      textTransform: "uppercase"
     })
   };
 
@@ -154,12 +174,12 @@ const ListLots = ({ id_producto, onRefreshProducts }) => {
         <div className="title-group">
           <div className="icon-badge"><Tag size={20} /></div>
           <div>
-            <h3>Gestión de Lotes</h3>
-            <p className="subtitle">{filteredLotes.length} lotes encontrados</p>
+            <h3>GESTIÓN DE LOTES</h3>
+            <p className="subtitle">{filteredLotes.length} LOTES ENCONTRADOS</p>
           </div>
         </div>
         <button className="btn-add-main" onClick={() => handleOpenForm()}>
-          <Plus size={18} /> <span>Nuevo Lote</span>
+          <Plus size={18} /> <span>NUEVO LOTE</span>
         </button>
       </div>
 
@@ -168,10 +188,11 @@ const ListLots = ({ id_producto, onRefreshProducts }) => {
           <Search size={18} className="search-icon" />
           <input
             type="text"
-            placeholder="Buscar por número de lote..."
+            placeholder="BUSCAR POR NÚMERO DE LOTE..."
+            style={{ textTransform: 'uppercase' }}
             value={searchTerm}
             onChange={e => {
-              setSearchTerm(e.target.value);
+              setSearchTerm(e.target.value.toUpperCase());
               setCurrentPage(1);
             }}
           />
@@ -182,26 +203,26 @@ const ListLots = ({ id_producto, onRefreshProducts }) => {
         <table className="lots-custom-table">
           <thead>
             <tr>
-              <th>Lote</th>
-              <th><Warehouse size={14} /> Depósito</th>
-              <th>Cantidad</th>
-              <th><Calendar size={14} /> Vencimiento</th>
-              <th>Estado</th>
-              <th className="text-center">Acciones</th>
+              <th>LOTE</th>
+              <th><Warehouse size={14} /> DEPÓSITO</th>
+              <th>CANTIDAD</th>
+              <th><Calendar size={14} /> VENCIMIENTO</th>
+              <th>ESTADO</th>
+              <th className="text-center">ACCIONES</th>
             </tr>
           </thead>
           <tbody>
             {currentLotes.map(lote => (
               <tr key={lote.id}>
-                <td>#{lote.nro_lote}</td>
-                <td>{lote.deposito_nombre}</td>
-                <td>{lote.cantidad}</td>
+                <td className="bold">#{lote.nro_lote.toUpperCase()}</td>
+                <td>{(lote.deposito_nombre || "N/A").toUpperCase()}</td>
+                <td className="bold">{lote.cantidad}</td>
                 <td>
                   <div className={`date-badge ${new Date(lote.fecha_vencimiento) < new Date() ? "is-expired" : ""}`}>
                     {new Date(lote.fecha_vencimiento).toLocaleDateString()}
                   </div>
                 </td>
-                <td><span className="status-tag st-active">Disponible</span></td>
+                <td><span className="status-tag st-active">DISPONIBLE</span></td>
                 <td>
                   <div className="actions-group">
                     <button className="act-btn edit" onClick={() => handleOpenForm(lote)}>
@@ -219,7 +240,7 @@ const ListLots = ({ id_producto, onRefreshProducts }) => {
             ))}
             {currentLotes.length === 0 && (
               <tr>
-                <td colSpan="6" className="text-center">No hay lotes registrados para este producto.</td>
+                <td colSpan="6" className="text-center">NO HAY LOTES REGISTRADOS PARA ESTE PRODUCTO.</td>
               </tr>
             )}
           </tbody>
@@ -231,14 +252,15 @@ const ListLots = ({ id_producto, onRefreshProducts }) => {
         <div className="modal-overlay-blur">
           <div className="modal-card">
             <div className="modal-header">
-              <h4>{selectedLote ? "Editar Lote" : "Nuevo Lote"}</h4>
+              <h4>{selectedLote ? "EDITAR LOTE" : "NUEVO LOTE"}</h4>
             </div>
 
             <div className="modal-body">
               <div className="input-group">
-                <label>Nro. de Lote</label>
+                <label>NRO. DE LOTE</label>
                 <input
                   type="text"
+                  style={{ textTransform: 'uppercase' }}
                   value={formData.nro_lote}
                   onChange={e =>
                     setFormData({ ...formData, nro_lote: e.target.value.toUpperCase() })
@@ -247,7 +269,7 @@ const ListLots = ({ id_producto, onRefreshProducts }) => {
               </div>
 
               <div className="input-group">
-                <label>Depósito</label>
+                <label>DEPÓSITO</label>
                 <Select
                   options={depositOptions}
                   styles={selectStyles}
@@ -255,39 +277,37 @@ const ListLots = ({ id_producto, onRefreshProducts }) => {
                   onChange={opt =>
                     setFormData({ ...formData, id_deposito: opt ? opt.value : "" })
                   }
-                  placeholder="Seleccione un depósito..."
+                  placeholder="SELECCIONE UN DEPÓSITO..."
                 />
               </div>
 
               <div className="input-group">
                 <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  Cantidad
-                  {/* Visualmente mostramos un candado si está bloqueado */}
+                  CANTIDAD
                   {selectedLote && <Lock size={14} color="#94a3b8" />}
                 </label>
                 <input
                   type="number"
                   min="0"
                   value={formData.cantidad}
-                  // 2. Deshabilitamos si hay un lote seleccionado (Modo Edición)
                   disabled={!!selectedLote}
-                  // Estilo opcional para indicar que está deshabilitado si tu CSS no lo maneja
+                  className={selectedLote ? "disabled-input" : ""}
                   style={selectedLote ? { backgroundColor: "#f1f5f9", color: "#64748b", cursor: "not-allowed" } : {}}
                   onChange={(e) => {
                     let value = e.target.value.replace(/\D/g, "").replace(/^0+(?!$)/, "");
                     setFormData({ ...formData, cantidad: value });
                   }}
-                  placeholder="Ej: 150"
+                  placeholder="EJ: 150"
                 />
                 {selectedLote && (
                   <small style={{ color: "#64748b", fontSize: "0.75rem", marginTop: "4px" }}>
-                    La cantidad no se puede editar una vez creado el lote.
+                    LA CANTIDAD NO SE PUEDE EDITAR UNA VEZ CREADO EL LOTE.
                   </small>
                 )}
               </div>
 
               <div className="input-group">
-                <label>Fecha de Caducidad</label>
+                <label>FECHA DE CADUCIDAD</label>
                 <input
                   type="date"
                   min={today}
@@ -301,10 +321,10 @@ const ListLots = ({ id_producto, onRefreshProducts }) => {
 
             <div className="modal-actions">
               <button className="btn-secondary-link" onClick={() => setIsFormModalOpen(false)}>
-                Cancelar
+                CANCELAR
               </button>
               <button className="btn-primary-solid" onClick={handleSubmit}>
-                Guardar
+                GUARDAR
               </button>
             </div>
           </div>
@@ -316,13 +336,17 @@ const ListLots = ({ id_producto, onRefreshProducts }) => {
         <div className="modal-overlay-blur">
           <div className="modal-card modal-danger">
             <div className="danger-icon"><AlertTriangle size={32} /></div>
-            <h4>¿Eliminar este lote?</h4>
+            <h4>¿ELIMINAR ESTE LOTE?</h4>
+            <p style={{ textAlign: 'center', color: '#64748b' }}>
+              CONFIRMA QUE DESEAS ELIMINAR EL LOTE: <br/>
+              <strong>{selectedLote?.nro_lote.toUpperCase()}</strong>
+            </p>
             <div className="modal-actions">
               <button className="btn-secondary-link" onClick={() => setIsDeleteModalOpen(false)}>
-                Cancelar
+                CANCELAR
               </button>
               <button className="btn-danger-solid" onClick={handleDeleteLote}>
-                Eliminar
+                ELIMINAR
               </button>
             </div>
           </div>

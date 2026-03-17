@@ -37,14 +37,28 @@ const ListZones = () => {
 
   // -------------------- Función de formateo --------------------
   const handleNameInput = (value, setter) => {
+    // Mantiene solo letras y espacios, forzando mayúsculas
     const formatted = value.replace(/[^a-zA-ZÁÉÍÓÚÜÑáéíóúüñ\s]/g, "").toUpperCase();
     setter(formatted);
   };
 
+  // Filtrado y Ordenación Alfabética
   const filteredZones = useMemo(() => {
-    return zones.filter(zone =>
+    const list = zones || [];
+    
+    // 1. Filtrar
+    const filtered = list.filter(zone =>
       zone.nombre.toUpperCase().includes(searchTerm.toUpperCase())
     );
+
+    // 2. Ordenar A-Z
+    return [...filtered].sort((a, b) => {
+      const nameA = (a.nombre || "").toUpperCase();
+      const nameB = (b.nombre || "").toUpperCase();
+      if (nameA < nameB) return -1;
+      if (nameA > nameB) return 1;
+      return 0;
+    });
   }, [zones, searchTerm]);
 
   const totalPages = Math.ceil(filteredZones.length / itemsPerPage);
@@ -56,7 +70,7 @@ const ListZones = () => {
   // -------------------- Acciones --------------------
   const openEditModal = (zone) => {
     setSelectedZone(zone);
-    setEditName(zone.nombre);
+    setEditName(zone.nombre.toUpperCase());
     setIsEditModalOpen(true);
   };
 
@@ -68,7 +82,7 @@ const ListZones = () => {
   const handleCreate = async () => {
     if (!editName.trim()) return;
     try {
-      await createNewEntity("zonas", { nombre: editName.trim() });
+      await createNewEntity("zonas", { nombre: editName.trim().toUpperCase() });
       setIsCreateModalOpen(false);
       setEditName("");
       getAllEntities("zonas");
@@ -80,7 +94,7 @@ const ListZones = () => {
   const handleUpdate = async () => {
     if (!editName.trim() || !selectedZone) return;
     try {
-      await editedEntity("zonas", selectedZone.id, { nombre: editName.trim() });
+      await editedEntity("zonas", selectedZone.id, { nombre: editName.trim().toUpperCase() });
       setIsEditModalOpen(false);
       setSelectedZone(null);
       setEditName("");
@@ -110,7 +124,7 @@ const ListZones = () => {
           <h2>Gestión de Zonas</h2>
           <p>{filteredZones.length} zonas registradas</p>
         </div>
-        <button className="btn-primary" onClick={() => setIsCreateModalOpen(true)}>
+        <button className="btn-primary" onClick={() => { setEditName(""); setIsCreateModalOpen(true); }}>
           <Plus size={16} /> Nueva Zona
         </button>
       </div>
@@ -120,10 +134,11 @@ const ListZones = () => {
         <div className="search-box">
           <Search size={16} />
           <input
-            placeholder="Buscar zona..."
+            placeholder="BUSCAR ZONA..."
             value={searchTerm}
+            style={{ textTransform: 'uppercase' }}
             onChange={(e) => {
-              setSearchTerm(e.target.value);
+              setSearchTerm(e.target.value.toUpperCase());
               setCurrentPage(1);
             }}
           />
@@ -146,25 +161,14 @@ const ListZones = () => {
               currentZones.map(zone => (
                 <tr key={zone.id}>
                   <td className="id hide-mobile">#{zone.id}</td>
-                  <td>{zone.nombre}</td>
-                  <td className="hide-mobile"><span className="badge active">Activo</span></td>
+                  <td className="bold">{zone.nombre.toUpperCase()}</td>
+                  <td className="hide-mobile">
+                    <span className="badge active">ACTIVO</span>
+                  </td>
                   <td className="center">
-                    <div className="actions-desktop">
-                      {/* <button className="icon-btn edit" onClick={() => openEditModal(zone)}>
-                        <Pencil size={16} />
-                      </button>
-                      <button className="icon-btn delete" onClick={() => openDeleteModal(zone)}>
-                        <Trash2 size={16} />
-                      </button> */}
-                      <button className="icon-btn edit" onClick={() => { setSelectedZone(zone); setIsDetailsModalOpen(true); }}>
-                        <SlOptionsVertical size={16}/>
-                      </button>
-                    </div>
-                    <div className="actions-mobile">
-                      <button className="icon-btn" onClick={() => { setSelectedZone(zone); setIsDetailsModalOpen(true); }}>
-                        &#8942;
-                      </button>
-                    </div>
+                    <button className="icon-btn edit" onClick={() => { setSelectedZone(zone); setIsDetailsModalOpen(true); }}>
+                      <SlOptionsVertical size={16}/>
+                    </button>
                   </td>
                 </tr>
               ))
@@ -194,11 +198,12 @@ const ListZones = () => {
       {(isCreateModalOpen || isEditModalOpen) && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>{isCreateModalOpen ? "Crear Zona" : "Editar Zona"}</h3>
+            <h3>{isCreateModalOpen ? "CREAR ZONA" : "EDITAR ZONA"}</h3>
             <input
               className="modal-input"
-              placeholder="Nombre de la zona"
+              placeholder="NOMBRE DE LA ZONA"
               value={editName}
+              style={{ textTransform: 'uppercase' }}
               onChange={(e) => handleNameInput(e.target.value, setEditName)}
             />
             <div className="modal-footer">
@@ -223,7 +228,7 @@ const ListZones = () => {
               <AlertTriangle size={28} />
               <h3>¿Eliminar zona?</h3>
             </div>
-            <p>Confirma que deseas eliminar <strong>{selectedZone.nombre}</strong></p>
+            <p>Confirma que deseas eliminar <strong>{selectedZone.nombre.toUpperCase()}</strong></p>
             <div className="modal-footer">
               <button className="btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
               <button className="btn-danger" onClick={handleDelete}><Trash2 size={16} /> Eliminar</button>
@@ -232,15 +237,15 @@ const ListZones = () => {
         </div>
       )}
 
-      {/* MODAL DETALLES MÓVIL */}
+      {/* MODAL DETALLES */}
       {isDetailsModalOpen && selectedZone && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Detalles de {selectedZone.nombre}</h3>
+            <h3>DETALLES DE {selectedZone.nombre.toUpperCase()}</h3>
             <div className="modal-info-body">
               <div className="detail-card"><strong>ID:</strong> <span>#{selectedZone.id}</span></div>
-              <div className="detail-card"><strong>Nombre:</strong> <span>{selectedZone.nombre}</span></div>
-              <div className="detail-card"><strong>Estado:</strong> <span>Activo</span></div>
+              <div className="detail-card"><strong>Nombre:</strong> <span>{selectedZone.nombre.toUpperCase()}</span></div>
+              <div className="detail-card"><strong>Estado:</strong> <span>ACTIVO</span></div>
             </div>
 
             <div className="modal-footer" style={{ flexDirection: "column", gap: "0.75rem" }}>

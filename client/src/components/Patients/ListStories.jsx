@@ -29,7 +29,6 @@ const ListStories = ({ pacienteId }) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
-  // FIXED: Synchronized data loading
   useEffect(() => {
     const loadAllData = async () => {
       setIsInitialLoading(true);
@@ -50,20 +49,39 @@ const ListStories = ({ pacienteId }) => {
   }, [pacienteId]);
 
   const pacienteOptions = useMemo(() => 
-    pacientes.map(p => ({ value: p.id, label: p.nombre })), 
+    pacientes.map(p => ({ value: p.id, label: p.nombre?.toUpperCase() })), 
   [pacientes]);
 
   const medicoOptions = useMemo(() => 
-    medicos.map(m => ({ value: m.id, label: m.nombre })), 
+    medicos.map(m => ({ value: m.id, label: m.nombre?.toUpperCase() })), 
   [medicos]);
+
+  const getPacienteNombre = (id) => pacientes.find(p => p.id === id)?.nombre?.toUpperCase() || "---";
+  const getMedicoNombre = (id) => medicos.find(m => m.id === id)?.nombre?.toUpperCase() || "---";
+
+  // -------------------- Filtrado y Ordenación --------------------
+  const filteredHistorias = useMemo(() => {
+    const historiasArray = Array.isArray(historias) ? historias : historias ? [historias] : [];
+    
+    const filtered = historiasArray
+      .filter(h => !pacienteId || h.id_paciente === Number(pacienteId))
+      .filter(h => h.detalle?.toUpperCase().includes(searchTerm.toUpperCase()));
+
+    // Ordenar por ID descendente (Lo más reciente primero)
+    return [...filtered].sort((a, b) => b.id - a.id);
+  }, [historias, searchTerm, pacienteId]);
+
+  const totalPages = Math.ceil(filteredHistorias.length / itemsPerPage);
+  const currentHistorias = filteredHistorias.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleSaveHistoria = async (formData) => {
     try {
       let historiaId = null;
+      // Normalizamos el detalle a Mayúsculas
       const payload = {
         id_paciente: formData.id_paciente,
         id_medico: formData.id_medico,
-        detalle: formData.detalle
+        detalle: formData.detalle?.toUpperCase()
       };
 
       if (selectedHistoria) {
@@ -87,24 +105,11 @@ const ListStories = ({ pacienteId }) => {
     }
   };
 
-  const filteredHistorias = useMemo(() => {
-    const historiasArray = Array.isArray(historias) ? historias : historias ? [historias] : [];
-    return historiasArray
-      .filter(h => !pacienteId || h.id_paciente === Number(pacienteId))
-      .filter(h => h.detalle?.toUpperCase().includes(searchTerm.toUpperCase()));
-  }, [historias, searchTerm, pacienteId]);
-
-  const totalPages = Math.ceil(filteredHistorias.length / itemsPerPage);
-  const currentHistorias = filteredHistorias.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-  const getPacienteNombre = (id) => pacientes.find(p => p.id === id)?.nombre || "---";
-  const getMedicoNombre = (id) => medicos.find(m => m.id === id)?.nombre || "---";
-
   if (isInitialLoading) {
     return (
       <div className="stories-loading-screen">
         <Loader2 className="animate-spin" size={40} color="var(--ins-primary)" />
-        <p>Cargando historias clínicas...</p>
+        <p>CARGANDO HISTORIAS CLÍNICAS...</p>
       </div>
     );
   }
@@ -114,13 +119,15 @@ const ListStories = ({ pacienteId }) => {
       {/* HEADER */}
       <div className="stories-main-header">
         <div>
-          <h2 className="stories-title">Historias Clínicas</h2>
+          <h2 className="stories-title">HISTORIAS CLÍNICAS</h2>
           <p className="stories-subtitle">
-            {pacienteId ? `Registros de ${getPacienteNombre(Number(pacienteId))}` : `${filteredHistorias.length} registros totales`}
+            {pacienteId 
+              ? `REGISTROS DE: ${getPacienteNombre(Number(pacienteId))}` 
+              : `${filteredHistorias.length} REGISTROS TOTALES`}
           </p>
         </div>
         <button className="stories-btn-primary" onClick={() => { setSelectedHistoria(null); setIsFormModalOpen(true); }}>
-          <Plus size={18} /> <span>Nueva Historia</span>
+          <Plus size={18} /> <span>NUEVA HISTORIA</span>
         </button>
       </div>
 
@@ -131,9 +138,10 @@ const ListStories = ({ pacienteId }) => {
           <input
             type="text"
             className="stories-search-input"
-            placeholder="Buscar por detalle clínico..."
+            placeholder="BUSCAR POR DETALLE CLÍNICO..."
+            style={{ textTransform: 'uppercase' }}
             value={searchTerm}
-            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+            onChange={(e) => { setSearchTerm(e.target.value.toUpperCase()); setCurrentPage(1); }}
           />
         </div>
       </div>
@@ -147,10 +155,12 @@ const ListStories = ({ pacienteId }) => {
                 <td className="stories-td-id">#{h.id}</td>
                 <td>
                   <div className="ins-main-info">
-                    <span className="ins-name" style={{fontSize: '0.95rem'}}>
-                      {h.detalle.length > 80 ? `${h.detalle.substring(0, 80)}...` : h.detalle}
+                    <span className="ins-name" style={{fontSize: '0.90rem', fontWeight: 600}}>
+                      {h.detalle?.toUpperCase().length > 100 
+                        ? `${h.detalle.substring(0, 100).toUpperCase()}...` 
+                        : h.detalle?.toUpperCase()}
                     </span>
-                    <div style={{display: 'flex', gap: '15px', marginTop: '4px'}}>
+                    <div style={{display: 'flex', gap: '15px', marginTop: '6px'}}>
                         <span className="ins-subtext"><Stethoscope size={12}/> {getMedicoNombre(h.id_medico)}</span>
                         {!pacienteId && <span className="ins-subtext"><User size={12}/> {getPacienteNombre(h.id_paciente)}</span>}
                     </div>
@@ -163,12 +173,12 @@ const ListStories = ({ pacienteId }) => {
                   <div style={{display: 'flex', gap: '0.5rem', justifyContent: 'flex-end'}}>
                     <button className="stories-action-pill" onClick={() => { setSelectedHistoria(h); setIsViewModalOpen(true); }}>
                       <FileText size={16} />
-                      <span className="stories-hide-mobile">Detalles</span>
+                      <span className="stories-hide-mobile">VER</span>
                     </button>
 
                     <button className="stories-action-pill" onClick={() => { setSelectedHistoria(h); setIsFormModalOpen(true); }}>
                       <Pencil size={16} />
-                      <span className="stories-hide-mobile">Editar</span>
+                      <span className="stories-hide-mobile">EDITAR</span>
                     </button>
 
                     <button 
@@ -183,7 +193,7 @@ const ListStories = ({ pacienteId }) => {
               </tr>
             )) : (
               <tr>
-                <td colSpan="4" className="stories-empty-state">No se encontraron historias clínicas.</td>
+                <td colSpan="4" className="stories-empty-state">NO SE ENCONTRARON HISTORIAS CLÍNICAS.</td>
               </tr>
             )}
           </tbody>
@@ -196,7 +206,7 @@ const ListStories = ({ pacienteId }) => {
           <button className="stories-page-btn" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>
             <ChevronLeft size={20} />
           </button>
-          <span style={{fontWeight: 700}}>{currentPage} / {totalPages}</span>
+          <span style={{fontWeight: 700}}>PÁGINA {currentPage} DE {totalPages}</span>
           <button className="stories-page-btn" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>
             <ChevronRight size={20} />
           </button>
@@ -227,11 +237,11 @@ const ListStories = ({ pacienteId }) => {
         <div className="stories-modal-overlay">
           <div className="stories-modal-card modal-delete-confirm">
             <div className="delete-icon-wrapper"><AlertTriangle size={48} /></div>
-            <h3 className="stories-modal-title">¿Eliminar registro?</h3>
-            <p>Estás a punto de eliminar la historia <strong>#{selectedHistoria.id}</strong> permanentemente.</p>
+            <h3 className="stories-modal-title">¿ELIMINAR REGISTRO?</h3>
+            <p>ESTÁS A PUNTO DE ELIMINAR LA HISTORIA <strong>#{selectedHistoria.id}</strong> PERMANENTEMENTE.</p>
             <div className="delete-actions-container">
-              <button className="stories-btn-danger" onClick={async () => { await deleteHistoriaById(selectedHistoria.id); setIsDeleteModalOpen(false); }}>Eliminar</button>
-              <button className="stories-btn-tertiary" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
+              <button className="stories-btn-danger" onClick={async () => { await deleteHistoriaById(selectedHistoria.id); setIsDeleteModalOpen(false); }}>ELIMINAR</button>
+              <button className="stories-btn-tertiary" onClick={() => setIsDeleteModalOpen(false)}>CANCELAR</button>
             </div>
           </div>
         </div>,

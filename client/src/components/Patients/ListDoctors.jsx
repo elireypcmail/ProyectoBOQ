@@ -44,11 +44,23 @@ const ListDoctors = () => {
     getAllTipoMedicos();
   }, []);
 
-  // -------------------- Filtrado y paginación --------------------
+  // -------------------- Filtrado y Ordenación Alfabética --------------------
   const filteredMedicos = useMemo(() => {
-    return medicos.filter(m =>
+    const list = medicos || [];
+
+    // 1. Filtrar por término de búsqueda
+    const filtered = list.filter(m =>
       m.nombre.toUpperCase().includes(searchTerm.toUpperCase())
     );
+
+    // 2. Ordenar alfabéticamente por nombre
+    return [...filtered].sort((a, b) => {
+      const nameA = (a.nombre || "").toUpperCase();
+      const nameB = (b.nombre || "").toUpperCase();
+      if (nameA < nameB) return -1;
+      if (nameA > nameB) return 1;
+      return 0;
+    });
   }, [medicos, searchTerm]);
 
   const totalPages = Math.ceil(filteredMedicos.length / itemsPerPage);
@@ -61,7 +73,7 @@ const ListDoctors = () => {
   const handleSaveDoctor = async (formData) => {
     try {
       const payload = {
-        nombre: formData.nombre,
+        nombre: formData.nombre.toUpperCase(), // Guardamos en mayúsculas para consistencia
         telefono: formData.telefono,
         id_tipoMedico: Number(formData.id_tipomedico),
         estatus: true
@@ -115,9 +127,13 @@ const ListDoctors = () => {
           <Search size={16} />
           <input
             type="text"
-            placeholder="Buscar personal médico..."
+            placeholder="BUSCAR PERSONAL MÉDICO..."
             value={searchTerm}
-            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+            style={{ textTransform: 'uppercase' }}
+            onChange={(e) => { 
+              setSearchTerm(e.target.value.toUpperCase()); 
+              setCurrentPage(1); 
+            }}
           />
         </div>
       </div>
@@ -136,10 +152,13 @@ const ListDoctors = () => {
           <tbody>
             {currentMedicos.length > 0 ? currentMedicos.map(medico => (
               <tr key={medico.id}>
-                {/* <td className="id hide-mobile">#{medico.id}</td> */}
-                <td>{medico.nombre}</td>
+                <td className="bold">{medico.nombre.toUpperCase()}</td>
                 <td className="hide-mobile">{medico.telefono ? `+${medico.telefono}` : "-"}</td>
-                <td className="hide-mobile">{medico.tipo}</td>
+                <td className="hide-mobile">
+                  <span className="badge-type">
+                    {medico.tipo?.toUpperCase()}
+                  </span>
+                </td>
                 <td className="center">
                   <button className="icon-btn" onClick={() => { 
                     setSelectedMedico(medico); 
@@ -151,7 +170,7 @@ const ListDoctors = () => {
               </tr>
             )) : (
               <tr>
-                <td colSpan="5" className="no-results">No se encontraron médicos</td>
+                <td colSpan="4" className="no-results">No se encontraron médicos</td>
               </tr>
             )}
           </tbody>
@@ -182,7 +201,7 @@ const ListDoctors = () => {
         isOpen={isDetailsModalOpen}
         doctor={selectedMedico}
         onClose={() => setIsDetailsModalOpen(false)}
-        onEdit={() => setIsFormModalOpen(true)}
+        onEdit={() => { setIsDetailsModalOpen(false); setIsFormModalOpen(true); }}
         onDelete={() => setIsDeleteModalOpen(true)}
       />
 
@@ -194,7 +213,7 @@ const ListDoctors = () => {
               <AlertTriangle size={28} />
               <h3>¿Eliminar médico?</h3>
             </div>
-            <p>¿Estás seguro de eliminar a <strong>{selectedMedico.nombre}</strong>?</p>
+            <p>¿Estás seguro de eliminar a <strong>{selectedMedico.nombre.toUpperCase()}</strong>?</p>
             <div className="modal-footer">
               <button className="btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
               <button className="btn-danger" onClick={handleDelete}><Trash2 size={16} /> Eliminar</button>

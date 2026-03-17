@@ -24,7 +24,7 @@ const ListCategories = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10
+  const itemsPerPage = 10;
 
   // Modales
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -44,15 +44,24 @@ const ListCategories = () => {
     setter(formatted);
   };
 
-  // -------------------- Filtrado y paginación --------------------
+  // -------------------- Filtrado y Ordenación Alfabética --------------------
   const filteredCategories = useMemo(() => {
-    return (Array.isArray(categories) ? categories : []).filter(c =>
+    const list = Array.isArray(categories) ? categories : [];
+    
+    // 1. Filtrar
+    const filtered = list.filter(c =>
       (c.nombre ?? "")
         .toUpperCase()
         .includes(searchTerm.toUpperCase())
     );
-  }, [categories, searchTerm]);
 
+    // 2. Ordenar A-Z
+    return [...filtered].sort((a, b) => {
+      const nameA = (a.nombre || "").toUpperCase();
+      const nameB = (b.nombre || "").toUpperCase();
+      return nameA.localeCompare(nameB);
+    });
+  }, [categories, searchTerm]);
 
   const totalPages = Math.ceil(filteredCategories.length / itemsPerPage);
   const currentCategories = filteredCategories.slice(
@@ -63,7 +72,7 @@ const ListCategories = () => {
   // -------------------- Acciones --------------------
   const openEditModal = (category) => {
     setSelectedCategory(category);
-    setEditName(category.nombre);
+    setEditName(category.nombre.toUpperCase());
     setIsEditModalOpen(true);
   };
 
@@ -75,7 +84,7 @@ const ListCategories = () => {
   const handleCreate = async () => {
     if (!editName.trim()) return;
     try {
-      await createNewCategory({ nombre: editName.trim() });
+      await createNewCategory({ nombre: editName.trim().toUpperCase() });
       setIsCreateModalOpen(false);
       setEditName("");
       getAllCategories();
@@ -87,7 +96,7 @@ const ListCategories = () => {
   const handleUpdate = async () => {
     if (!editName.trim() || !selectedCategory) return;
     try {
-      await editCategory(selectedCategory.id, { nombre: editName.trim() });
+      await editCategory(selectedCategory.id, { nombre: editName.trim().toUpperCase() });
       setIsEditModalOpen(false);
       setSelectedCategory(null);
       setEditName("");
@@ -109,18 +118,17 @@ const ListCategories = () => {
     }
   };
 
-  // -------------------- Render --------------------
   return (
     <div className="orders-container">
 
       {/* HEADER */}
       <div className="orders-header">
         <div>
-          <h2>Gestión de Categorías</h2>
-          <p>{filteredCategories.length} categorías registradas</p>
+          <h2>GESTIÓN DE CATEGORÍAS</h2>
+          <p>{filteredCategories.length} CATEGORÍAS REGISTRADAS</p>
         </div>
         <button className="btn-primary" onClick={() => { setEditName(""); setIsCreateModalOpen(true); }}>
-          <Plus size={16} /> Nueva Categoría
+          <Plus size={16} /> NUEVA CATEGORÍA
         </button>
       </div>
 
@@ -130,9 +138,10 @@ const ListCategories = () => {
           <Search size={16} />
           <input
             type="text"
-            placeholder="Buscar categoría..."
+            placeholder="BUSCAR CATEGORÍA..."
+            style={{ textTransform: 'uppercase' }}
             value={searchTerm}
-            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+            onChange={(e) => { setSearchTerm(e.target.value.toUpperCase()); setCurrentPage(1); }}
           />
         </div>
       </div>
@@ -143,9 +152,9 @@ const ListCategories = () => {
           <thead>
             <tr>
               <th className="hide-mobile">ID</th>
-              <th>Nombre</th>
-              <th className="hide-mobile">Estatus</th>
-              <th className="center">Acciones</th>
+              <th>NOMBRE</th>
+              <th className="hide-mobile">ESTATUS</th>
+              <th className="center">ACCIONES</th>
             </tr>
           </thead>
           <tbody>
@@ -153,27 +162,20 @@ const ListCategories = () => {
               currentCategories.map(category => (
                 <tr key={category.id}>
                   <td className="id hide-mobile">#{category.id}</td>
-                  <td>{category.nombre}</td>
+                  <td className="bold">{category.nombre.toUpperCase()}</td>
                   <td className="hide-mobile">
-                    <span className="badge active">Activo</span>
+                    <span className="badge active">ACTIVO</span>
                   </td>
                   <td className="center">
-                    <div className="actions-desktop">
-                      <button className="icon-btn edit" onClick={() => { setSelectedCategory(category); setIsDetailsModalOpen(true); }}>
-                        <SlOptionsVertical size={16}/>
-                      </button>
-                    </div>
-                    <div className="actions-mobile">
-                      <button className="icon-btn" onClick={() => { setSelectedCategory(category); setIsDetailsModalOpen(true); }}>
-                        &#8942;
-                      </button>
-                    </div>
+                    <button className="icon-btn" onClick={() => { setSelectedCategory(category); setIsDetailsModalOpen(true); }}>
+                      <SlOptionsVertical size={16}/>
+                    </button>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="4" className="no-results">No se encontraron categorías</td>
+                <td colSpan="4" className="no-results">NO SE ENCONTRARON RESULTADOS</td>
               </tr>
             )}
           </tbody>
@@ -186,7 +188,7 @@ const ListCategories = () => {
           <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>
             <ChevronLeft size={18} />
           </button>
-          <span>Página {currentPage} de {totalPages}</span>
+          <span>PÁGINA {currentPage} DE {totalPages}</span>
           <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>
             <ChevronRight size={18} />
           </button>
@@ -197,16 +199,17 @@ const ListCategories = () => {
       {isCreateModalOpen && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Crear Categoría</h3>
+            <h3>CREAR CATEGORÍA</h3>
             <input 
-              placeholder="Nombre"
+              placeholder="NOMBRE"
               className="modal-input" 
+              style={{ textTransform: 'uppercase' }}
               value={editName} 
-              onChange={(e) => setEditName(e.target.value.toUpperCase())} 
+              onChange={(e) => handleNameInput(e.target.value, setEditName)} 
             />
             <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setIsCreateModalOpen(false)}>Cancelar</button>
-              <button className="btn-primary" onClick={handleCreate}><Save size={16} /> Crear</button>
+              <button className="btn-secondary" onClick={() => setIsCreateModalOpen(false)}>CANCELAR</button>
+              <button className="btn-primary" onClick={handleCreate}><Save size={16} /> CREAR</button>
             </div>
           </div>
         </div>
@@ -216,16 +219,17 @@ const ListCategories = () => {
       {isEditModalOpen && selectedCategory && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Editar Categoría</h3>
+            <h3>EDITAR CATEGORÍA</h3>
             <input 
-              placeholder="Nombre"
+              placeholder="NOMBRE"
               className="modal-input" 
+              style={{ textTransform: 'uppercase' }}
               value={editName} 
-              onChange={(e) => setEditName(e.target.value.toUpperCase())} 
+              onChange={(e) => handleNameInput(e.target.value, setEditName)} 
             />
             <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setIsEditModalOpen(false)}>Cancelar</button>
-              <button className="btn-primary" onClick={handleUpdate}><Save size={16} /> Guardar</button>
+              <button className="btn-secondary" onClick={() => setIsEditModalOpen(false)}>CANCELAR</button>
+              <button className="btn-primary" onClick={handleUpdate}><Save size={16} /> GUARDAR</button>
             </div>
           </div>
         </div>
@@ -237,12 +241,12 @@ const ListCategories = () => {
           <div className="modal-content">
             <div className="modal-header-danger">
               <AlertTriangle size={28} />
-              <h3>¿Eliminar categoría?</h3>
+              <h3>¿ELIMINAR CATEGORÍA?</h3>
             </div>
-            <p>Confirma que deseas eliminar <strong>{selectedCategory.nombre}</strong></p>
+            <p>CONFIRMA QUE DESEAS ELIMINAR: <br/><strong>{selectedCategory.nombre.toUpperCase()}</strong></p>
             <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
-              <button className="btn-danger" onClick={handleDelete}><Trash2 size={16} /> Eliminar</button>
+              <button className="btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>CANCELAR</button>
+              <button className="btn-danger" onClick={handleDelete}><Trash2 size={16} /> ELIMINAR</button>
             </div>
           </div>
         </div>
@@ -252,16 +256,16 @@ const ListCategories = () => {
       {isDetailsModalOpen && selectedCategory && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Detalles de {selectedCategory.nombre}</h3>
+            <h3>DETALLES DE CATEGORÍA</h3>
             <div className="modal-info-body">
               <div className="detail-card"><strong>ID:</strong> <span>#{selectedCategory.id}</span></div>
-              <div className="detail-card"><strong>Nombre:</strong> <span>{selectedCategory.nombre}</span></div>
-              <div className="detail-card"><strong>Estado:</strong> <span>Activo</span></div>
+              <div className="detail-card"><strong>NOMBRE:</strong> <span className="bold">{selectedCategory.nombre.toUpperCase()}</span></div>
+              <div className="detail-card"><strong>ESTADO:</strong> <span>ACTIVO</span></div>
             </div>
             <div className="modal-footer" style={{ flexDirection: "column", gap: "0.75rem" }}>
-              <button className="btn-primary" onClick={() => { setIsDetailsModalOpen(false); openEditModal(selectedCategory); }}><Pencil size={16} /> Editar</button>
-              <button className="btn-danger" onClick={() => { setIsDetailsModalOpen(false); openDeleteModal(selectedCategory); }}><Trash2 size={16} /> Eliminar</button>
-              <button className="btn-secondary" onClick={() => setIsDetailsModalOpen(false)}>Cerrar</button>
+              <button className="btn-primary" onClick={() => { setIsDetailsModalOpen(false); openEditModal(selectedCategory); }}><Pencil size={16} /> EDITAR</button>
+              <button className="btn-danger" onClick={() => { setIsDetailsModalOpen(false); openDeleteModal(selectedCategory); }}><Trash2 size={16} /> ELIMINAR</button>
+              <button className="btn-secondary" onClick={() => setIsDetailsModalOpen(false)}>CERRAR</button>
             </div>
           </div>
         </div>

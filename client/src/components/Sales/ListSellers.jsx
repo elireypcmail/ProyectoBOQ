@@ -4,7 +4,7 @@ import { SlOptionsVertical } from "react-icons/sl";
 
 // Contexts
 import { useSales } from "../../context/SalesContext";
-import { useEntity } from "../../context/EntityContext"; // Importamos el nuevo contexto
+import { useEntity } from "../../context/EntityContext"; 
 
 // Modals
 import SellerDetailModal from './Ui/SellerDetailModal';
@@ -14,7 +14,6 @@ import SellerFormModal from './Ui/SellerFormModal';
 import "../../styles/components/ListSellers.css";
 
 const ListSellers = () => {
-  // Datos y acciones del Vendedor (SalesContext)
   const {
     sellers,
     getAllSellers,
@@ -24,7 +23,6 @@ const ListSellers = () => {
     saveFilesSeller
   } = useSales();
 
-  // Datos y acciones de Entidades (EntityContext)
   const { 
     entities, 
     getAllEntities, 
@@ -41,21 +39,32 @@ const ListSellers = () => {
   const [selectedSeller, setSelectedSeller] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Mapeamos los datos del EntityContext para que sean fáciles de usar
   const oficinas = entities.oficinas || [];
   const zonas = entities.zonas || [];
 
-  // Cargamos los datos iniciales de ambos contextos
   useEffect(() => {
     getAllSellers();
     getAllEntities("oficinas");
     getAllEntities("zonas");
   }, []);
 
+  // Filtrado y Ordenación Alfabética por Nombre
   const filteredSellers = useMemo(() => {
-    return (sellers || []).filter(s =>
+    const list = sellers || [];
+    
+    // 1. Filtramos
+    const filtered = list.filter(s =>
       s.nombre.toUpperCase().includes(searchTerm.toUpperCase())
     );
+
+    // 2. Ordenamos alfabéticamente
+    return [...filtered].sort((a, b) => {
+      const nameA = (a.nombre || "").toUpperCase();
+      const nameB = (b.nombre || "").toUpperCase();
+      if (nameA < nameB) return -1;
+      if (nameA > nameB) return 1;
+      return 0;
+    });
   }, [sellers, searchTerm]);
 
   const totalPages = Math.ceil(filteredSellers.length / itemsPerPage);
@@ -72,6 +81,7 @@ const ListSellers = () => {
   const handleOpenEdit = (seller) => {
     setSelectedSeller(seller);
     setIsFormModalOpen(true);
+    setIsDetailsModalOpen(false); // Cerramos detalle si venimos de ahí
   };
 
   const handleSaveSeller = async (data, files) => {
@@ -90,7 +100,7 @@ const ListSellers = () => {
       if (files && files.length > 0 && sellerId) {
         const filesJson = files.map((f, idx) => ({
           id: null,
-          name: f.name,
+          name: f.name.toUpperCase(), // Coherencia en nombres de archivos
           order: idx + 1,
         }));
         await saveFilesSeller(sellerId, files, filesJson);
@@ -106,15 +116,10 @@ const ListSellers = () => {
     }
   };
 
-  // --- HANDLER PARA CREAR OFICINA DESDE EL MODAL DE VENDEDOR ---
   const handleCreateOficina = async (payload) => {
     try {
-      // Usamos el createNewEntity del EntityContext
       const res = await createNewEntity("oficinas", payload);
-      
-      // Refrescamos la lista global de oficinas en el EntityContext
       await getAllEntities("oficinas");
-      
       return res?.data || res;
     } catch (error) {
       console.error("Error al crear la oficina:", error);
@@ -131,7 +136,6 @@ const ListSellers = () => {
 
   return (
     <div className="lsu-container">
-      {/* HEADER */}
       <div className="lsu-header">
         <div className="lsu-title-section">
           <h2>Gestión de Vendedores</h2>
@@ -142,22 +146,21 @@ const ListSellers = () => {
         </button>
       </div>
 
-      {/* TOOLBAR */}
       <div className="lsu-toolbar">
         <div className="lsu-search-box">
           <Search size={16} className="lsu-search-icon" />
           <input
-            placeholder="Buscar vendedor..."
+            placeholder="BUSCAR VENDEDOR..."
             value={searchTerm}
+            style={{ textTransform: 'uppercase' }} // Estética visual
             onChange={(e) => {
-              setSearchTerm(e.target.value);
+              setSearchTerm(e.target.value.toUpperCase());
               setCurrentPage(1);
             }}
           />
         </div>
       </div>
 
-      {/* TABLA */}
       <div className="lsu-table-wrapper">
         <table className="lsu-table">
           <thead>
@@ -174,14 +177,14 @@ const ListSellers = () => {
             {currentSellers.length ? currentSellers.map(s => (
               <tr key={s.id}>
                 <td className="lsu-col-id">#{s.id}</td>
-                <td className="lsu-col-name">{s.nombre}</td>
+                <td className="lsu-col-name">{s.nombre.toUpperCase()}</td>
                 <td className="lsu-hide-mobile">
                   <span className="lsu-badge">
-                    {s.oficina}
+                    {s.oficina?.toUpperCase()}
                   </span>
                 </td>
                 <td className="lsu-hide-mobile">{s.telefono ? `+${s.telefono}` : "—"}</td>
-                <td className="lsu-hide-mobile">{s.email || "—"}</td>
+                <td className="lsu-hide-mobile">{s.email?.toUpperCase() || "—"}</td>
                 <td className="lsu-text-center">
                   <button
                     className="lsu-icon-btn"
@@ -205,7 +208,6 @@ const ListSellers = () => {
         </table>
       </div>
 
-      {/* PAGINACIÓN */}
       {totalPages > 1 && (
         <div className="lsu-pagination">
           <button
@@ -235,8 +237,8 @@ const ListSellers = () => {
         onClose={() => setIsFormModalOpen(false)}
         onSave={handleSaveSeller}
         isSaving={isSaving}
-        oficinas={oficinas} // Vienen de EntityContext
-        zonas={zonas}       // Vienen de EntityContext
+        oficinas={oficinas}
+        zonas={zonas}
         onCreateOficina={handleCreateOficina} 
       />
 
@@ -248,7 +250,6 @@ const ListSellers = () => {
         onDelete={() => setIsDeleteModalOpen(true)}
       />
 
-      {/* MODAL ELIMINAR */}
       {isDeleteModalOpen && selectedSeller && (
         <div className="lsu-modal-overlay">
           <div className="lsu-modal-content">
@@ -257,7 +258,7 @@ const ListSellers = () => {
               <h3>¿Eliminar vendedor?</h3>
             </div>
             <p className="lsu-modal-text">
-              Confirma que deseas eliminar a <strong>{selectedSeller.nombre}</strong>.
+              Confirma que deseas eliminar a <strong>{selectedSeller.nombre.toUpperCase()}</strong>.
             </p>
             <div className="lsu-modal-footer">
               <button

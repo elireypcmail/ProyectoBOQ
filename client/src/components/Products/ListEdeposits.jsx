@@ -31,7 +31,6 @@ const ListEdeposits = ({ id_producto, existenciaGeneral, onRefreshProducts }) =>
   useEffect(() => {
     const fetchData = async () => {
       if (id_producto) {
-        // Limpiamos estados locales al cambiar de producto
         setSearchTerm("");
         setIsKardexOpen(false);
         setActiveKardexData(null);
@@ -55,21 +54,22 @@ const ListEdeposits = ({ id_producto, existenciaGeneral, onRefreshProducts }) =>
     fetchData();
   }, [id_producto]); 
 
-  // Memorizar depósitos
-  const safeProductDeposits = useMemo(
-    () => (Array.isArray(productDeposits) ? productDeposits : productDeposits?.data || []),
-    [productDeposits],
-  );
+  // Memorizar depósitos y ORDENAR ALFABÉTICAMENTE
+  const safeProductDeposits = useMemo(() => {
+    const data = Array.isArray(productDeposits) ? productDeposits : productDeposits?.data || [];
+    return [...data].sort((a, b) => 
+      (a.deposito_nombre || "").localeCompare(b.deposito_nombre || "")
+    );
+  }, [productDeposits]);
 
   // Filtro de búsqueda de depósitos
   const filteredDeposits = useMemo(() => {
     return safeProductDeposits.filter((d) =>
-      (d.deposito_nombre ?? "").toLowerCase().includes(searchTerm.toLowerCase())
+      (d.deposito_nombre ?? "").toUpperCase().includes(searchTerm.toUpperCase())
     );
   }, [safeProductDeposits, searchTerm]);
 
-  // NUEVO: Filtro de seguridad para el Kardex General
-  // Evita mostrar datos de un producto anterior si la API falla (Ej: Error 404)
+  // Filtro de seguridad para el Kardex General
   const validKardexG = useMemo(() => {
     const data = Array.isArray(productKardexG) ? productKardexG : productKardexG?.data || [];
     return data.filter(k => k.id_producto === id_producto);
@@ -79,13 +79,11 @@ const ListEdeposits = ({ id_producto, existenciaGeneral, onRefreshProducts }) =>
     try {
       setLoadingKardex(true);
       setActiveKardexData(dep);
-      
       await getAllKardexDep(id_producto, dep.id_deposito);
-      
       setIsKardexOpen(true);
     } catch (error) {
       console.error("Error al cargar kardex del depósito:", error);
-      alert("No se pudo cargar el historial del depósito.");
+      alert("NO SE PUDO CARGAR EL HISTORIAL DEL DEPÓSITO.");
     } finally {
       setLoadingKardex(false);
     }
@@ -99,8 +97,8 @@ const ListEdeposits = ({ id_producto, existenciaGeneral, onRefreshProducts }) =>
         <div className="pdm-stat-card inventory">
           <div className="pdm-stat-icon"><Hash size={18} /></div>
           <div className="pdm-stat-content">
-            <small>Existencia Total</small>
-            <strong>{existenciaGeneral ?? 0} unidades</strong>
+            <small>EXISTENCIA TOTAL</small>
+            <strong style={{ fontSize: '1.2rem' }}>{existenciaGeneral ?? 0} UNIDADES</strong>
           </div>
         </div>
       </div>
@@ -109,7 +107,7 @@ const ListEdeposits = ({ id_producto, existenciaGeneral, onRefreshProducts }) =>
       <div className="lots-container">
         <div
           className="lots-header-section"
-          style={{ cursor: "pointer" }}
+          style={{ cursor: "pointer", background: "#f8fafc" }}
           onClick={() => setShowKardexG(!showKardexG)}
         >
           <div className="title-group">
@@ -117,8 +115,8 @@ const ListEdeposits = ({ id_producto, existenciaGeneral, onRefreshProducts }) =>
               <History size={20} color="#6366f1" />
             </div>
             <div>
-              <h3>Kardex General del Producto</h3>
-              <p className="subtitle">Historial consolidado (Todas las sedes)</p>
+              <h3>KARDEX GENERAL DEL PRODUCTO</h3>
+              <p className="subtitle">HISTORIAL CONSOLIDADO (TODAS LAS SEDES)</p>
             </div>
           </div>
           <div className="actions-group">
@@ -130,7 +128,7 @@ const ListEdeposits = ({ id_producto, existenciaGeneral, onRefreshProducts }) =>
           <div className="lots-card" style={{ borderTop: "none", borderRadius: "0 0 12px 12px" }}>
             <KardexG 
               id_producto={id_producto} 
-              data={validKardexG} // Usamos la data validada aquí
+              data={validKardexG} 
               isInline={true} 
             />
           </div>
@@ -141,21 +139,22 @@ const ListEdeposits = ({ id_producto, existenciaGeneral, onRefreshProducts }) =>
       <div className="lots-container" style={{ marginTop: "2rem" }}>
         <div className="lots-header-section">
           <div className="title-group">
-            <div className="icon-badge">
-              <Warehouse size={20} />
+            <div className="icon-badge" style={{ background: "#fff7ed" }}>
+              <Warehouse size={20} color="#f97316" />
             </div>
             <div>
-              <h3>Existencias por Depósito</h3>
-              <p className="subtitle">{filteredDeposits.length} ubicaciones con stock</p>
+              <h3>EXISTENCIAS POR DEPÓSITO</h3>
+              <p className="subtitle">{filteredDeposits.length} UBICACIONES CON STOCK</p>
             </div>
           </div>
           <div className={`search-container ${searchTerm ? "active" : ""}`}>
             <Search size={18} className="search-icon" />
             <input
               type="text"
-              placeholder="Filtrar por depósito..."
+              placeholder="FILTRAR POR DEPÓSITO..."
+              style={{ textTransform: 'uppercase' }}
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => setSearchTerm(e.target.value.toUpperCase())}
             />
           </div>
         </div>
@@ -164,32 +163,38 @@ const ListEdeposits = ({ id_producto, existenciaGeneral, onRefreshProducts }) =>
           <table className="lots-custom-table">
             <thead>
               <tr>
-                <th>Depósito</th>
-                <th>Existencia</th>
-                <th>Stock Mínimo</th>
-                <th>Estado</th>
+                <th>DEPÓSITO</th>
+                <th className="text-center">EXISTENCIA</th>
+                <th className="text-center">STOCK MÍNIMO</th>
+                <th className="text-center">ESTADO</th>
               </tr>
             </thead>
             <tbody>
-              {filteredDeposits.map((dep) => {
-                const isLowStock = dep.existencia_deposito <= dep.stock_minimo_deposito;
-                return (
-                  <tr
-                    key={dep.id_deposito}
-                    className={`row-interactive ${loadingKardex ? 'loading' : ''}`}
-                    onClick={() => !loadingKardex && handleOpenKardex(dep)}
-                  >
-                    <td><strong>{dep.deposito_nombre}</strong></td>
-                    <td>{dep.existencia_deposito}</td>
-                    <td>{dep.stock_minimo_deposito}</td>
-                    <td>
-                      <span className={`status-tag ${isLowStock ? "is-expired" : "st-active"}`}>
-                        {isLowStock ? "Bajo" : "Óptimo"}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
+              {filteredDeposits.length > 0 ? (
+                filteredDeposits.map((dep) => {
+                  const isLowStock = dep.existencia_deposito <= dep.stock_minimo_deposito;
+                  return (
+                    <tr
+                      key={dep.id_deposito}
+                      className={`row-interactive ${loadingKardex ? 'loading' : ''}`}
+                      onClick={() => !loadingKardex && handleOpenKardex(dep)}
+                    >
+                      <td><strong style={{ color: "#1e293b" }}>{dep.deposito_nombre.toUpperCase()}</strong></td>
+                      <td className="text-center bold">{dep.existencia_deposito}</td>
+                      <td className="text-center">{dep.stock_minimo_deposito}</td>
+                      <td className="text-center">
+                        <span className={`status-tag ${isLowStock ? "is-expired" : "st-active"}`}>
+                          {isLowStock ? "BAJO" : "ÓPTIMO"}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan="4" className="text-center">NO SE ENCONTRARON DEPÓSITOS CON ESTA BÚSQUEDA</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

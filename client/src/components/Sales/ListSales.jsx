@@ -33,12 +33,24 @@ const ListSales = () => {
     }
   }
 
+  // Filtrado y Ordenación Alfabética
   const filteredSales = useMemo(() => {
     if (!sales) return []
-    return sales.filter((s) =>
+
+    // 1. Filtrar por término de búsqueda
+    const filtered = sales.filter((s) =>
       s.nro_factura?.toUpperCase().includes(searchTerm.toUpperCase()) ||
       s.paciente?.toUpperCase().includes(searchTerm.toUpperCase())
     )
+
+    // 2. Ordenar alfabéticamente por el nombre del paciente (cliente)
+    return [...filtered].sort((a, b) => {
+      const nameA = (a.paciente || "").toUpperCase()
+      const nameB = (b.paciente || "").toUpperCase()
+      if (nameA < nameB) return -1
+      if (nameA > nameB) return 1
+      return 0
+    })
   }, [sales, searchTerm])
 
   const formatCurrency = (value) => {
@@ -87,6 +99,7 @@ const ListSales = () => {
           <input
             placeholder="Buscar por factura o cliente..."
             value={searchTerm}
+            style={{ textTransform: 'uppercase' }} // Estética de mayúsculas
             onChange={(e) => setSearchTerm(e.target.value.toUpperCase())}
           />
         </div>

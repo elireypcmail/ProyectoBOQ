@@ -49,11 +49,24 @@ const ListClinics = () => {
     getAllEntities("zonas");
   }, []);
 
+  // -------------------- Filtrado y Ordenación Alfabética --------------------
   const filteredClinics = useMemo(() => {
-    return (clinics || []).filter((c) =>
+    const list = clinics || [];
+    
+    // 1. Filtrar por Nombre o RIF
+    const filtered = list.filter((c) =>
       c.nombre?.toUpperCase().includes(searchTerm.toUpperCase()) ||
       c.rif?.toUpperCase().includes(searchTerm.toUpperCase())
     );
+
+    // 2. Ordenar A-Z por Nombre
+    return [...filtered].sort((a, b) => {
+      const nameA = (a.nombre || "").toUpperCase();
+      const nameB = (b.nombre || "").toUpperCase();
+      if (nameA < nameB) return -1;
+      if (nameA > nameB) return 1;
+      return 0;
+    });
   }, [clinics, searchTerm]);
 
   const totalPages = Math.ceil(filteredClinics.length / itemsPerPage);
@@ -62,6 +75,7 @@ const ListClinics = () => {
     currentPage * itemsPerPage
   );
 
+  // Handlers
   const handleOpenDetails = async (id) => {
     setIsLoadingDetails(id);
     try {
@@ -79,10 +93,18 @@ const ListClinics = () => {
   const handleSaveClinic = async (payload) => {
     setIsSaving(true);
     try {
+      // Forzamos mayúsculas en los campos críticos antes de enviar
+      const formattedPayload = {
+        ...payload,
+        nombre: payload.nombre?.toUpperCase(),
+        rif: payload.rif?.toUpperCase(),
+        direccion: payload.direccion?.toUpperCase()
+      };
+
       if (selectedClinic?.id) {
-        await editedClinic(selectedClinic.id, payload);
+        await editedClinic(selectedClinic.id, formattedPayload);
       } else {
-        await createNewClinic(payload);
+        await createNewClinic(formattedPayload);
       }
       setIsFormModalOpen(false);
       await getAllClinics();
@@ -136,6 +158,7 @@ const ListClinics = () => {
             className="cln-search-input"
             placeholder="BUSCAR POR NOMBRE O RIF..." 
             value={searchTerm} 
+            style={{ textTransform: 'uppercase' }}
             onChange={(e) => { 
               setSearchTerm(e.target.value.toUpperCase()); 
               setCurrentPage(1); 
@@ -162,7 +185,7 @@ const ListClinics = () => {
 
                   <td className="cln-td-main">
                     <div className="cln-clinic-cell">
-                      <span className="cln-name-text">
+                      <span className="cln-name-text bold">
                         {c.nombre?.toUpperCase()}
                       </span>
                       <span className="cln-address-text">
@@ -226,7 +249,7 @@ const ListClinics = () => {
         </div>
       )}
 
-      {/* MODALS (se mantienen igual) */}
+      {/* MODALS */}
       <ClinicFormModal
         isOpen={isFormModalOpen}
         onClose={() => setIsFormModalOpen(false)}

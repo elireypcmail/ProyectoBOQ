@@ -26,7 +26,7 @@ const ListPatients = () => {
     editedPaciente,
     deletePacienteById,
     saveFilesPaciente,
-    createNewSeguro, // Asegúrate de que esté en tu context
+    createNewSeguro, 
   } = useHealth();
 
   // Estados de UI
@@ -50,12 +50,24 @@ const ListPatients = () => {
     getAllSeguros();
   }, []);
 
-  // Filtrado y Paginación
+  // Filtrado y Ordenación Alfabética
   const filteredPacientes = useMemo(() => {
-    return (pacientes || []).filter((p) =>
+    const list = pacientes || [];
+    
+    // 1. Filtrar por nombre o documento
+    const filtered = list.filter((p) =>
       p.nombre.toUpperCase().includes(searchTerm.toUpperCase()) ||
       p.documento?.includes(searchTerm)
     );
+
+    // 2. Ordenar alfabéticamente por nombre
+    return [...filtered].sort((a, b) => {
+      const nameA = (a.nombre || "").toUpperCase();
+      const nameB = (b.nombre || "").toUpperCase();
+      if (nameA < nameB) return -1;
+      if (nameA > nameB) return 1;
+      return 0;
+    });
   }, [pacientes, searchTerm]);
 
   const totalPages = Math.ceil(filteredPacientes.length / itemsPerPage);
@@ -88,12 +100,15 @@ const ListPatients = () => {
         pacienteId = selectedPaciente.id;
       } else {
         const res = await createNewPaciente(payload);
-        // Ajuste de extracción de ID según la estructura de tu API
         pacienteId = res?.data?.id || res?.id || res?.data?.data?.id;
       }
 
       if (archivos?.length > 0 && pacienteId) {
-        const filesJson = archivos.map((f, idx) => ({ id: null, name: f.name, order: idx + 1 }));
+        const filesJson = archivos.map((f, idx) => ({ 
+          id: null, 
+          name: f.name.toUpperCase(), 
+          order: idx + 1 
+        }));
         await saveFilesPaciente(pacienteId, archivos, filesJson);
       }
 
@@ -106,16 +121,10 @@ const ListPatients = () => {
     }
   };
 
-  // Función corregida para el guardado de seguros "al vuelo"
   const handleCreateSeguro = async (payload) => {
     try {
-      // payload viene del modal con { nombre: "..." }
       const res = await createNewSeguro({ ...payload, estatus: true });
-      
-      // Refrescamos la lista global para que el Select del modal vea los cambios
       await getAllSeguros();
-      
-      // Retornamos el objeto creado (o el ID) para que el modal lo autoseleccione
       return res?.data || res;
     } catch (error) {
       console.error("Error al crear seguro:", error);
@@ -155,9 +164,13 @@ const ListPatients = () => {
         <div className="lpa-search-box">
           <Search size={18} className="lpa-search-icon" />
           <input 
-            placeholder="Buscar por nombre o documento..." 
+            placeholder="BUSCAR POR NOMBRE O DOCUMENTO..." 
             value={searchTerm} 
-            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} 
+            style={{ textTransform: 'uppercase' }}
+            onChange={(e) => { 
+              setSearchTerm(e.target.value.toUpperCase()); 
+              setCurrentPage(1); 
+            }} 
           />
         </div>
       </div>
@@ -179,13 +192,13 @@ const ListPatients = () => {
                 <td className="lpa-col-id">#{p.id}</td>
                 <td className="lpa-text-left">
                   <div className="lpa-patient-info">
-                    <span className="lpa-name">{p.nombre}</span>
+                    <span className="lpa-name">{p.nombre.toUpperCase()}</span>
                     <span className="lpa-subtext">{p.documento}</span>
                   </div>
                 </td>
                 <td className="lpa-hide-mobile">
                   <span className="lpa-badge">
-                    {seguros.find((s) => s.id === p.id_seguro)?.nombre || "Particular"}
+                    {(seguros.find((s) => s.id === p.id_seguro)?.nombre || "Particular").toUpperCase()}
                   </span>
                 </td>
                 <td>
@@ -258,7 +271,7 @@ const ListPatients = () => {
               <h3>¿Eliminar registro?</h3>
             </div>
             <p className="lpa-modal-text">
-              Esta acción eliminará permanentemente a <strong>{selectedPaciente?.nombre}</strong>.
+              Esta acción eliminará permanentemente a <strong>{selectedPaciente?.nombre.toUpperCase()}</strong>.
             </p>
             <div className="lpa-modal-footer">
               <button className="lpa-btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>

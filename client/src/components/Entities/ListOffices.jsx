@@ -10,7 +10,7 @@ import {
   Plus
 } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
-import OfficesFormModal from "./ui/OfficesFormModal"; // Importamos el modal
+import OfficesFormModal from "./ui/OfficesFormModal"; 
 import "../../styles/components/ListZone.css";
 
 const ListOffices = () => {
@@ -33,10 +33,23 @@ const ListOffices = () => {
     getAllEntities("zonas");
   }, []);
 
+  // Filtrado y Ordenación Alfabética
   const filteredOffices = useMemo(() => {
-    return offices.filter((office) =>
+    const list = offices || [];
+    
+    // 1. Filtrar
+    const filtered = list.filter((office) =>
       office.nombre.toUpperCase().includes(searchTerm.toUpperCase())
     );
+
+    // 2. Ordenar A-Z
+    return [...filtered].sort((a, b) => {
+      const nameA = (a.nombre || "").toUpperCase();
+      const nameB = (b.nombre || "").toUpperCase();
+      if (nameA < nameB) return -1;
+      if (nameA > nameB) return 1;
+      return 0;
+    });
   }, [offices, searchTerm]);
 
   const totalPages = Math.ceil(filteredOffices.length / itemsPerPage);
@@ -47,12 +60,12 @@ const ListOffices = () => {
 
   // Handlers
   const handleOpenCreate = () => {
-    setSelectedOffice(null); // Importante: null para modo creación
+    setSelectedOffice(null);
     setIsFormModalOpen(true);
   };
 
   const handleOpenEdit = (office) => {
-    setSelectedOffice(office); // Pasamos la oficina para modo edición
+    setSelectedOffice(office);
     setIsFormModalOpen(true);
     setIsDetailsModalOpen(false);
   };
@@ -87,9 +100,13 @@ const ListOffices = () => {
         <div className="search-box">
           <Search size={16} />
           <input
-            placeholder="Buscar oficina..."
+            placeholder="BUSCAR OFICINA..."
             value={searchTerm}
-            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+            style={{ textTransform: 'uppercase' }}
+            onChange={(e) => { 
+              setSearchTerm(e.target.value.toUpperCase()); 
+              setCurrentPage(1); 
+            }}
           />
         </div>
       </div>
@@ -110,9 +127,11 @@ const ListOffices = () => {
             {currentOffices.length > 0 ? currentOffices.map((office) => (
               <tr key={office.id}>
                 <td className="id hide-mobile">#{office.id}</td>
-                <td>{office.nombre}</td>
-                <td className="hide-mobile">{office.nombre_zona}</td>
-                <td className="hide-mobile"><span className="badge active">Activo</span></td>
+                <td className="bold">{office.nombre.toUpperCase()}</td>
+                <td className="hide-mobile">{office.nombre_zona?.toUpperCase()}</td>
+                <td className="hide-mobile">
+                  <span className="badge active">ACTIVO</span>
+                </td>
                 <td className="center">
                   <button className="icon-btn edit" onClick={() => { setSelectedOffice(office); setIsDetailsModalOpen(true); }}>
                     <SlOptionsVertical size={16}/>
@@ -152,7 +171,7 @@ const ListOffices = () => {
               <AlertTriangle size={28} />
               <h3>¿Eliminar oficina?</h3>
             </div>
-            <p>Confirma que deseas eliminar <strong>{selectedOffice.nombre}</strong></p>
+            <p>Confirma que deseas eliminar <strong>{selectedOffice.nombre.toUpperCase()}</strong></p>
             <div className="modal-footer">
               <button className="btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
               <button className="btn-danger" onClick={handleDelete}><Trash2 size={16} /> Eliminar</button>
@@ -161,16 +180,16 @@ const ListOffices = () => {
         </div>
       )}
 
-      {/* MODAL DETALLES MÓVIL / OPCIONES */}
+      {/* MODAL DETALLES */}
       {isDetailsModalOpen && selectedOffice && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Opciones de Oficina</h3>
+            <h3>DETALLES DE OFICINA</h3>
             <div className="modal-info-body">
               <div className="detail-card"><strong>ID:</strong> <span>#{selectedOffice.id}</span></div>
-              <div className="detail-card"><strong>Nombre:</strong> <span>{selectedOffice.nombre}</span></div>
-              <div className="detail-card"><strong>Zona:</strong> <span>{selectedOffice.nombre_zona}</span></div>
-              <div className="detail-card"><strong>Depósito:</strong> <span>{selectedOffice.nombre_deposito}</span></div>
+              <div className="detail-card"><strong>Nombre:</strong> <span>{selectedOffice.nombre.toUpperCase()}</span></div>
+              <div className="detail-card"><strong>Zona:</strong> <span>{selectedOffice.nombre_zona?.toUpperCase()}</span></div>
+              <div className="detail-card"><strong>Depósito:</strong> <span>{selectedOffice.nombre_deposito?.toUpperCase()}</span></div>
             </div>
 
             <div className="modal-footer" style={{ flexDirection: "column", gap: "0.75rem" }}>

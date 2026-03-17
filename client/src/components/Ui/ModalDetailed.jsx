@@ -3,7 +3,7 @@ import {
   Pencil, Trash2, X, Package, Tag, Layers, 
   TrendingUp, DollarSign, Bookmark, AlertCircle,
   History, Boxes, Warehouse, Lock, Image as ImageIcon,
-  Loader2, Maximize2 
+  Loader2, Maximize2, Percent 
 } from "lucide-react";
 import { useProducts } from "../../context/ProductsContext";
 import ListLots from "../Products/ListLots"; 
@@ -54,9 +54,7 @@ const ModalDetailed = ({
   const product = detailedProduct || initialProduct;
   if (!product) return null;
 
-  // Validación de estatus de lotes (soporta booleano o 1/0)
   const tieneLotes = product.estatus_lotes === true || product.estatus_lotes === 1;
-
   const auditList = Array.isArray(audits) ? audits : (audits?.data || []);
   const hasHistory = auditList.length > 0;
 
@@ -83,9 +81,9 @@ const ModalDetailed = ({
               {isLoading ? <Loader2 className="animate-spin" size={24} /> : <Package size={24} />}
             </div>
             <div>
-              <h3 className="pdm-title">{product.descripcion}</h3>
+              <h3 className="pdm-title">{product.descripcion.toUpperCase()}</h3>
               <span className={`pdm-badge ${product.inventario_estatus ? 'active' : 'inactive'}`}>
-                {product.inventario_estatus ? "Activo" : "Inactivo"}
+                {product.inventario_estatus ? "ACTIVO" : "INACTIVO"}
               </span>
             </div>
           </div>
@@ -95,21 +93,20 @@ const ModalDetailed = ({
         {/* TABS */}
         <div className="pdm-tabs">
           <button className={`pdm-tab-btn ${activeTab === 'general' ? 'active' : ''}`} onClick={() => setActiveTab('general')}>
-            <Bookmark size={16} /> General
+            <Bookmark size={16} /> GENERAL
           </button>
           
-          {/* Pestaña de Lotes Condicional */}
           {tieneLotes && (
             <button className={`pdm-tab-btn ${activeTab === 'lotes' ? 'active' : ''}`} onClick={() => setActiveTab('lotes')}>
-              <Boxes size={16} /> Lotes
+              <Boxes size={16} /> LOTES
             </button>
           )}
 
           <button className={`pdm-tab-btn ${activeTab === 'depositos' ? 'active' : ''}`} onClick={() => setActiveTab('depositos')}>
-            <Warehouse size={16} /> Existencias
+            <Warehouse size={16} /> EXISTENCIAS
           </button>
           <button className={`pdm-tab-btn ${activeTab === 'precios' ? 'active' : ''}`} onClick={() => setActiveTab('precios')}>
-            <History size={16} /> Auditoría
+            <History size={16} /> AUDITORÍA
           </button>
         </div>
 
@@ -133,7 +130,7 @@ const ModalDetailed = ({
                       ) : (
                         <div className="pdm-image-placeholder">
                           <ImageIcon size={48} strokeWidth={1.5} />
-                          <span>Sin imagen</span>
+                          <span>SIN IMAGEN</span>
                         </div>
                       )}
                     </div>
@@ -158,16 +155,16 @@ const ModalDetailed = ({
 
                 <div className="pdm-main-info">
                   <div className="pdm-info-item">
-                    <label><Layers size={14} /> Categoría</label>
-                    <p>{category || product.categoria || "N/A"}</p>
+                    <label><Layers size={14} /> CATEGORÍA</label>
+                    <p>{(category || product.categoria || "N/A").toUpperCase()}</p>
                   </div>
                   <div className="pdm-info-item">
-                    <label><Tag size={14} /> Marca</label>
-                    <p>{brand || product.marca || "N/A"}</p>
+                    <label><Tag size={14} /> MARCA</label>
+                    <p>{(brand || product.marca || "N/A").toUpperCase()}</p>
                   </div>
                   <div className="pdm-info-item">
                     <label><Lock size={14} /> SKU</label>
-                    <p>{product.sku || "N/A"}</p>
+                    <p>{(product.sku || "N/A").toUpperCase()}</p>
                   </div>
                 </div>
               </div>
@@ -177,8 +174,8 @@ const ModalDetailed = ({
               <div className="pdm-stat-card inventory" style={{ marginBottom: '1.5rem' }}>
                  <div className="pdm-stat-icon"><Package size={20} /></div>
                  <div className="pdm-stat-content">
-                    <small>Existencia General Actualizada</small>
-                    <strong>{product.existencia_general} unidades</strong>
+                    <small>EXISTENCIA GENERAL ACTUALIZADA</small>
+                    <strong style={{ fontSize: '1.2rem' }}>{product.existencia_general} UNIDADES</strong>
                  </div>
               </div>
 
@@ -186,36 +183,38 @@ const ModalDetailed = ({
                 <div className="pdm-stat-card warning">
                   <div className="pdm-stat-icon"><AlertCircle size={18} /></div>
                   <div className="pdm-stat-content">
-                    <small>Stock Mínimo</small>
-                    <strong>{product.stock_minimo_general} unidades</strong>
+                    <small>STOCK MÍNIMO</small>
+                    <strong>{product.stock_minimo_general} UNIDADES</strong>
                   </div>
                 </div>
                 <div className="pdm-stat-card finance">
                   <div className="pdm-stat-icon"><DollarSign size={18} /></div>
                   <div className="pdm-stat-content">
-                    <small>Costo Unitario</small>
+                    <small>COSTO UNITARIO</small>
                     <strong>{formatCurrency(product.costo_unitario)}</strong>
                   </div>
                 </div>
                 <div className="pdm-stat-card finance">
                   <div className="pdm-stat-icon"><TrendingUp size={18} /></div>
                   <div className="pdm-stat-content">
-                    <small>Precio de Venta</small>
+                    <small>PRECIO DE VENTA</small>
                     <strong>{formatCurrency(product.precio_venta)}</strong>
                   </div>
                 </div>
+                
                 <div className="pdm-stat-card finance">
-                  <div className="pdm-stat-icon"><TrendingUp size={18} /></div>
+                  <div className="pdm-stat-icon" style={{ background: '#eef2ff', color: '#6366f1' }}>
+                    <Percent size={18} /> 
+                  </div>
                   <div className="pdm-stat-content">
-                    <small>Margen de Ganancia</small>
-                    <strong>{formatCurrency(product.margen_ganancia)}</strong>
+                    <small>MARGEN DE GANANCIA</small>
+                    <strong>{product.margen_ganancia}%</strong>
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Sección de Lotes Condicional */}
           {activeTab === "lotes" && tieneLotes && (
             <div className="pdm-tab-content animate-fade-in">
               <ListLots id_producto={product.id} onRefreshProducts={handleRefreshProduct} />
@@ -224,7 +223,7 @@ const ModalDetailed = ({
 
           {activeTab === "depositos" && (
             <div className="pdm-tab-content animate-fade-in">
-              <ListEdeposits id_producto={product.id} existenciaGeneral={product.existencia_general} stockMinimoGeneral={product.stock_minimo_general} onRefreshProducts={handleRefreshProduct} />
+              <ListEdeposits id_producto={product.id} existenciaGeneral={product.existencia_general} onRefreshProducts={handleRefreshProduct} />
             </div>
           )}
 
@@ -237,14 +236,18 @@ const ModalDetailed = ({
 
         {/* FOOTER */}
         <div className="pdm-footer">
-          <button className={`pdm-btn-action delete ${hasHistory ? 'disabled' : ''}`} onClick={!hasHistory ? onDelete : null} disabled={hasHistory || isLoading}>
+          <button 
+            className={`pdm-btn-action delete ${hasHistory ? 'disabled' : ''}`} 
+            onClick={!hasHistory ? onDelete : null} 
+            disabled={hasHistory || isLoading}
+          >
             {hasHistory ? <Lock size={16} /> : <Trash2 size={16} />}
-            <span>{hasHistory ? "Eliminación Bloqueada" : "Eliminar Producto"}</span>
+            <span>{hasHistory ? "ELIMINACIÓN BLOQUEADA" : "ELIMINAR PRODUCTO"}</span>
           </button>
           <div className="pdm-footer-right">
-            <button className="pdm-btn-secondary" onClick={onClose}>Cerrar</button>
+            <button className="pdm-btn-secondary" onClick={onClose}>CERRAR</button>
             <button className="pdm-btn-primary" onClick={onEdit} disabled={isLoading}>
-              <Pencil size={16} /> Editar Producto
+              <Pencil size={16} /> EDITAR PRODUCTO
             </button>
           </div>
         </div>
