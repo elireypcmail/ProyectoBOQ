@@ -242,6 +242,7 @@ const ListProducts = () => {
         initialData={selectedProduct}
         categories={categories}
         brands={brands}
+        products={products}
         onCreateCategory={handleOnCreateCategory}
         onCreateBrand={handleOnCreateBrand}
       />

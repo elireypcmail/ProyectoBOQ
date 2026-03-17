@@ -56,6 +56,11 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
     onValidationChange?.(isValid);
   }, [formData.id_paciente, formData.id_vendedor, onValidationChange]);
 
+  // Obtener datos extendidos del vendedor seleccionado
+  const selectedSellerData = useMemo(() => {
+    return sellers?.find(s => s.id === formData.id_vendedor);
+  }, [sellers, formData.id_vendedor]);
+
   const options = useMemo(
     () => ({
       pacientes: (pacientes || []).map((p) => ({
@@ -66,27 +71,54 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
         value: s.id,
         label: s.nombre?.toUpperCase(),
         id_oficina: s.id_oficina,
+        zona: s.zona,
       })),
       medicos: (medicos || []).map((m) => ({
         value: m.id,
         label: m.nombre?.toUpperCase(),
         tipo: m.tipo?.toUpperCase() || "GENERAL",
       })),
-      oficinas: (entities?.oficinas || []).map((o) => ({
-        value: o.id,
-        label: o.nombre?.toUpperCase(),
-      })),
-      depositos: (entities?.depositos || []).map((d) => ({
-        value: d.id,
-        label: d.nombre?.toUpperCase(),
-      })),
+      // Filtrar Oficinas: Solo la que pertenece al vendedor seleccionado
+      oficinas: (entities?.oficinas || [])
+        .filter(o => !formData.id_vendedor || o.id === selectedSellerData?.id_oficina)
+        .map((o) => ({
+          value: o.id,
+          label: o.nombre?.toUpperCase(),
+        })),
+      // Filtrar Depósitos: Por coincidencia con la zona del vendedor
+      depositos: (entities?.depositos || [])
+        .filter(d => {
+          if (!formData.id_vendedor || !selectedSellerData?.zona) return true;
+          return d.nombre.toLowerCase().includes(selectedSellerData.zona.toLowerCase());
+        })
+        .map((d) => ({
+          value: d.id,
+          label: d.nombre?.toUpperCase(),
+        })),
       clinics: (clinics || []).map((c) => ({
         value: c.id,
         label: c.nombre?.toUpperCase(),
         id_oficina: c.id_oficina,
       })),
     }),
-    [pacientes, sellers, medicos, entities, clinics]
+    [pacientes, sellers, medicos, entities, clinics, formData.id_vendedor, selectedSellerData]
+  );
+
+  // Renderizado personalizado para las opciones de Médicos
+  const formatDoctorOption = ({ label, tipo }) => (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <span>{label}</span>
+      <span style={{ 
+        fontSize: '0.7rem', 
+        backgroundColor: '#f3f4f6', 
+        padding: '2px 8px', 
+        borderRadius: '4px',
+        color: '#666',
+        fontWeight: 'bold'
+      }}>
+        {tipo}
+      </span>
+    </div>
   );
 
   const handleSellerChange = (opt) => {
@@ -108,8 +140,7 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
     );
 
     const depositoSugerido = entities?.depositos?.find((d) => 
-      oficinaSeleccionada && 
-      d.nombre.toLowerCase().includes(oficinaSeleccionada.nombre.split(' ')[0].toLowerCase())
+      opt.zona && d.nombre.toLowerCase().includes(opt.zona.toLowerCase())
     );
 
     setFormData((prev) => ({
@@ -118,21 +149,21 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
       nombre_vendedor: opt.label,
       id_oficina: oficinaSeleccionada?.id || "",
       nombre_oficina: oficinaSeleccionada?.nombre || "",
-      id_deposito: depositoSugerido?.id || prev.id_deposito,
-      nombre_deposito: depositoSugerido?.nombre || prev.nombre_deposito,
+      id_deposito: depositoSugerido?.id || "",
+      nombre_deposito: depositoSugerido?.nombre || "",
     }));
   };
 
   const handleClinicChange = (opt) => {
-    const oficinaRelacionada = options.oficinas.find(
-      (o) => o.value === opt?.id_oficina
+    const oficinaRelacionada = (entities?.oficinas || []).find(
+      (o) => o.id === opt?.id_oficina
     );
     setFormData((prev) => ({
       ...prev,
       id_clinica: opt?.value || "",
       nombre_clinica: opt?.label || "",
-      id_oficina: oficinaRelacionada?.value || prev.id_oficina,
-      nombre_oficina: oficinaRelacionada?.label || prev.nombre_oficina,
+      id_oficina: oficinaRelacionada?.id || prev.id_oficina,
+      nombre_oficina: oficinaRelacionada?.nombre || prev.nombre_oficina,
     }));
   };
 
@@ -170,16 +201,12 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
       <div className="pform-form-grid">
         <div className="pform-group col-span-2">
           <label>
-            <UserCircle size={14} /> PACIENTE{" "}
-            <span className="required">*</span>
+            <UserCircle size={14} /> PACIENTE <span className="required">*</span>
           </label>
           <Select
             isClearable
             options={options.pacientes}
-            value={
-              options.pacientes.find((o) => o.value === formData.id_paciente) ||
-              null
-            }
+            value={options.pacientes.find((o) => o.value === formData.id_paciente) || null}
             onChange={(opt) =>
               setFormData((p) => ({
                 ...p,
@@ -193,16 +220,11 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
         </div>
 
         <div className="pform-group col-span-2">
-          <label>
-            VENDEDOR <span className="required">*</span>
-          </label>
+          <label>VENDEDOR <span className="required">*</span></label>
           <Select
             isClearable
             options={options.sellers}
-            value={
-              options.sellers.find((o) => o.value === formData.id_vendedor) ||
-              null
-            }
+            value={options.sellers.find((o) => o.value === formData.id_vendedor) || null}
             onChange={handleSellerChange}
             placeholder="Asignar vendedor..."
             styles={siSelectStyles}
@@ -214,10 +236,7 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
           <Select
             isClearable
             options={options.oficinas}
-            value={
-              options.oficinas.find((o) => o.value === formData.id_oficina) ||
-              null
-            }
+            value={options.oficinas.find((o) => o.value === formData.id_oficina) || null}
             onChange={(opt) =>
               setFormData((p) => ({
                 ...p,
@@ -226,7 +245,7 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
               }))
             }
             styles={siSelectStyles}
-            placeholder="Oficina..."
+            placeholder={formData.id_vendedor ? "Oficina del vendedor..." : "Selecciona un vendedor primero..."}
           />
         </div>
 
@@ -237,10 +256,7 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
           <Select
             isClearable
             options={options.depositos}
-            value={
-              options.depositos.find((o) => o.value === formData.id_deposito) ||
-              null
-            }
+            value={options.depositos.find((o) => o.value === formData.id_deposito) || null}
             onChange={(opt) =>
               setFormData((p) => ({
                 ...p,
@@ -249,7 +265,7 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
               }))
             }
             styles={siSelectStyles}
-            placeholder="Depósito..."
+            placeholder={formData.id_vendedor ? "Depósitos en zona..." : "Selecciona un vendedor primero..."}
           />
         </div>
 
@@ -260,10 +276,7 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
           <Select
             isClearable
             options={options.clinics}
-            value={
-              options.clinics.find((o) => o.value === formData.id_clinica) ||
-              null
-            }
+            value={options.clinics.find((o) => o.value === formData.id_clinica) || null}
             onChange={handleClinicChange}
             styles={siSelectStyles}
             placeholder="Seleccionar institución..."
@@ -287,6 +300,7 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
           <Select
             options={options.medicos}
             value={null}
+            formatOptionLabel={formatDoctorOption}
             onChange={(opt) => {
               if (
                 opt &&

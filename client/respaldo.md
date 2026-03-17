@@ -1,267 +1,403 @@
-import React, { useEffect } from "react";
-import { Search, Plus, Trash2, Edit2, Layers } from "lucide-react";
-import "../../../../styles/ui/steps/StepProducts.css";
+import React, { useEffect, useState, useMemo, useRef } from "react";
+import Select from "react-select";
+import { Save, X, Plus, UploadCloud, XCircle, Search } from "lucide-react"; 
+import "../../styles/ui/ProductFormModal.css";
 
-const StepProducts = ({
-  items = [],
-  setItems,
-  onOpenSearch,
-  onOpenCreate,
-  onOpenBatch,
-  onEditProduct,
+const ProductFormModal = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  initialData = null,
+  categories = [],
+  brands = [],
+  products = [], // <--- Asegúrate de pasar la lista de productos desde el padre
+  onCreateCategory,
+  onCreateBrand
 }) => {
-  
-  console.log("items")
-  console.log(items)
 
-  /* =========================================
-      CONSTANTES Y HELPERS
-  ========================================= */
-  
-  const MAX_VALUE = 999999999; 
-
-  const round2 = (num) => {
-    return Math.round((num + Number.EPSILON) * 100) / 100;
+  const emptyForm = {
+    descripcion: "",
+    id_categoria: "",
+    id_marca: "",
+    sku: "",
+    existencia_general: 0,
+    costo_unitario: "", 
+    precio_venta: "0,00",
+    margen_ganancia: "",
+    stock_minimo_general: 1,
+    estatus: true,
+    estatus_lotes: true, 
   };
 
-  /**
-   * Ajuste clave: Si el valor viene de la DB como 123.00 (puntos),
-   * lo visualizamos con coma para que sea editable por nuestra lógica.
-   */
-  const formatInitialValue = (value) => {
-    if (value === null || value === undefined || value === "") return "";
-    
-    // Si detectamos que es un número puro o un string con punto decimal (tipo 123.50)
-    if (typeof value === "number" || (typeof value === "string" && value.includes(".") && !value.includes(","))) {
-      return value.toString().replace(".", ",");
-    }
-    return value.toString();
+  const [form, setForm] = useState(emptyForm);
+  const [selectedFiles, setSelectedFiles] = useState([]); 
+  const [isCreatingCat, setIsCreatingCat] = useState(false);
+  const [newCatName, setNewCatName] = useState("");
+  const [isCreatingBrand, setIsCreatingBrand] = useState(false);
+  const [newBrandName, setNewBrandName] = useState("");
+
+  // Estados para las sugerencias
+  const [showSuggestions, setShowSuggestions] = useState({ field: null, visible: false });
+
+  const categoryOptions = useMemo(
+    () => categories.map(c => ({ value: c.id, label: c.nombre })),
+    [categories]
+  );
+
+  const brandOptions = useMemo(
+    () => brands.map(b => ({ value: b.id, label: b.nombre })),
+    [brands]
+  );
+
+  // Filtrado de coincidencias en tiempo real
+  const matches = useMemo(() => {
+    if (initialData) return []; // No sugerir si estamos editando
+    const descLower = form.descripcion.toLowerCase();
+    const skuLower = form.sku.toLowerCase();
+
+    if (descLower.length < 2 && skuLower.length < 2) return [];
+
+    return products.filter(p => 
+      (descLower && p.descripcion?.toLowerCase().includes(descLower)) ||
+      (skuLower && p.sku?.toLowerCase().includes(skuLower))
+    ).slice(0, 5); // Limitar a 5 sugerencias
+  }, [form.descripcion, form.sku, products, initialData]);
+
+  const parseLocaleNumber = (stringNumber) => {
+    if (!stringNumber) return 0;
+    return parseFloat(stringNumber.toString().replace(",", ".")) || 0;
   };
-
-  const parseToFloat = (value) => {
-    if (!value) return 0;
-    if (typeof value === "number") return value;
-
-    const standardNumber = value
-      .toString()
-      .replace(/\./g, "") 
-      .replace(",", "."); 
-    
-    return parseFloat(standardNumber) || 0;
-  };
-
-  const calculateWidth = (value) => {
-    const text = value ? value.toString() : "";
-    const length = text.length; 
-    return `${Math.max(6, length + 2)}ch`;
-  };
-
-  /* =========================================
-      MANEJO DE INPUTS
-  ========================================= */
-
-  const handleInputChange = (id, field, value) => {
-    if (value === "") {
-      updateItemState(id, field, "");
-      return;
-    }
-
-    let valToProcess = value;
-    if (value.includes(".") && !value.includes(",")) {
-       const parts = value.split(".");
-       if (parts.length === 2) {
-          valToProcess = value.replace(".", ",");
-       }
-    }
-
-    const regex = /^[0-9.]*(,[0-9]{0,2})?$/;
-
-    if (regex.test(valToProcess)) {
-      const numericValue = parseToFloat(valToProcess);
-
-      if (numericValue > MAX_VALUE) {
-        alert("El valor no puede superar 999.999.999,00");
-        return; 
-      }
-
-      let finalValue = valToProcess;
-      if (valToProcess.length > 1 && valToProcess.startsWith("0") && valToProcess[1] !== ",") {
-        finalValue = valToProcess.substring(1);
-      }
-
-      updateItemState(id, field, finalValue);
-    }
-  };
-
-  const updateItemState = (id, field, value) => {
-    const updatedItems = items.map((item) => {
-      if (item.id === id) return { ...item, [field]: value };
-      return item;
-    });
-    setItems(updatedItems);
-  };
-
-  const handleBlurFormat = (id, field, value) => {
-    if (!value) return;
-
-    const number = parseToFloat(value);
-    const formatted = number.toLocaleString("de-DE", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-
-    updateItemState(id, field, formatted);
-  };
-
-  const removeItem = (id) => {
-    setItems(items.filter((item) => item.id !== id));
-  };
-
-  /* =========================================
-      EFECTOS DE VALIDACIÓN
-  ========================================= */
 
   useEffect(() => {
-    const updatedItems = items.map((item) => {
-      const qty = parseToFloat(item.cantidad);
-      const cost = parseToFloat(item.costo_unitario);
-      const isValid = qty > 0 && cost > 0;
-
-      if (item.isValid !== isValid) {
-        return { ...item, isValid };
-      }
-      return item;
-    });
-
-    if (JSON.stringify(updatedItems) !== JSON.stringify(items)) {
-      setItems(updatedItems);
+    if (initialData) {
+      setForm({
+        ...emptyForm,
+        ...initialData,
+        stock_minimo_general: Number(initialData.stock_minimo_general) || 1,
+        costo_unitario: initialData.costo_unitario ? String(initialData.costo_unitario).replace(".", ",") : "",
+        margen_ganancia: initialData.margen_ganancia ? String(initialData.margen_ganancia).replace(".", ",") : "",
+        precio_venta: initialData.precio_venta ? String(initialData.precio_venta).replace(".", ",") : "0,00",
+      });
+    } else {
+      setForm(emptyForm);
+      setSelectedFiles([]); 
     }
-  }, [items, setItems]);
+  }, [initialData, isOpen]);
+
+  useEffect(() => {
+    const costo = parseLocaleNumber(form.costo_unitario);
+    const margen = parseLocaleNumber(form.margen_ganancia);
+    let precio = costo + (costo * (margen / 100));
+    
+    setForm(prev => ({ 
+      ...prev, 
+      precio_venta: precio.toFixed(2).replace(".", ",")
+    }));
+  }, [form.costo_unitario, form.margen_ganancia]);
+
+  if (!isOpen) return null;
+
+  const handleSelectSuggestion = (p) => {
+    setForm({
+      ...form,
+      descripcion: p.descripcion.toUpperCase(),
+      sku: p.sku.toUpperCase(),
+      id_categoria: p.id_categoria,
+      id_marca: p.id_marca,
+      costo_unitario: String(p.costo_unitario).replace(".", ","),
+      margen_ganancia: String(p.margen_ganancia).replace(".", ","),
+    });
+    setShowSuggestions({ field: null, visible: false });
+  };
+
+  const handleChange = (e) => {
+    const { name, value, type } = e.target;
+    let val = value;
+
+    if (type === "text" && name !== "costo_unitario" && name !== "margen_ganancia") {
+      val = val.toUpperCase();
+    } else if (type === "number") {
+      val = value === "" ? "" : Number(value);
+    }
+
+    if (name === "costo_unitario" || name === "margen_ganancia") {
+      if (!/^[0-9,]*$/.test(val)) return; 
+      if (name === "margen_ganancia" && val !== "") {
+        const numVal = parseLocaleNumber(val);
+        if (numVal > 100) val = "100";
+        if (numVal < 0) val = "0";
+      }
+    }
+    
+    if (name === "stock_minimo_general" && val !== "") {
+        val = Math.max(val, 1);
+    }
+
+    setForm(prev => ({ ...prev, [name]: val }));
+    
+    // Mostrar sugerencias si hay texto
+    if ((name === "descripcion" || name === "sku") && val.length > 1) {
+      setShowSuggestions({ field: name, visible: true });
+    } else {
+      setShowSuggestions({ field: null, visible: false });
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (selectedFiles.length >= 5) return alert("Máximo 5 archivos permitidos");
+
+    const newFiles = files.slice(0, 5 - selectedFiles.length).map((file) => ({
+      url: URL.createObjectURL(file),
+      mime_type: file.type,
+      name: file.name,
+      file,
+    }));
+    setSelectedFiles((prev) => [...prev, ...newFiles]);
+  };
+
+  const handleSubmit = () => {
+    const usuario_id = Number(localStorage.getItem("UserId"));
+    const { descripcion, sku, id_categoria, id_marca, stock_minimo_general } = form;
+
+    if (!descripcion.trim()) return alert("La descripción es obligatoria.");
+    if (!sku.trim()) return alert("El SKU/N° de Serie es obligatorio.");
+    if (!id_categoria) return alert("Debe seleccionar una categoría.");
+    if (!id_marca) return alert("Debe seleccionar una marca.");
+    if (!stock_minimo_general || stock_minimo_general < 1) {
+        return alert("El stock mínimo debe ser al menos 1.");
+    }
+
+    const finalData = {
+      ...form,
+      costo_unitario: parseLocaleNumber(form.costo_unitario),
+      precio_venta: parseLocaleNumber(form.precio_venta), 
+      margen_ganancia: parseLocaleNumber(form.margen_ganancia),
+      stock_minimo_general: Number(form.stock_minimo_general),
+      usuario_id
+    };
+
+    onSubmit(finalData, selectedFiles.map(f => f.file));
+    onClose();
+  };
+
+  const handleCancel = () => {
+    setForm(emptyForm);
+    setSelectedFiles([]);
+    setIsCreatingCat(false);
+    setIsCreatingBrand(false);
+    onClose();
+  };
+
+  const selectStyles = {
+    control: base => ({
+      ...base,
+      minHeight: 38,
+      borderRadius: 6,
+      borderColor: "#d1d5db",
+      fontSize: "0.875rem",
+    }),
+    container: base => ({ ...base, flex: 1 })
+  };
+
+  // Componente de lista de sugerencias
+  const SuggestionList = () => (
+    <div className="pfm-suggestions-container">
+      <div className="pfm-suggestions-header">
+        <Search size={12} /> Coincidencias encontradas
+      </div>
+      {matches.map(p => (
+        <div key={p.id} className="pfm-suggestion-item" onClick={() => handleSelectSuggestion(p)}>
+          <div className="pfm-suggestion-main">
+            <span className="pfm-suggestion-sku">{p.sku}</span>
+            <span className="pfm-suggestion-desc">{p.descripcion}</span>
+          </div>
+          <span className="pfm-suggestion-action">Autocompletar</span>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
-    <section className="pform-products-step">
-      <div className="section-header-alt">
-        <h2>Gestión de Productos</h2>
-        <p style={{ fontSize: "0.8rem", color: "#666" }}>
-          * Ingrese cantidad y costo. Use la coma (,) para decimales. Límite: 999.999.999,00
-        </p>
-      </div>
-
-      <div className="pform-products-toolbar">
-        <div className="search-container-full" onClick={onOpenSearch} style={{ cursor: "pointer" }}>
-          <Search size={18} className="search-icon" />
-          <input type="text" placeholder="Buscar por SKU o descripción..." readOnly />
+    <div className="pfm-overlay">
+      <div className="pfm-container pfm-container--large">
+        <div className="pfm-header">
+          <h3 className="pfm-title">{initialData ? "Editar Producto" : "Crear Producto"}</h3>
+          <button className="pfm-icon-btn" onClick={handleCancel}><X size={18} /></button>
         </div>
-        <button className="btn-add-new-product" onClick={onOpenCreate}>
-          <Plus size={18} /> Crear producto nuevo
-        </button>
-      </div>
 
-      {items.length === 0 ? (
-        <div className="pform-empty-table-container">
-          <p>No hay productos agregados.</p>
-        </div>
-      ) : (
-        <div className="pform-items-table-container">
-          <table className="pform-items-table">
-            <thead>
-              <tr>
-                <th>CÓDIGO</th>
-                <th>DESCRIPCIÓN</th>
-                <th className="center">CANTIDAD</th>
-                <th className="center">COSTO</th>
-                <th className="center">TOTAL</th>
-                <th className="center">ACCIONES</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => {
-                const qtyVal = parseToFloat(item.cantidad);
-                const costVal = parseToFloat(item.costo_unitario);
-                const totalLine = round2(qtyVal * costVal);
-                
-                const hasError = !item.cantidad || !item.costo_unitario || qtyVal <= 0 || costVal <= 0;
+        <div className="pfm-body">
+          <div className="pfm-section">
+            <h4 className="pfm-section-title">Información básica</h4>
+            <div className="pfm-grid">
+              
+              <div className="pfm-field" style={{ position: 'relative' }}>
+                <label className="pfm-label">DESCRIPCIÓN *</label>
+                <input 
+                  className="pfm-input" 
+                  type="text" 
+                  name="descripcion" 
+                  value={form.descripcion} 
+                  onChange={handleChange} 
+                  placeholder="Nombre del producto"
+                  autoComplete="off"
+                />
+                {showSuggestions.visible && showSuggestions.field === "descripcion" && matches.length > 0 && <SuggestionList />}
+              </div>
 
-                return (
-                  <tr key={item.id} style={{ backgroundColor: hasError ? "#fffafb" : "transparent" }}>
-                    <td className="sku-cell">{item.sku?.substring(0, 10) || "S/C"}</td>
-                    <td className="desc-cell">{item.descripcion}</td>
+              <div className="pfm-field" style={{ position: 'relative' }}>
+                <label className="pfm-label">SKU *</label>
+                <input 
+                  className="pfm-input" 
+                  type="text" 
+                  name="sku" 
+                  value={form.sku} 
+                  onChange={handleChange} 
+                  placeholder="Código único"
+                  autoComplete="off"
+                />
+                {showSuggestions.visible && showSuggestions.field === "sku" && matches.length > 0 && <SuggestionList />}
+              </div>
 
-                    <td className="center">
-                      <input
-                        type="text"
-                        className={`table-input-dynamic ${!qtyVal ? "input-error" : ""}`}
-                        style={{
-                          textAlign: "center",
-                          width: calculateWidth(item.cantidad),
-                          minWidth: "60px"
-                        }}
-                        value={formatInitialValue(item.cantidad)}
-                        onChange={(e) => handleInputChange(item.id, "cantidad", e.target.value)}
-                        onBlur={(e) => handleBlurFormat(item.id, "cantidad", e.target.value)}
-                        placeholder="0,00"
-                        inputMode="decimal"
+              {/* ... Categoría, Marca y Stock Mínimo se mantienen igual ... */}
+              <div className="pfm-field">
+                <label className="pfm-label">CATEGORÍA *</label>
+                {!isCreatingCat ? (
+                  <div style={{ display: 'flex', gap: '5px' }}>
+                    <Select
+                      styles={selectStyles}
+                      options={categoryOptions}
+                      placeholder="Seleccionar..."
+                      value={categoryOptions.find(o => o.value === form.id_categoria) || null}
+                      onChange={opt => setForm(prev => ({ ...prev, id_categoria: opt ? opt.value : "" }))}
+                    />
+                    <button className="pfm-btn-add" onClick={() => setIsCreatingCat(true)}><Plus size={16}/></button>
+                  </div>
+                ) : (
+                  <div className="pfm-new-inline">
+                    <input className="pfm-input" placeholder="Nueva Categoría" value={newCatName} onChange={(e) => setNewCatName(e.target.value.toUpperCase())} />
+                    <button className="pfm-btn-save-small" onClick={() => { onCreateCategory(newCatName).then(res => { if(res?.id) setForm(p => ({...p, id_categoria: res.id})); setIsCreatingCat(false); setNewCatName(""); })} }>OK</button>
+                    <button className="pfm-btn-cancel-small" onClick={() => setIsCreatingCat(false)}>X</button>
+                  </div>
+                )}
+              </div>
+
+              <div className="pfm-field">
+                <label className="pfm-label">MARCA *</label>
+                {!isCreatingBrand ? (
+                  <div style={{ display: 'flex', gap: '5px' }}>
+                    <Select
+                      styles={selectStyles}
+                      options={brandOptions}
+                      placeholder="Seleccionar..."
+                      value={brandOptions.find(o => o.value === form.id_marca) || null}
+                      onChange={opt => setForm(prev => ({ ...prev, id_marca: opt ? opt.value : "" }))}
+                    />
+                    <button className="pfm-btn-add" onClick={() => setIsCreatingBrand(true)}><Plus size={16}/></button>
+                  </div>
+                ) : (
+                  <div className="pfm-new-inline">
+                    <input className="pfm-input" placeholder="Nueva Marca" value={newBrandName} onChange={(e) => setNewBrandName(e.target.value.toUpperCase())} />
+                    <button className="pfm-btn-save-small" onClick={() => { onCreateBrand(newBrandName).then(res => { if(res?.id) setForm(p => ({...p, id_marca: res.id})); setIsCreatingBrand(false); setNewBrandName(""); })} }>OK</button>
+                    <button className="pfm-btn-cancel-small" onClick={() => setIsCreatingBrand(false)}>X</button>
+                  </div>
+                )}
+              </div>
+
+              <div className="pfm-field">
+                <label className="pfm-label">STOCK MÍNIMO *</label>
+                <input className="pfm-input" type="number" name="stock_minimo_general" min="1" value={form.stock_minimo_general} onChange={handleChange} />
+              </div>
+            </div>
+          </div>
+
+          {/* ... Secciones de Precios, Inventario y Multimedia se mantienen igual ... */}
+          <div className="pfm-section">
+            <h4 className="pfm-section-title">Precios y Márgenes</h4>
+            <div className="pfm-grid">
+              <div className="pfm-field">
+                <label className="pfm-label">COSTO ($)</label>
+                <input className="pfm-input" type="text" name="costo_unitario" value={form.costo_unitario} onChange={handleChange} placeholder="0,00" />
+              </div>
+              <div className="pfm-field">
+                <label className="pfm-label">MARGEN (%)</label>
+                <input className="pfm-input" type="text" name="margen_ganancia" value={form.margen_ganancia} onChange={handleChange} placeholder="0" />
+              </div>
+              <div className="pfm-field">
+                <label className="pfm-label">PRECIO VENTA ($)</label>
+                <input className="pfm-input pfm-input--readonly" type="text" value={form.precio_venta} readOnly />
+              </div>
+            </div>
+          </div>
+
+          <div className="pfm-section">
+            <h4 className="pfm-section-title">Gestión de Inventario</h4>
+            <div className="pfm-toggle-group">
+              <button 
+                type="button"
+                className={`pfm-toggle-btn ${!form.estatus_lotes ? 'active' : ''}`}
+                onClick={() => setForm(prev => ({ ...prev, estatus_lotes: false }))}
+              >
+                Sin Lotes
+              </button>
+              <button 
+                type="button"
+                className={`pfm-toggle-btn ${form.estatus_lotes ? 'active' : ''}`}
+                onClick={() => setForm(prev => ({ ...prev, estatus_lotes: true }))}
+              >
+                Con Lotes
+              </button>
+            </div>
+          </div>
+
+          <div className="pfm-section">
+            <h4 className="pfm-section-title">Archivos Multimedia</h4>
+            <div className="pfm-field">
+              <div 
+                className="uploadAdm-box" 
+                style={{ cursor: 'pointer', textAlign: 'center', padding: '20px', border: '2px dashed #d1d5db', borderRadius: '8px' }}
+                onClick={() => document.getElementById("fileUpload").click()}
+              >
+                <UploadCloud size={30} style={{ margin: '0 auto', color: '#6b7280' }} />
+                <span className="upload-label" style={{ display: 'block', marginTop: '10px', color: '#374151' }}>
+                  Haz clic aquí para subir (Máx. 5 archivos)
+                </span>
+                <input id="fileUpload" type="file" multiple accept="image/*,video/*" style={{ display: 'none' }} onChange={handleFileChange} />
+              </div>
+
+              {selectedFiles.length > 0 && (
+                <ul className="files_containerEdit" style={{ display: 'flex', gap: '10px', marginTop: '15px', padding: 0, listStyle: 'none', flexWrap: 'wrap' }}>
+                  {selectedFiles.map((file, index) => (
+                    <li key={index} className="file_itemEdit" style={{ position: 'relative', width: '100px', height: '100px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e5e7eb' }}>
+                      <div className="file_order" style={{ position: 'absolute', top: '4px', left: '4px', background: 'rgba(0,0,0,0.5)', color: 'white', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', zIndex: 10 }}>{index + 1}</div>
+                      <div className="file_background" style={{ width: '100%', height: '100%' }}>
+                        {file.mime_type?.startsWith("video") 
+                          ? <video src={file.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> 
+                          : <img src={file.url} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        }
+                      </div>
+                      <XCircle 
+                        className="cms-file-remove" 
+                        color="#ef4444" 
+                        size={20} 
+                        style={{ position: 'absolute', top: '4px', right: '4px', cursor: 'pointer', background: 'white', borderRadius: '50%' }}
+                        onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== index))} 
                       />
-                    </td>
-
-                    <td className="center">
-                      <div className="input" style={{ display: 'inline-flex', justifyContent: "center", alignItems: 'center' }}>
-                        <input
-                          type="text"
-                          className={`table-input-dynamic ${!costVal ? "input-error" : ""}`}
-                          style={{
-                            textAlign: "center",
-                            width: calculateWidth(item.costo_unitario),
-                            minWidth: "80px"
-                          }}
-                          value={formatInitialValue(item.costo_unitario)}
-                          onChange={(e) => handleInputChange(item.id, "costo_unitario", e.target.value)}
-                          onBlur={(e) => handleBlurFormat(item.id, "costo_unitario", e.target.value)}
-                          placeholder="0,00"
-                          inputMode="decimal"
-                        />
-                      </div>
-                    </td>
-
-                    <td className="center total-cell" style={{ fontWeight: "700", color: "#333" }}>
-                      {totalLine.toLocaleString("de-DE", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </td>
-
-                    <td className="center">
-                      <div className="pform-actions-cell">
-                        {/* AJUSTE: Solo renderiza el botón de lotes si 
-                            estatus_lotes es estrictamente true 
-                        */}
-                        {item.estatus_lotes === true && (
-                          <button 
-                            className="btn-batch-row" 
-                            title="Lotes" 
-                            onClick={() => onOpenBatch(item)}
-                          >
-                            <Layers size={16} />
-                          </button>
-                        )}
-                        
-                        <button className="btn-edit-row" title="Editar" onClick={() => onEditProduct(item)}>
-                          <Edit2 size={16} />
-                        </button>
-                        <button className="btn-delete-row" title="Quitar" onClick={() => removeItem(item.id)}>
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
         </div>
-      )}
-    </section>
+
+        <div className="pfm-footer">
+          <button className="pfm-btn pfm-btn--secondary" onClick={handleCancel}>Cancelar</button>
+          <button className="pfm-btn pfm-btn--primary" onClick={handleSubmit}><Save size={16} /> Guardar Producto</button>
+        </div>
+      </div>
+    </div>
   );
 };
 
-export default StepProducts;
+export default ProductFormModal;

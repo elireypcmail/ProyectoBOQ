@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import Select from "react-select";
-import { Save, X, Plus, UploadCloud, XCircle } from "lucide-react"; 
+import { Save, X, Plus, UploadCloud, XCircle, Search } from "lucide-react"; 
 import "../../styles/ui/ProductFormModal.css";
 
 const ProductFormModal = ({
@@ -10,6 +10,7 @@ const ProductFormModal = ({
   initialData = null,
   categories = [],
   brands = [],
+  products = [], 
   onCreateCategory,
   onCreateBrand
 }) => {
@@ -34,16 +35,28 @@ const ProductFormModal = ({
   const [newCatName, setNewCatName] = useState("");
   const [isCreatingBrand, setIsCreatingBrand] = useState(false);
   const [newBrandName, setNewBrandName] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState({ field: null, visible: false });
 
   const categoryOptions = useMemo(
-    () => categories.map(c => ({ value: c.id, label: c.nombre })),
+    () => categories.map(c => ({ value: c.id, label: c.nombre.toUpperCase() })),
     [categories]
   );
 
   const brandOptions = useMemo(
-    () => brands.map(b => ({ value: b.id, label: b.nombre })),
+    () => brands.map(b => ({ value: b.id, label: b.nombre.toUpperCase() })),
     [brands]
   );
+
+  const matches = useMemo(() => {
+    if (initialData || !showSuggestions.field) return [];
+    const field = showSuggestions.field;
+    const value = form[field].toLowerCase();
+    if (value.length < 2) return [];
+
+    return products
+      .filter(p => p[field]?.toLowerCase().includes(value))
+      .slice(0, 5); 
+  }, [form.descripcion, form.sku, products, initialData, showSuggestions.field]);
 
   const parseLocaleNumber = (stringNumber) => {
     if (!stringNumber) return 0;
@@ -55,6 +68,8 @@ const ProductFormModal = ({
       setForm({
         ...emptyForm,
         ...initialData,
+        descripcion: (initialData.descripcion || "").toUpperCase(),
+        sku: (initialData.sku || "").toUpperCase(),
         stock_minimo_general: Number(initialData.stock_minimo_general) || 1,
         costo_unitario: initialData.costo_unitario ? String(initialData.costo_unitario).replace(".", ",") : "",
         margen_ganancia: initialData.margen_ganancia ? String(initialData.margen_ganancia).replace(".", ",") : "",
@@ -79,24 +94,29 @@ const ProductFormModal = ({
 
   if (!isOpen) return null;
 
+  const handleSelectSuggestion = (p) => {
+    const field = showSuggestions.field;
+    setForm(prev => ({
+      ...prev,
+      [field]: (p[field] || "").toUpperCase(),
+    }));
+    setShowSuggestions({ field: null, visible: false });
+  };
+
   const handleChange = (e) => {
     const { name, value, type } = e.target;
     let val = value;
 
-    if (type === "text" && name !== "costo_unitario" && name !== "margen_ganancia") {
+    // Convertir a mayúsculas si es texto (incluyendo los de moneda para consistencia de estado)
+    if (type !== "number") {
       val = val.toUpperCase();
-    } else if (type === "number") {
+    } else {
       val = value === "" ? "" : Number(value);
     }
 
+    // Validación específica para campos con coma decimal
     if (name === "costo_unitario" || name === "margen_ganancia") {
       if (!/^[0-9,]*$/.test(val)) return; 
-      
-      if (name === "margen_ganancia" && val !== "") {
-        const numVal = parseLocaleNumber(val);
-        if (numVal > 100) val = "100";
-        if (numVal < 0) val = "0";
-      }
     }
     
     if (name === "stock_minimo_general" && val !== "") {
@@ -104,16 +124,22 @@ const ProductFormModal = ({
     }
 
     setForm(prev => ({ ...prev, [name]: val }));
+    
+    if ((name === "descripcion" || name === "sku") && val.length > 1) {
+      setShowSuggestions({ field: name, visible: true });
+    } else {
+      setShowSuggestions({ field: null, visible: false });
+    }
   };
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
-    if (selectedFiles.length >= 5) return alert("Máximo 5 archivos permitidos");
+    if (selectedFiles.length >= 5) return alert("MÁXIMO 5 ARCHIVOS PERMITIDOS.");
 
     const newFiles = files.slice(0, 5 - selectedFiles.length).map((file) => ({
       url: URL.createObjectURL(file),
       mime_type: file.type,
-      name: file.name,
+      name: file.name.toUpperCase(),
       file,
     }));
     setSelectedFiles((prev) => [...prev, ...newFiles]);
@@ -121,15 +147,12 @@ const ProductFormModal = ({
 
   const handleSubmit = () => {
     const usuario_id = Number(localStorage.getItem("UserId"));
-    const { descripcion, sku, id_categoria, id_marca, stock_minimo_general } = form;
+    const { descripcion, sku, id_categoria, id_marca } = form;
 
-    if (!descripcion.trim()) return alert("La descripción es obligatoria.");
-    if (!sku.trim()) return alert("El SKU/N° de Serie es obligatorio.");
-    if (!id_categoria) return alert("Debe seleccionar una categoría.");
-    if (!id_marca) return alert("Debe seleccionar una marca.");
-    if (!stock_minimo_general || stock_minimo_general < 1) {
-        return alert("El stock mínimo debe ser al menos 1.");
-    }
+    if (!descripcion.trim()) return alert("LA DESCRIPCIÓN ES OBLIGATORIA.");
+    if (!sku.trim()) return alert("EL SKU ES OBLIGATORIO.");
+    if (!id_categoria) return alert("DEBE SELECCIONAR UNA CATEGORÍA.");
+    if (!id_marca) return alert("DEBE SELECCIONAR UNA MARCA.");
 
     const finalData = {
       ...form,
@@ -159,31 +182,72 @@ const ProductFormModal = ({
       borderRadius: 6,
       borderColor: "#d1d5db",
       fontSize: "0.875rem",
+      textTransform: "uppercase"
     }),
+    singleValue: base => ({ ...base, textTransform: "uppercase" }),
+    placeholder: base => ({ ...base, textTransform: "uppercase" }),
     container: base => ({ ...base, flex: 1 })
   };
+
+  const SuggestionList = () => (
+    <div className="pfm-suggestions-container">
+      <div className="pfm-suggestions-header">
+        <Search size={12} /> COINCIDENCIAS ENCONTRADAS
+      </div>
+      {matches.map(p => (
+        <div key={p.id} className="pfm-suggestion-item" onClick={() => handleSelectSuggestion(p)}>
+          <div className="pfm-suggestion-main">
+            <span className="pfm-suggestion-text">
+                {showSuggestions.field === "sku" ? p.sku.toUpperCase() : p.descripcion.toUpperCase()}
+            </span>
+          </div>
+          <span className="pfm-suggestion-action">USAR</span>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <div className="pfm-overlay">
       <div className="pfm-container pfm-container--large">
         <div className="pfm-header">
-          <h3 className="pfm-title">{initialData ? "Editar Producto" : "Crear Producto"}</h3>
+          <h3 className="pfm-title">{initialData ? "EDITAR PRODUCTO" : "CREAR PRODUCTO"}</h3>
           <button className="pfm-icon-btn" onClick={handleCancel}><X size={18} /></button>
         </div>
 
         <div className="pfm-body">
           <div className="pfm-section">
-            <h4 className="pfm-section-title">Información básica</h4>
+            <h4 className="pfm-section-title">INFORMACIÓN BÁSICA</h4>
             <div className="pfm-grid">
               
-              <div className="pfm-field">
+              <div className="pfm-field" style={{ position: 'relative' }}>
                 <label className="pfm-label">DESCRIPCIÓN *</label>
-                <input className="pfm-input" type="text" name="descripcion" value={form.descripcion} onChange={handleChange} placeholder="Nombre del producto" />
+                <input 
+                  className="pfm-input" 
+                  type="text" 
+                  name="descripcion" 
+                  value={form.descripcion} 
+                  onChange={handleChange} 
+                  placeholder="NOMBRE DEL PRODUCTO"
+                  autoComplete="off"
+                  style={{ textTransform: 'uppercase' }}
+                />
+                {showSuggestions.visible && showSuggestions.field === "descripcion" && matches.length > 0 && <SuggestionList />}
               </div>
 
-              <div className="pfm-field">
+              <div className="pfm-field" style={{ position: 'relative' }}>
                 <label className="pfm-label">SKU *</label>
-                <input className="pfm-input" type="text" name="sku" value={form.sku} onChange={handleChange} placeholder="Código único" />
+                <input 
+                  className="pfm-input" 
+                  type="text" 
+                  name="sku" 
+                  value={form.sku} 
+                  onChange={handleChange} 
+                  placeholder="CÓDIGO ÚNICO"
+                  autoComplete="off"
+                  style={{ textTransform: 'uppercase' }}
+                />
+                {showSuggestions.visible && showSuggestions.field === "sku" && matches.length > 0 && <SuggestionList />}
               </div>
 
               <div className="pfm-field">
@@ -193,7 +257,7 @@ const ProductFormModal = ({
                     <Select
                       styles={selectStyles}
                       options={categoryOptions}
-                      placeholder="Seleccionar..."
+                      placeholder="SELECCIONAR..."
                       value={categoryOptions.find(o => o.value === form.id_categoria) || null}
                       onChange={opt => setForm(prev => ({ ...prev, id_categoria: opt ? opt.value : "" }))}
                     />
@@ -201,8 +265,27 @@ const ProductFormModal = ({
                   </div>
                 ) : (
                   <div className="pfm-new-inline">
-                    <input className="pfm-input" placeholder="Nueva Categoría" value={newCatName} onChange={(e) => setNewCatName(e.target.value.toUpperCase())} />
-                    <button className="pfm-btn-save-small" onClick={() => { onCreateCategory(newCatName).then(res => { if(res?.id) setForm(p => ({...p, id_categoria: res.id})); setIsCreatingCat(false); setNewCatName(""); })} }>OK</button>
+                    <input 
+                      className="pfm-input" 
+                      placeholder="NUEVA CATEGORÍA" 
+                      value={newCatName} 
+                      onChange={(e) => setNewCatName(e.target.value.toUpperCase())} 
+                      style={{ textTransform: 'uppercase' }}
+                    />
+                    <button 
+                      className="pfm-btn-save-small" 
+                      onClick={() => { 
+                        const nameUpper = newCatName.trim().toUpperCase();
+                        if (!nameUpper) return alert("EL NOMBRE ES OBLIGATORIO");
+                        onCreateCategory(nameUpper).then(res => { 
+                          if(res?.id) setForm(p => ({...p, id_categoria: res.id})); 
+                          setIsCreatingCat(false); 
+                          setNewCatName(""); 
+                        });
+                      }}
+                    >
+                      OK
+                    </button>
                     <button className="pfm-btn-cancel-small" onClick={() => setIsCreatingCat(false)}>X</button>
                   </div>
                 )}
@@ -215,7 +298,7 @@ const ProductFormModal = ({
                     <Select
                       styles={selectStyles}
                       options={brandOptions}
-                      placeholder="Seleccionar..."
+                      placeholder="SELECCIONAR..."
                       value={brandOptions.find(o => o.value === form.id_marca) || null}
                       onChange={opt => setForm(prev => ({ ...prev, id_marca: opt ? opt.value : "" }))}
                     />
@@ -223,8 +306,27 @@ const ProductFormModal = ({
                   </div>
                 ) : (
                   <div className="pfm-new-inline">
-                    <input className="pfm-input" placeholder="Nueva Marca" value={newBrandName} onChange={(e) => setNewBrandName(e.target.value.toUpperCase())} />
-                    <button className="pfm-btn-save-small" onClick={() => { onCreateBrand(newBrandName).then(res => { if(res?.id) setForm(p => ({...p, id_marca: res.id})); setIsCreatingBrand(false); setNewBrandName(""); })} }>OK</button>
+                    <input 
+                      className="pfm-input" 
+                      placeholder="NUEVA MARCA" 
+                      value={newBrandName} 
+                      onChange={(e) => setNewBrandName(e.target.value.toUpperCase())} 
+                      style={{ textTransform: 'uppercase' }}
+                    />
+                    <button 
+                      className="pfm-btn-save-small" 
+                      onClick={() => { 
+                        const nameUpper = newBrandName.trim().toUpperCase();
+                        if (!nameUpper) return alert("EL NOMBRE ES OBLIGATORIO");
+                        onCreateBrand(nameUpper).then(res => { 
+                          if(res?.id) setForm(p => ({...p, id_marca: res.id})); 
+                          setIsCreatingBrand(false); 
+                          setNewBrandName(""); 
+                        });
+                      }}
+                    >
+                      OK
+                    </button>
                     <button className="pfm-btn-cancel-small" onClick={() => setIsCreatingBrand(false)}>X</button>
                   </div>
                 )}
@@ -234,13 +336,12 @@ const ProductFormModal = ({
                 <label className="pfm-label">STOCK MÍNIMO *</label>
                 <input className="pfm-input" type="number" name="stock_minimo_general" min="1" value={form.stock_minimo_general} onChange={handleChange} />
               </div>
-
             </div>
           </div>
 
           <div className="pfm-section">
-            <h4 className="pfm-section-title">Precios y Márgenes</h4>
-            <div className="pfm-grid">
+            <h4 className="pfm-section-title">PRECIOS Y MÁRGENES</h4>
+            <div className="pfm-grid pfm-grid--3">
               <div className="pfm-field">
                 <label className="pfm-label">COSTO ($)</label>
                 <input className="pfm-input" type="text" name="costo_unitario" value={form.costo_unitario} onChange={handleChange} placeholder="0,00" />
@@ -256,28 +357,29 @@ const ProductFormModal = ({
             </div>
           </div>
 
+          {/* Resto del componente (Inventario, Multimedia, Footer) sin cambios funcionales extra */}
           <div className="pfm-section">
-            <h4 className="pfm-section-title">Gestión de Inventario</h4>
+            <h4 className="pfm-section-title">GESTIÓN DE INVENTARIO</h4>
             <div className="pfm-toggle-group">
               <button 
                 type="button"
                 className={`pfm-toggle-btn ${!form.estatus_lotes ? 'active' : ''}`}
                 onClick={() => setForm(prev => ({ ...prev, estatus_lotes: false }))}
               >
-                Sin Lotes
+                SIN LOTES
               </button>
               <button 
                 type="button"
                 className={`pfm-toggle-btn ${form.estatus_lotes ? 'active' : ''}`}
                 onClick={() => setForm(prev => ({ ...prev, estatus_lotes: true }))}
               >
-                Con Lotes
+                CON LOTES
               </button>
             </div>
           </div>
 
           <div className="pfm-section">
-            <h4 className="pfm-section-title">Archivos Multimedia</h4>
+            <h4 className="pfm-section-title">ARCHIVOS MULTIMEDIA</h4>
             <div className="pfm-field">
               <div 
                 className="uploadAdm-box" 
@@ -285,8 +387,8 @@ const ProductFormModal = ({
                 onClick={() => document.getElementById("fileUpload").click()}
               >
                 <UploadCloud size={30} style={{ margin: '0 auto', color: '#6b7280' }} />
-                <span className="upload-label" style={{ display: 'block', marginTop: '10px', color: '#374151' }}>
-                  Haz clic aquí para subir (Máx. 5 archivos)
+                <span className="upload-label" style={{ display: 'block', marginTop: '10px', color: '#374151', textTransform: 'uppercase' }}>
+                  HAZ CLIC AQUÍ PARA SUBIR (MÁX. 5 ARCHIVOS)
                 </span>
                 <input id="fileUpload" type="file" multiple accept="image/*,video/*" style={{ display: 'none' }} onChange={handleFileChange} />
               </div>
@@ -299,10 +401,9 @@ const ProductFormModal = ({
                       <div className="file_background" style={{ width: '100%', height: '100%' }}>
                         {file.mime_type?.startsWith("video") 
                           ? <video src={file.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> 
-                          : <img src={file.url} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          : <img src={file.url} alt="PREVIEW" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         }
                       </div>
-                      {index === 0 && <div className="badge_portada" style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', background: 'rgba(59, 130, 246, 0.8)', color: 'white', textAlign: 'center', fontSize: '10px', padding: '2px 0' }}>Portada</div>}
                       <XCircle 
                         className="cms-file-remove" 
                         color="#ef4444" 
@@ -319,8 +420,8 @@ const ProductFormModal = ({
         </div>
 
         <div className="pfm-footer">
-          <button className="pfm-btn pfm-btn--secondary" onClick={handleCancel}>Cancelar</button>
-          <button className="pfm-btn pfm-btn--primary" onClick={handleSubmit}><Save size={16} /> Guardar Producto</button>
+          <button className="pfm-btn pfm-btn--secondary" onClick={handleCancel}>CANCELAR</button>
+          <button className="pfm-btn pfm-btn--primary" onClick={handleSubmit}><Save size={16} /> GUARDAR PRODUCTO</button>
         </div>
       </div>
     </div>
