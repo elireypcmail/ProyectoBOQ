@@ -132,6 +132,11 @@
 
 .col-lote { font-family: 'Monaco', monospace; font-weight: 600; color: var(--primary); }
 .row-disabled { opacity: 0.6; background: #fdfdfd; }
+.row-interactive:hover { 
+  background: #dbe3eb;
+  cursor: pointer;
+  transition: all 0.2s ease-in;
+}
 
 /* BADGES */
 .status-tag {

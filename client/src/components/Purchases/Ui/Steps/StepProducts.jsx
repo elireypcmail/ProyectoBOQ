@@ -21,14 +21,8 @@ const StepProducts = ({
     return Math.round((num + Number.EPSILON) * 100) / 100;
   };
 
-  /**
-   * Ajuste clave: Si el valor viene de la DB como 123.00 (puntos),
-   * lo visualizamos con coma para que sea editable por nuestra lógica.
-   */
   const formatInitialValue = (value) => {
     if (value === null || value === undefined || value === "") return "";
-    
-    // Si detectamos que es un número puro o un string con punto decimal (tipo 123.50)
     if (typeof value === "number" || (typeof value === "string" && value.includes(".") && !value.includes(","))) {
       return value.toString().replace(".", ",");
     }
@@ -38,12 +32,7 @@ const StepProducts = ({
   const parseToFloat = (value) => {
     if (!value) return 0;
     if (typeof value === "number") return value;
-
-    const standardNumber = value
-      .toString()
-      .replace(/\./g, "") 
-      .replace(",", "."); 
-    
+    const standardNumber = value.toString().replace(/\./g, "").replace(",", "."); 
     return parseFloat(standardNumber) || 0;
   };
 
@@ -63,8 +52,6 @@ const StepProducts = ({
       return;
     }
 
-    // Normalización: Si el usuario pega o el sistema trae un valor con punto decimal
-    // lo convertimos a coma para que pase la validación de la Regex
     let valToProcess = value;
     if (value.includes(".") && !value.includes(",")) {
        const parts = value.split(".");
@@ -73,22 +60,17 @@ const StepProducts = ({
        }
     }
 
-    // Regex: Permite dígitos, puntos y una sola coma (máximo 2 decimales)
     const regex = /^[0-9.]*(,[0-9]{0,2})?$/;
-
     if (regex.test(valToProcess)) {
       const numericValue = parseToFloat(valToProcess);
-
       if (numericValue > MAX_VALUE) {
         alert("El valor no puede superar 999.999.999,00");
         return; 
       }
-
       let finalValue = valToProcess;
       if (valToProcess.length > 1 && valToProcess.startsWith("0") && valToProcess[1] !== ",") {
         finalValue = valToProcess.substring(1);
       }
-
       updateItemState(id, field, finalValue);
     }
   };
@@ -103,13 +85,11 @@ const StepProducts = ({
 
   const handleBlurFormat = (id, field, value) => {
     if (!value) return;
-
     const number = parseToFloat(value);
     const formatted = number.toLocaleString("de-DE", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
-
     updateItemState(id, field, formatted);
   };
 
@@ -118,22 +98,36 @@ const StepProducts = ({
   };
 
   /* =========================================
-      EFECTOS DE VALIDACIÓN
+      EFECTOS DE VALIDACIÓN Y LIMPIEZA
   ========================================= */
 
   useEffect(() => {
+    let needsUpdate = false;
+
     const updatedItems = items.map((item) => {
       const qty = parseToFloat(item.cantidad);
       const cost = parseToFloat(item.costo_unitario);
       const isValid = qty > 0 && cost > 0;
 
+      // REGLA DE NEGOCIO: Si estatus_lotes es false, el ítem NO puede tener lotes.
+      // Update this logic to check both arrays:
+      const hasLotesAsignados = 
+        (item.lotes && item.lotes.length > 0) || 
+        (item.lotes_compra && item.lotes_compra.length > 0);
+      
+      if (item.estatus_lotes === false && hasLotesAsignados) {
+        needsUpdate = true;
+        return { ...item, isValid, lotes: [], lotes_compra: [] };
+      }
+
       if (item.isValid !== isValid) {
+        needsUpdate = true;
         return { ...item, isValid };
       }
       return item;
     });
 
-    if (JSON.stringify(updatedItems) !== JSON.stringify(items)) {
+    if (needsUpdate) {
       setItems(updatedItems);
     }
   }, [items, setItems]);
@@ -179,7 +173,6 @@ const StepProducts = ({
                 const qtyVal = parseToFloat(item.cantidad);
                 const costVal = parseToFloat(item.costo_unitario);
                 const totalLine = round2(qtyVal * costVal);
-                
                 const hasError = !item.cantidad || !item.costo_unitario || qtyVal <= 0 || costVal <= 0;
 
                 return (
@@ -196,7 +189,6 @@ const StepProducts = ({
                           width: calculateWidth(item.cantidad),
                           minWidth: "60px"
                         }}
-                        // Se aplica el formateo inicial por si vienen datos de la DB
                         value={formatInitialValue(item.cantidad)}
                         onChange={(e) => handleInputChange(item.id, "cantidad", e.target.value)}
                         onBlur={(e) => handleBlurFormat(item.id, "cantidad", e.target.value)}
@@ -215,7 +207,6 @@ const StepProducts = ({
                             width: calculateWidth(item.costo_unitario),
                             minWidth: "80px"
                           }}
-                          // Se aplica el formateo inicial por si vienen datos de la DB
                           value={formatInitialValue(item.costo_unitario)}
                           onChange={(e) => handleInputChange(item.id, "costo_unitario", e.target.value)}
                           onBlur={(e) => handleBlurFormat(item.id, "costo_unitario", e.target.value)}
@@ -234,9 +225,19 @@ const StepProducts = ({
 
                     <td className="center">
                       <div className="pform-actions-cell">
-                        <button className="btn-batch-row" title="Lotes" onClick={() => onOpenBatch(item)}>
+                        <button 
+                          className="btn-batch-row" 
+                          title={item.estatus_lotes ? "Lotes" : "Este producto no permite lotes"} 
+                          onClick={() => item.estatus_lotes && onOpenBatch(item)}
+                          style={{ 
+                            opacity: item.estatus_lotes ? 1 : 0.3,
+                            cursor: item.estatus_lotes ? "pointer" : "not-allowed",
+                            filter: item.estatus_lotes ? "none" : "grayscale(1)"
+                          }}
+                        >
                           <Layers size={16} />
                         </button>
+
                         <button className="btn-edit-row" title="Editar" onClick={() => onEditProduct(item)}>
                           <Edit2 size={16} />
                         </button>

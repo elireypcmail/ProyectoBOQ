@@ -11,13 +11,6 @@ const StepProducts = ({
   onEditProduct,
 }) => {
   
-  console.log("# StepProducts Render");
-  console.log(items);
-
-  /* =========================================
-      CONSTANTS & HELPERS
-  ========================================= */
-  
   const MAX_VALUE = 999999999; 
 
   const round2 = (num) => {
@@ -53,10 +46,6 @@ const StepProducts = ({
     const length = text.length; 
     return `${Math.max(6, length + 2)}ch`;
   };
-
-  /* =========================================
-      INPUT HANDLING
-  ========================================= */
 
   const handleInputChange = (id, field, value) => {
     if (value === "") {
@@ -124,11 +113,13 @@ const StepProducts = ({
       const qty = parseToFloat(item.cantidad);
       const price = parseToFloat(item.precio_venta);
       
-      // Sumamos la cantidad de los lotes asignados (usando lotes_compra o lotes)
       const lotesAsignados = (item.lotes_compra || item.lotes || []).reduce((acc, l) => acc + parseToFloat(l.cantidad), 0);
       
-      // Validación: Cantidad y Precio > 0, y la suma de lotes debe coincidir exactamente con la cantidad
-      const lotesCompletos = Math.abs(qty - lotesAsignados) < 0.0001;
+      // Verificamos si usa lotes. Se omite si estatus_lotes es falso Y no tiene lotes pre-cargados.
+      const usaLotes = Boolean(item.estatus_lotes || item.usa_lotes || (item.lotes_compra && item.lotes_compra.length > 0));
+      
+      // Si el producto maneja lotes, exigimos validación estricta. Si no, `lotesCompletos` es true por defecto.
+      const lotesCompletos = usaLotes ? (Math.abs(qty - lotesAsignados) < 0.0001) : true;
       const isValid = qty > 0 && price > 0 && lotesCompletos;
 
       if (item.isValid !== isValid) {
@@ -184,8 +175,13 @@ const StepProducts = ({
                 const priceVal = parseToFloat(item.precio_venta);
                 const totalLine = round2(qtyVal * priceVal);
                 
-                // Marcamos error visual si no es válido
                 const hasError = !item.isValid;
+                
+                // Determinamos la razón del error para mostrar un mensaje más preciso
+                const isQtyError = qtyVal <= 0;
+                const usaLotes = Boolean(item.estatus_lotes || item.usa_lotes || (item.lotes_compra && item.lotes_compra.length > 0));
+                const lotesAsignados = (item.lotes_compra || item.lotes || []).reduce((acc, l) => acc + parseToFloat(l.cantidad), 0);
+                const isLotesError = usaLotes && Math.abs(qtyVal - lotesAsignados) > 0.0001;
 
                 return (
                   <tr key={item.id} className={hasError ? "step-prod-row-error" : "step-prod-row-valid"}>
@@ -203,7 +199,9 @@ const StepProducts = ({
                         placeholder="0,00"
                         inputMode="decimal"
                       />
-                      {hasError && <div style={{ fontSize: '10px', color: '#ec3137' }}>Lotes incompletos</div>}
+                      {/* Mensajes de error dinámicos */}
+                      {isQtyError && <div style={{ fontSize: '10px', color: '#ec3137' }}>Cant. inválida</div>}
+                      {isLotesError && !isQtyError && <div style={{ fontSize: '10px', color: '#ec3137' }}>Lotes incompletos</div>}
                     </td>
 
                     <td className="step-prod-text-right">
@@ -228,9 +226,12 @@ const StepProducts = ({
 
                     <td className="step-prod-text-center">
                       <div className="step-prod-actions">
-                        <button className="step-prod-action-btn step-prod-btn-batch" title="Lotes" onClick={() => onOpenBatch?.(item)}>
-                          <Layers size={16} />
-                        </button>
+                        {/* Ocultamos el botón de lotes si el producto no los maneja */}
+                        {usaLotes && (
+                          <button className="step-prod-action-btn step-prod-btn-batch" title="Lotes" onClick={() => onOpenBatch?.(item)}>
+                            <Layers size={16} />
+                          </button>
+                        )}
                         <button className="step-prod-action-btn step-prod-btn-edit" title="Editar" onClick={() => onEditProduct?.(item)}>
                           <Edit2 size={16} />
                         </button>

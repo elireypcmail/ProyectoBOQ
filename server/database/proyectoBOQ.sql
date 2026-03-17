@@ -117,6 +117,7 @@ CREATE TABLE inventario (
   margen_ganancia DECIMAL(5,2) NOT NULL,
   stock_minimo_general INT NOT NULL,
   estatus BOOLEAN NOT NULL DEFAULT TRUE,
+  estatus_lotes BOOLEAN NOT NULL,
   fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 

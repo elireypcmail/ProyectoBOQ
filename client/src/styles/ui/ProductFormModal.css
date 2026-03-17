@@ -200,6 +200,43 @@
   }
 }
 
+/* Selector de Lotes (Segmented Control) */
+.pfm-field--full {
+  grid-column: 1 / -1;
+}
+
+.pfm-toggle-group {
+  display: flex;
+  background: var(--soft);
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  gap: 4px;
+}
+
+.pfm-toggle-btn {
+  flex: 1;
+  padding: 0.6rem;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pfm-toggle-btn.active {
+  background: white;
+  color: var(--primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.pfm-toggle-btn:hover:not(.active) {
+  background: rgba(0, 0, 0, 0.03);
+}
+
 /* ============================= */
 /* Agregado para Categorías y Marcas Quick-Create */
 /* ============================= */

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import Select from "react-select";
-import { Save, X, Plus, UploadCloud, XCircle } from "lucide-react"; // Añadidos iconos para archivos
+import { Save, X, Plus, UploadCloud, XCircle } from "lucide-react"; 
 import "../../styles/ui/ProductFormModal.css";
 
 const ProductFormModal = ({
@@ -20,15 +20,16 @@ const ProductFormModal = ({
     id_marca: "",
     sku: "",
     existencia_general: 0,
-    costo_unitario: "", // Ahora manejan strings para permitir comas
+    costo_unitario: "", 
     precio_venta: "0,00",
     margen_ganancia: "",
     stock_minimo_general: 1,
-    estatus: true
+    estatus: true,
+    estatus_lotes: true, 
   };
 
   const [form, setForm] = useState(emptyForm);
-  const [selectedFiles, setSelectedFiles] = useState([]); // Estado para archivos
+  const [selectedFiles, setSelectedFiles] = useState([]); 
   const [isCreatingCat, setIsCreatingCat] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [isCreatingBrand, setIsCreatingBrand] = useState(false);
@@ -44,7 +45,6 @@ const ProductFormModal = ({
     [brands]
   );
 
-  // Función para parsear números con coma
   const parseLocaleNumber = (stringNumber) => {
     if (!stringNumber) return 0;
     return parseFloat(stringNumber.toString().replace(",", ".")) || 0;
@@ -55,21 +55,17 @@ const ProductFormModal = ({
       setForm({
         ...emptyForm,
         ...initialData,
-        existencia_general: Number(initialData.existencia_general) || 0,
         stock_minimo_general: Number(initialData.stock_minimo_general) || 1,
-        // Convertimos a string con coma si vienen como número de la BD
         costo_unitario: initialData.costo_unitario ? String(initialData.costo_unitario).replace(".", ",") : "",
         margen_ganancia: initialData.margen_ganancia ? String(initialData.margen_ganancia).replace(".", ",") : "",
         precio_venta: initialData.precio_venta ? String(initialData.precio_venta).replace(".", ",") : "0,00",
       });
-      // Si el initialData trae archivos, se podrían cargar aquí
     } else {
       setForm(emptyForm);
-      setSelectedFiles([]); // Limpiar archivos
+      setSelectedFiles([]); 
     }
   }, [initialData, isOpen]);
 
-  // Recalcular precio automáticamente permitiendo decimales con coma
   useEffect(() => {
     const costo = parseLocaleNumber(form.costo_unitario);
     const margen = parseLocaleNumber(form.margen_ganancia);
@@ -93,9 +89,8 @@ const ProductFormModal = ({
       val = value === "" ? "" : Number(value);
     }
 
-    // Validación especial para inputs monetarios/porcentajes con comas
     if (name === "costo_unitario" || name === "margen_ganancia") {
-      if (!/^[0-9,]*$/.test(val)) return; // Solo permite números y comas
+      if (!/^[0-9,]*$/.test(val)) return; 
       
       if (name === "margen_ganancia" && val !== "") {
         const numVal = parseLocaleNumber(val);
@@ -138,7 +133,6 @@ const ProductFormModal = ({
 
     const finalData = {
       ...form,
-      // Parseamos los valores al enviar a la BD
       costo_unitario: parseLocaleNumber(form.costo_unitario),
       precio_venta: parseLocaleNumber(form.precio_venta), 
       margen_ganancia: parseLocaleNumber(form.margen_ganancia),
@@ -146,7 +140,6 @@ const ProductFormModal = ({
       usuario_id
     };
 
-    // Pasamos tanto los datos como los archivos al componente padre
     onSubmit(finalData, selectedFiles.map(f => f.file));
     onClose();
   };
@@ -239,14 +232,7 @@ const ProductFormModal = ({
 
               <div className="pfm-field">
                 <label className="pfm-label">STOCK MÍNIMO *</label>
-                <input 
-                  className="pfm-input" 
-                  type="number" 
-                  name="stock_minimo_general" 
-                  min="1"
-                  value={form.stock_minimo_general} 
-                  onChange={handleChange} 
-                />
+                <input className="pfm-input" type="number" name="stock_minimo_general" min="1" value={form.stock_minimo_general} onChange={handleChange} />
               </div>
 
             </div>
@@ -257,39 +243,39 @@ const ProductFormModal = ({
             <div className="pfm-grid">
               <div className="pfm-field">
                 <label className="pfm-label">COSTO ($)</label>
-                <input 
-                  className="pfm-input" 
-                  type="text" 
-                  name="costo_unitario" 
-                  value={form.costo_unitario} 
-                  onChange={handleChange} 
-                  placeholder="0,00"
-                />
+                <input className="pfm-input" type="text" name="costo_unitario" value={form.costo_unitario} onChange={handleChange} placeholder="0,00" />
               </div>
               <div className="pfm-field">
                 <label className="pfm-label">MARGEN (%)</label>
-                <input 
-                  className="pfm-input" 
-                  type="text" 
-                  name="margen_ganancia" 
-                  value={form.margen_ganancia} 
-                  onChange={handleChange} 
-                  placeholder="0"
-                />
+                <input className="pfm-input" type="text" name="margen_ganancia" value={form.margen_ganancia} onChange={handleChange} placeholder="0" />
               </div>
               <div className="pfm-field">
                 <label className="pfm-label">PRECIO VENTA ($)</label>
-                <input 
-                  className="pfm-input pfm-input--readonly" 
-                  type="text" 
-                  value={form.precio_venta} 
-                  readOnly 
-                />
+                <input className="pfm-input pfm-input--readonly" type="text" value={form.precio_venta} readOnly />
               </div>
             </div>
           </div>
 
-          {/* NUEVA SECCIÓN: Galería de imágenes/videos */}
+          <div className="pfm-section">
+            <h4 className="pfm-section-title">Gestión de Inventario</h4>
+            <div className="pfm-toggle-group">
+              <button 
+                type="button"
+                className={`pfm-toggle-btn ${!form.estatus_lotes ? 'active' : ''}`}
+                onClick={() => setForm(prev => ({ ...prev, estatus_lotes: false }))}
+              >
+                Sin Lotes
+              </button>
+              <button 
+                type="button"
+                className={`pfm-toggle-btn ${form.estatus_lotes ? 'active' : ''}`}
+                onClick={() => setForm(prev => ({ ...prev, estatus_lotes: true }))}
+              >
+                Con Lotes
+              </button>
+            </div>
+          </div>
+
           <div className="pfm-section">
             <h4 className="pfm-section-title">Archivos Multimedia</h4>
             <div className="pfm-field">
@@ -302,23 +288,14 @@ const ProductFormModal = ({
                 <span className="upload-label" style={{ display: 'block', marginTop: '10px', color: '#374151' }}>
                   Haz clic aquí para subir (Máx. 5 archivos)
                 </span>
-                <input 
-                  id="fileUpload" 
-                  type="file" 
-                  multiple 
-                  accept="image/*,video/*" 
-                  style={{ display: 'none' }}
-                  onChange={handleFileChange} 
-                />
+                <input id="fileUpload" type="file" multiple accept="image/*,video/*" style={{ display: 'none' }} onChange={handleFileChange} />
               </div>
 
               {selectedFiles.length > 0 && (
                 <ul className="files_containerEdit" style={{ display: 'flex', gap: '10px', marginTop: '15px', padding: 0, listStyle: 'none', flexWrap: 'wrap' }}>
                   {selectedFiles.map((file, index) => (
                     <li key={index} className="file_itemEdit" style={{ position: 'relative', width: '100px', height: '100px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e5e7eb' }}>
-                      <div className="file_order" style={{ position: 'absolute', top: '4px', left: '4px', background: 'rgba(0,0,0,0.5)', color: 'white', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', zIndex: 10 }}>
-                        {index + 1}
-                      </div>
+                      <div className="file_order" style={{ position: 'absolute', top: '4px', left: '4px', background: 'rgba(0,0,0,0.5)', color: 'white', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', zIndex: 10 }}>{index + 1}</div>
                       <div className="file_background" style={{ width: '100%', height: '100%' }}>
                         {file.mime_type?.startsWith("video") 
                           ? <video src={file.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> 
@@ -339,7 +316,6 @@ const ProductFormModal = ({
               )}
             </div>
           </div>
-
         </div>
 
         <div className="pfm-footer">

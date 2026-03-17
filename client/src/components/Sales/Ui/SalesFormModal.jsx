@@ -30,11 +30,11 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
   const initialFormState = {
     nro_factura: "",
     id_paciente: "",
-    personal_asignado: [], // Replaced id_personal with personal_asignado
+    personal_asignado: [], 
     id_vendedor: "",
     id_oficina: "",
-    id_clinica: "", // Added
-    id_deposito: "", // Added
+    id_clinica: "", 
+    id_deposito: "", 
     id_seguro: "",
     id_presupuesto: "",
   };
@@ -49,7 +49,6 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
     estado_pago: "Pendiente",
   };
 
-  // --- ESTADOS ---
   const [step, setStep] = useState(1);
   const [items, setItems] = useState([]);
   const [formData, setFormData] = useState(initialFormState);
@@ -61,17 +60,15 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
   const [selectedProductForBatch, setSelectedProductForBatch] = useState(null);
 
-  const isStep2Valid = items.length > 0 && items.every(item => item.isValid)
+  const isStep2Valid = items.length > 0 && items.every(item => item.isValid);
 
-  // --- EFECTO: CARGAR DATA PARA EDICIÓN ---
   useEffect(() => {
     if (isOpen && editData) {
-      // 1. Mapeamos el formData incluyendo los NOMBRES para la visualización
       setFormData({
         id: editData.id,
         nro_factura: editData.nro_factura || "",
         id_paciente: editData.id_paciente || "",
-        nombre_paciente: editData.paciente_nombre || "", // Cargar nombre para el resumen
+        nombre_paciente: editData.paciente_nombre || "", 
         
         personal_asignado: editData.personal?.map((p) => ({
           id: p.id_medico,
@@ -80,41 +77,39 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
         })) || [],
 
         id_vendedor: editData.id_vendedor || "",
-        nombre_vendedor: editData.vendedor_nombre || "", // Cargar nombre para el resumen
+        nombre_vendedor: editData.vendedor_nombre || "", 
         id_oficina: editData.id_oficina || "",
-        nombre_oficina: editData.oficina_nombre || "", // Cargar nombre para el resumen
+        nombre_oficina: editData.oficina_nombre || "", 
         id_clinica: editData.id_clinica || "",
-        nombre_clinica: editData.clinica_nombre || "", // Cargar nombre para el resumen
+        nombre_clinica: editData.clinica_nombre || "", 
         id_deposito: editData.id_deposito || "",
-        nombre_deposito: editData.deposito_nombre || "", // Cargar nombre para el resumen
+        nombre_deposito: editData.deposito_nombre || "", 
         id_seguro: editData.id_seguro || "",
         nombre_seguro: editData.seguro_nombre || "",
         id_presupuesto: editData.id_presupuesto || "",
       });
 
-      // 2. Normalizamos items incluyendo la descripción y los LOTES ya asignados
       setItems(editData.items?.map(item => ({
         ...item,
-        id: item.id_producto || item.id, // Aseguramos que haya un id para la edición
-        descripcion: item.producto || item.descripcion, // Asegurar que tenga texto
+        id: item.id_producto || item.id, 
+        descripcion: item.producto || item.descripcion, 
         sku: item.sku || "",
         cantidad: item.cantidad,
         precio_venta: item.precio_venta,
-        // IMPORTANTE: Pasamos los lotes que ya tiene la venta al estado local
-        lotes_compra: item.lotes || [] 
+        lotes_compra: item.lotes || [],
+        // Aseguramos mantener la bandera de si usa lotes o no (ajusta el nombre según tu BD)
+        maneja_lotes: item.maneja_lotes || item.usa_lotes || false
       })) || []);
 
-      // 3. Ajustamos totales (asegurando que las llaves coincidan con lo que esperan los sub-pasos)
       setTotals({
         subtotal: parseFloat(editData.subtotal) || 0,
         porcentaje_impuesto: parseFloat(editData.porcentaje_impuesto) || 0,
-        impuesto: parseFloat(editData.impuesto) || 0, // o impuestos_monto según StepConfirm
+        impuesto: parseFloat(editData.impuesto) || 0, 
         total: parseFloat(editData.total) || 0,
         abonado: parseFloat(editData.abonado) || 0,
         notas_abono: editData.notas_abono || "",
         estado_pago: editData.estado_pago || "Pendiente",
         
-        // Agregamos estas llaves extras si StepConfirm las usa específicamente
         impuestos_monto: parseFloat(editData.impuesto) || 0,
         monto_abonado: parseFloat(editData.abonado) || 0,
         monto_descuento_fijo: editData.descuento?.toString() || "0",
@@ -124,13 +119,11 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
     }
   }, [isOpen, editData]);
 
-  // --- HELPERS ---
   const safeParse = (val) =>
     val !== "" && val !== null && val !== undefined ? parseFloat(val) || 0 : 0;
 
   const isDuplicateInvoice = () => {
     if (!formData.nro_factura || !sales) return false;
-    // Si estamos editando, ignoramos el nro_factura de la venta actual
     return sales.some(
       (s) =>
         s.id !== editData?.id &&
@@ -139,45 +132,32 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
     );
   };
 
-  /* =========================
-      CALCULO AUTOMATICO Y PRORRATEO
-  ==========================*/
   useEffect(() => {
-    // 1. Calculamos subtotal base de productos
     const subtotalProductos = items.reduce(
       (acc, item) => acc + safeParse(item.cantidad) * safeParse(item.precio_venta),
       0
     );
 
-    // 2. Extraemos valores actuales del estado
     const descuentoManual = safeParse(totals.monto_descuento_fijo);
     const impuestoManual  = safeParse(totals.impuestos_monto);
     const abonadoManual   = safeParse(totals.monto_abonado);
 
-    // 3. Prorrateo del descuento:
-    // Distribuimos el descuento total proporcionalmente entre los ítems
     const itemsConDescuento = items.map((item) => {
       const itemSubtotal = safeParse(item.cantidad) * safeParse(item.precio_venta);
-      // Calculamos el peso del producto respecto al total para asignar su parte del descuento
       const proporcion = subtotalProductos > 0 ? itemSubtotal / subtotalProductos : 0;
       const descAsignado = descuentoManual * proporcion;
       
       return {
         ...item,
-        // Guardamos el descuento unitario para referencia en el detalle de la venta
         descuento_unitario: safeParse(item.cantidad) > 0 ? descAsignado / safeParse(item.cantidad) : 0,
-        // Guardamos el precio neto tras el descuento aplicado
         precio_con_descuento: safeParse(item.precio_venta) - (safeParse(item.cantidad) > 0 ? descAsignado / safeParse(item.cantidad) : 0)
       };
     });
 
-    // Actualizamos el estado de los items procesados para usarlo en el envío final
     setProcessedItems(itemsConDescuento);
 
-    // 4. Calculamos Total Final
     const totalFactura = (subtotalProductos - descuentoManual) + impuestoManual;
 
-    // 5. Determinamos estado de pago
     let estado_pago = "Pendiente";
     if (totalFactura > 0 && abonadoManual >= totalFactura) {
       estado_pago = "Pagado";
@@ -185,7 +165,6 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
       estado_pago = "Abono Parcial";
     }
 
-    // 6. Actualizamos los campos DERIVADOS
     setTotals((prev) => ({
       ...prev,
       subtotal: subtotalProductos,
@@ -195,9 +174,6 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
     }));
   }, [items, totals.monto_descuento_fijo, totals.impuestos_monto, totals.monto_abonado]);
 
-  /* =========================
-      ENVIO FINAL
-  ==========================*/
   const handleFinalSubmit = async () => {
     if (isDuplicateInvoice()) {
       alert("Esta factura ya existe.");
@@ -211,7 +187,6 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
       const payload = {
         ...formData,
         subtotal: parseFloat(totals.subtotal.toFixed(2)),
-        // Agregamos el descuento total de la factura al payload
         descuento: parseFloat(safeParse(totals.monto_descuento_fijo).toFixed(2)),
         porcentaje_impuesto: parseFloat(safeParse(totals.porcentaje_impuesto).toFixed(2)),
         impuesto: parseFloat(safeParse(totals.impuestos_monto).toFixed(2)),
@@ -220,16 +195,13 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
         notas_abono: totals.notas_abono,
         estado_pago: totals.estado_pago,
         
-        // USAMOS processedItems en lugar de items
         detalle: processedItems.map((item) => ({
           id_producto: item.id || item.id_producto,
           id_inventario: item.inventario_id || item.id_inventario,
           descripcion: item.descripcion || item.producto,
           cantidad: parseInt(item.cantidad),
           precio_venta: parseFloat(item.precio_venta),
-          // Enviamos el descuento unitario prorrateado
           descuento_unitario: parseFloat(item.descuento_unitario.toFixed(2)),
-          // Enviamos el monto total resultante para este producto tras el descuento
           precio_descuento: parseFloat((item.precio_con_descuento * item.cantidad).toFixed(2)),
           lotes: item.lotes_compra || [],
         })),

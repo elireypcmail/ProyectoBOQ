@@ -3,7 +3,7 @@ import {
   Pencil, Trash2, X, Package, Tag, Layers, 
   TrendingUp, DollarSign, Bookmark, AlertCircle,
   History, Boxes, Warehouse, Lock, Image as ImageIcon,
-  Loader2, Maximize2 // Icono para indicar que se puede ampliar
+  Loader2, Maximize2 
 } from "lucide-react";
 import { useProducts } from "../../context/ProductsContext";
 import ListLots from "../Products/ListLots"; 
@@ -24,9 +24,8 @@ const ModalDetailed = ({
   const [detailedProduct, setDetailedProduct] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImgIdx, setSelectedImgIdx] = useState(0);
-  // Nuevo estado para el zoom de la imagen
   const [isZoomOpen, setIsZoomOpen] = useState(false);
-  
+
   const { getAuditProd, audits, getProductsById } = useProducts();
 
   useEffect(() => {
@@ -35,7 +34,7 @@ const ModalDetailed = ({
         setIsLoading(true);
         setActiveTab("general");
         setSelectedImgIdx(0);
-        setIsZoomOpen(false); // Resetear zoom al cambiar de producto
+        setIsZoomOpen(false);
         try {
           const freshData = await getProductsById(initialProduct.id);
           setDetailedProduct(freshData);
@@ -54,6 +53,9 @@ const ModalDetailed = ({
 
   const product = detailedProduct || initialProduct;
   if (!product) return null;
+
+  // Validación de estatus de lotes (soporta booleano o 1/0)
+  const tieneLotes = product.estatus_lotes === true || product.estatus_lotes === 1;
 
   const auditList = Array.isArray(audits) ? audits : (audits?.data || []);
   const hasHistory = auditList.length > 0;
@@ -82,8 +84,8 @@ const ModalDetailed = ({
             </div>
             <div>
               <h3 className="pdm-title">{product.descripcion}</h3>
-              <span className={`pdm-badge ${product.estatus ? 'active' : 'inactive'}`}>
-                {product.estatus ? "Activo" : "Inactivo"}
+              <span className={`pdm-badge ${product.inventario_estatus ? 'active' : 'inactive'}`}>
+                {product.inventario_estatus ? "Activo" : "Inactivo"}
               </span>
             </div>
           </div>
@@ -95,9 +97,14 @@ const ModalDetailed = ({
           <button className={`pdm-tab-btn ${activeTab === 'general' ? 'active' : ''}`} onClick={() => setActiveTab('general')}>
             <Bookmark size={16} /> General
           </button>
-          <button className={`pdm-tab-btn ${activeTab === 'lotes' ? 'active' : ''}`} onClick={() => setActiveTab('lotes')}>
-            <Boxes size={16} /> Lotes
-          </button>
+          
+          {/* Pestaña de Lotes Condicional */}
+          {tieneLotes && (
+            <button className={`pdm-tab-btn ${activeTab === 'lotes' ? 'active' : ''}`} onClick={() => setActiveTab('lotes')}>
+              <Boxes size={16} /> Lotes
+            </button>
+          )}
+
           <button className={`pdm-tab-btn ${activeTab === 'depositos' ? 'active' : ''}`} onClick={() => setActiveTab('depositos')}>
             <Warehouse size={16} /> Existencias
           </button>
@@ -110,7 +117,6 @@ const ModalDetailed = ({
         <div className="pdm-body">
           {activeTab === "general" && (
             <div className="pdm-tab-content animate-fade-in">
-              
               <div className="pdm-general-hero">
                 <div className="pdm-image-section">
                     <div 
@@ -140,7 +146,7 @@ const ModalDetailed = ({
                             src={`data:${img.mime_type};base64,${img.data}`}
                             className={`pdm-thumb ${selectedImgIdx === idx ? 'active' : ''}`}
                             onClick={(e) => {
-                              e.stopPropagation(); // Evitar que el click en la miniatura abra el zoom
+                              e.stopPropagation();
                               setSelectedImgIdx(idx);
                             }}
                             alt="thumb"
@@ -168,7 +174,6 @@ const ModalDetailed = ({
 
               <div className="pdm-divider"></div>
 
-              {/* DASHBOARD DE EXISTENCIA */}
               <div className="pdm-stat-card inventory" style={{ marginBottom: '1.5rem' }}>
                  <div className="pdm-stat-icon"><Package size={20} /></div>
                  <div className="pdm-stat-content">
@@ -210,17 +215,19 @@ const ModalDetailed = ({
             </div>
           )}
 
-          {/* ... resto de los tabs permanecen igual ... */}
-          {activeTab === "lotes" && (
+          {/* Sección de Lotes Condicional */}
+          {activeTab === "lotes" && tieneLotes && (
             <div className="pdm-tab-content animate-fade-in">
               <ListLots id_producto={product.id} onRefreshProducts={handleRefreshProduct} />
             </div>
           )}
+
           {activeTab === "depositos" && (
             <div className="pdm-tab-content animate-fade-in">
               <ListEdeposits id_producto={product.id} existenciaGeneral={product.existencia_general} stockMinimoGeneral={product.stock_minimo_general} onRefreshProducts={handleRefreshProduct} />
             </div>
           )}
+
           {activeTab === "precios" && (
             <div className="pdm-tab-content animate-fade-in">
               <ListPrices productId={product.id} />

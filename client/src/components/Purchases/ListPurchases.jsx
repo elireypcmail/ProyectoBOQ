@@ -61,7 +61,7 @@ const ListPurchases = () => {
 
   // Formats to: $ 1.250,50 
   const formatCurrency = (value) => {
-    return `$ ${parseFloat(value).toLocaleString("es-ES", {
+    return `${parseFloat(value).toLocaleString("es-ES", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;

@@ -542,6 +542,9 @@ export const ProductsProvider = ({ children }) => {
   // -------------------- KARDEX GENERAL --------------------
   const getKardexGByProd = async (id_producto) => {
     try {
+      console.log("Kardex general del producto")
+      console.log(id_producto)
+
       const res = await ProductsAPI.getAllKardexG(id_producto);
       setProductKardexG(res.data?.data || []);
     } catch (error) {

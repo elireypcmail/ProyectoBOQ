@@ -28,6 +28,7 @@ export class ProductsModel {
           i.precio_venta,
           i.margen_ganancia,
           i.stock_minimo_general,
+          i.estatus_lotes,
 
           COALESCE(
             json_agg(
@@ -74,7 +75,9 @@ export class ProductsModel {
           i.costo_unitario,
           i.precio_venta,
           i.margen_ganancia,
-          i.stock_minimo_general
+          i.stock_minimo_general,
+          i.estatus_lotes
+
 
         ORDER BY p.id DESC
       `;
@@ -129,7 +132,7 @@ export class ProductsModel {
           p.id_categoria,
           p.id_marca,
           p.files,
-          p.estatus,
+          p.estatus AS producto_estatus,
           p.fecha_creacion,
 
           c.nombre AS categoria,
@@ -142,6 +145,8 @@ export class ProductsModel {
           i.precio_venta,
           i.margen_ganancia,
           i.stock_minimo_general,
+          i.estatus AS inventario_estatus,
+          i.estatus_lotes,
 
           COALESCE(
             json_agg(
@@ -163,7 +168,6 @@ export class ProductsModel {
           SELECT *
           FROM inventario i2
           WHERE i2.id_producto = p.id
-          AND i2.estatus = TRUE
           ORDER BY i2.fecha_creacion DESC
           LIMIT 1
         ) i ON true
@@ -188,7 +192,9 @@ export class ProductsModel {
           i.costo_unitario,
           i.precio_venta,
           i.margen_ganancia,
-          i.stock_minimo_general
+          i.stock_minimo_general,
+          i.estatus,
+          i.estatus_lotes
       `;
 
       const result = await connection.query(sql, [id]);
@@ -457,6 +463,8 @@ export class ProductsModel {
   static async createProduct(data) {
     let connection;
 
+    console.log(data)
+
     try {
       connection = await pool.connect();
       await connection.query("BEGIN");
@@ -464,7 +472,7 @@ export class ProductsModel {
       // 1️⃣ Validar duplicado
       const duplicate = await connection.query(
         `SELECT id FROM productos WHERE LOWER(descripcion) = LOWER($1)`,
-        [data.descripcion],
+        [data.descripcion]
       );
 
       if (duplicate.rows.length) {
@@ -481,7 +489,12 @@ export class ProductsModel {
           files
         ) VALUES ($1,$2,$3,$4)
         RETURNING *`,
-        [data.descripcion, data.id_categoria, data.id_marca, null],
+        [
+          data.descripcion,
+          data.id_categoria,
+          data.id_marca,
+          null
+        ]
       );
 
       const producto = productResult.rows[0];
@@ -495,17 +508,19 @@ export class ProductsModel {
           costo_unitario,
           precio_venta,
           margen_ganancia,
-          stock_minimo_general
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+          stock_minimo_general,
+          estatus_lotes
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
         [
           producto.id,
           data.sku,
-          data.existencia_general,
+          data.existencia_general || 0,
           data.costo_unitario,
           data.precio_venta,
           data.margen_ganancia,
-          data.stock_minimo_general,
-        ],
+          data.stock_minimo_general || 0,
+          data.estatus_lotes ?? false
+        ]
       );
 
       // 4️⃣ Crear edeposito para TODOS los depósitos
@@ -525,7 +540,7 @@ export class ProductsModel {
         FROM depositos d
         WHERE d.estatus = TRUE
         `,
-        [producto.id],
+        [producto.id]
       );
 
       await connection.query("COMMIT");
@@ -536,17 +551,20 @@ export class ProductsModel {
         msg: "Producto, inventario y depósitos creados correctamente",
         data: {
           ...data,
-          id: producto.id,
-        },
+          id: producto.id
+        }
       };
+
     } catch (error) {
       if (connection) await connection.query("ROLLBACK");
+
       return {
         status: false,
         code: 500,
         msg: "Error al crear producto",
-        error: error.message,
+        error: error.message
       };
+
     } finally {
       if (connection) connection.release();
     }

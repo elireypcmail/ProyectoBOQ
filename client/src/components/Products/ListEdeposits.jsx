@@ -18,8 +18,7 @@ const ListEdeposits = ({ id_producto, existenciaGeneral, onRefreshProducts }) =>
     getEDepositsByProduct, 
     getKardexGByProd, 
     productKardexG,
-    getAllKardexDep,
-    kardexDep
+    getAllKardexDep
   } = useProducts();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -28,13 +27,17 @@ const ListEdeposits = ({ id_producto, existenciaGeneral, onRefreshProducts }) =>
   const [showKardexG, setShowKardexG] = useState(true);
   const [loadingKardex, setLoadingKardex] = useState(false);
 
-  console.log("kardexDep")
-  console.log(kardexDep)
-
-  // Efecto inicial para cargar existencias por depósito y kardex general
+  // Efecto inicial para cargar existencias
   useEffect(() => {
     const fetchData = async () => {
       if (id_producto) {
+        // Limpiamos estados locales al cambiar de producto
+        setSearchTerm("");
+        setIsKardexOpen(false);
+        setActiveKardexData(null);
+        setShowKardexG(true);
+        setLoadingKardex(false);
+
         try {
           await Promise.all([
             getEDepositsByProduct(id_producto),
@@ -52,26 +55,31 @@ const ListEdeposits = ({ id_producto, existenciaGeneral, onRefreshProducts }) =>
     fetchData();
   }, [id_producto]); 
 
-  // Memorizar depósitos para evitar re-renders innecesarios
+  // Memorizar depósitos
   const safeProductDeposits = useMemo(
     () => (Array.isArray(productDeposits) ? productDeposits : productDeposits?.data || []),
     [productDeposits],
   );
 
-  // Filtro de búsqueda
+  // Filtro de búsqueda de depósitos
   const filteredDeposits = useMemo(() => {
     return safeProductDeposits.filter((d) =>
       (d.deposito_nombre ?? "").toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [safeProductDeposits, searchTerm]);
 
-  // FUNCIÓN CORREGIDA: Carga el kardex específico antes de abrir el modal
+  // NUEVO: Filtro de seguridad para el Kardex General
+  // Evita mostrar datos de un producto anterior si la API falla (Ej: Error 404)
+  const validKardexG = useMemo(() => {
+    const data = Array.isArray(productKardexG) ? productKardexG : productKardexG?.data || [];
+    return data.filter(k => k.id_producto === id_producto);
+  }, [productKardexG, id_producto]);
+
   const handleOpenKardex = async (dep) => {
     try {
       setLoadingKardex(true);
       setActiveKardexData(dep);
       
-      // Llamada a la API usando los dos IDs requeridos
       await getAllKardexDep(id_producto, dep.id_deposito);
       
       setIsKardexOpen(true);
@@ -122,7 +130,7 @@ const ListEdeposits = ({ id_producto, existenciaGeneral, onRefreshProducts }) =>
           <div className="lots-card" style={{ borderTop: "none", borderRadius: "0 0 12px 12px" }}>
             <KardexG 
               id_producto={id_producto} 
-              data={productKardexG} 
+              data={validKardexG} // Usamos la data validada aquí
               isInline={true} 
             />
           </div>

@@ -167,8 +167,6 @@ static async getAllShoping() {
     }
   }
 
-// Helpers internos
-
   static async createShopping(data) {
     let connection;
 
@@ -185,7 +183,7 @@ static async getAllShoping() {
         id_usuario,
         items,           
         detalle_lotes,   
-        totales_cargos   
+        totales_cargos  
       } = data;
 
       // 1️⃣ Preparación de montos globales
@@ -224,46 +222,31 @@ static async getAllShoping() {
         
         const nuevoPrecio = costoFinal * (1 + (parseFloat(inv.margen_ganancia) / 100));
 
-        // Actualizar Ficha de Inventario (Existencia General)
+        // Actualizar Existencia General (Aplica para TODOS los productos)
         await connection.query(
           `UPDATE inventario SET costo_unitario = $1, precio_venta = $2, 
           existencia_general = existencia_general + $3 WHERE id = $4`,
           [costoFinal, nuevoPrecio, cantidadComp, inv.id]
         );
 
-        // ============================================================
-        // AJUSTE DE AUDITORÍA (Estilo updateProduct)
-        // ============================================================
+        // Auditoría de cambios de costos
         const hayCambiosValores = 
           Number(costoFinal) !== Number(inv.costo_unitario) || 
           Number(nuevoPrecio) !== Number(inv.precio_venta);
 
         if (hayCambiosValores) {
           await connection.query(
-            `INSERT INTO auditoria (
-              entidad, id_entidad, accion, datos_previos, datos_nuevos, usuario_id
-            ) VALUES ($1, $2, $3, $4, $5, $6)`,
-            [
-              'inventario',
-              inv.id_producto,
-              'ACTUALIZACION_COSTO_MARGEN_PRECIO',
-              JSON.stringify({
-                costo_unitario: inv.costo_unitario,
-                margen_ganancia: inv.margen_ganancia,
-                precio_venta: inv.precio_venta,
-              }),
-              JSON.stringify({
-                costo_unitario: costoFinal,
-                margen_ganancia: inv.margen_ganancia, // En compras el margen suele mantenerse igual
-                precio_venta: nuevoPrecio,
-              }),
+            `INSERT INTO auditoria (entidad, id_entidad, accion, datos_previos, datos_nuevos, usuario_id) 
+            VALUES ($1, $2, $3, $4, $5, $6)`,
+            ['inventario', inv.id_producto, 'ACTUALIZACION_COSTO_MARGEN_PRECIO',
+              JSON.stringify({ costo_unitario: inv.costo_unitario, margen_ganancia: inv.margen_ganancia, precio_venta: inv.precio_venta }),
+              JSON.stringify({ costo_unitario: costoFinal, margen_ganancia: inv.margen_ganancia, precio_venta: nuevoPrecio }),
               id_usuario
             ]
           );
         }
-        // ============================================================
 
-        // Registro en Kardex
+        // Registro en Kardex General
         await connection.query(
           `INSERT INTO kardexg (id_producto, fecha, existencia_inicial, entrada, salida, existencia_final, costo, precio, detalle, documento, tipo)
           VALUES ($1, $2, $3, $4, 0, $5, $6, $7, $8, $9, 'COMPRA')`,
@@ -271,7 +254,7 @@ static async getAllShoping() {
           (parseMonto(inv.existencia_general) + cantidadComp), costoFinal, nuevoPrecio, `Compra Fac: ${nro_factura}`, nro_factura]
         );
 
-        // 4️⃣ INSERTAR EN COMPRAS_DETALLE
+        // 4️⃣ Insertar Detalle de Compra
         const detRes = await connection.query(
           `INSERT INTO compras_detalle (
             id_compra, id_inventario, descripcion, cantidad, costo_compra, 
@@ -283,16 +266,18 @@ static async getAllShoping() {
         );
         const idDetalle = detRes.rows[0].id;
 
-        // 5️⃣ Manejo de Lotes
-        if (detalle_lotes && Array.isArray(detalle_lotes)) {
-          const lotesProducto = detalle_lotes.filter(l => l.id_producto === item.id_producto);
-          
+        // 5️⃣ Manejo condicional de Lotes y Depósitos
+        // Filtramos si este producto específico tiene información en detalle_lotes
+        const lotesProducto = detalle_lotes?.filter(l => l.id_producto === item.id_producto) || [];
+        
+        if (lotesProducto.length > 0) {
           for (const lote of lotesProducto) {
             const cLote = parseMonto(lote.cantidad);
             const depLote = lote.id_deposito;
 
-            if (!depLote) throw new Error(`El lote ${lote.nro_lote} del producto ${item.Producto} no tiene un depósito asignado.`);
+            if (!depLote) throw new Error(`El lote ${lote.nro_lote} no tiene depósito asignado.`);
 
+            // Actualizar o Crear Lote
             const loteExist = await connection.query(
               `SELECT id FROM lotes WHERE nro_lote = $1 AND id_producto = $2 AND id_deposito = $3`,
               [lote.nro_lote, item.id_producto, depLote]
@@ -311,6 +296,7 @@ static async getAllShoping() {
               idLote = nl.rows[0].id;
             }
 
+            // Actualizar Stock por Depósito (edeposito)
             const edepExist = await connection.query(
               `SELECT id FROM edeposito WHERE id_producto = $1 AND id_deposito = $2`,
               [item.id_producto, depLote]
@@ -330,12 +316,15 @@ static async getAllShoping() {
               );
             }
 
+            // Registrar vínculo de compra con el lote
             await connection.query(
               `INSERT INTO compras_detalle_lote (id_detalle, id_lote, cantidad, fecha_caducidad) VALUES ($1, $2, $3, $4)`,
               [idDetalle, idLote, cLote, lote.fecha_vencimiento]
             );
           }
-        }
+        } 
+        // Si lotesProducto está vacío (productos sin lotes), el bucle continúa 
+        // sin tocar las tablas de lotes ni depósitos.
       }
 
       await connection.query("COMMIT");

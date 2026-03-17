@@ -238,17 +238,19 @@ const PurchaseFormModal = ({ isOpen, onClose, initialData }) => {
           Costo_Ficha: parseFloat(safeParse(item.costo_final).toFixed(4)),
           Subtotal_Linea: parseFloat(safeParse(item.itemSubtotal).toFixed(2)),
         })),
-        detalle_lotes: processedItems.flatMap((item) =>
-          (item.lotes_compra || []).map((l) => ({
-            id_producto: item.id_producto || item.id,
-            Producto: item.descripcion || item.nombre,
-            nro_lote: l.nro_lote,
-            id_deposito: l.id_deposito || formData.id_deposito, 
-            fecha_vencimiento: l.fecha_vencimiento,
-            cantidad: parseFloat(safeParse(l.cantidad).toFixed(2)),
-            costo_lote: parseFloat(safeParse(item.costo_final).toFixed(4)),
-          }))
-        ),
+        detalle_lotes: processedItems
+          .filter((item) => item.estatus_lotes === true || item.estatus_lotes === 1)
+          .flatMap((item) =>
+            (item.lotes_compra || item.lotes || []).map((l) => ({
+              id_producto: item.id_producto || item.id,
+              Producto: item.descripcion || item.nombre,
+              nro_lote: l.nro_lote,
+              id_deposito: l.id_deposito || formData.id_deposito, 
+              fecha_vencimiento: l.fecha_vencimiento,
+              cantidad: parseFloat(safeParse(l.cantidad).toFixed(2)),
+              costo_lote: parseFloat(safeParse(item.costo_final).toFixed(4)),
+            }))
+          ),
       };
 
       const res = await createNewShopping(shoppingPayload);

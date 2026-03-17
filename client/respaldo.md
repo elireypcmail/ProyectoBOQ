@@ -1,310 +1,267 @@
-import React, { useEffect, useMemo } from "react";
-import Select from "react-select";
-import { Trash2, User, Building2, ShieldCheck, UserCircle, Stethoscope, Warehouse } from "lucide-react";
-import "../../../../styles/ui/stepsSales/StepInfo.css";
+import React, { useEffect } from "react";
+import { Search, Plus, Trash2, Edit2, Layers } from "lucide-react";
+import "../../../../styles/ui/steps/StepProducts.css";
 
-import { useHealth } from "../../../../context/HealtContext";
-import { useSales } from "../../../../context/SalesContext";
-import { useEntity } from "../../../../context/EntityContext";
-import { useClinics } from "../../../../context/ClinicsContext";
+const StepProducts = ({
+  items = [],
+  setItems,
+  onOpenSearch,
+  onOpenCreate,
+  onOpenBatch,
+  onEditProduct,
+}) => {
+  
+  console.log("items")
+  console.log(items)
 
-const StepInfo = ({ formData, setFormData, onValidationChange }) => {
-  const {
-    pacientes,
-    medicos,
-    seguros,
-    getAllPacientes,
-    getAllMedicos,
-    getAllSeguros
-  } = useHealth();
+  /* =========================================
+      CONSTANTES Y HELPERS
+  ========================================= */
+  
+  const MAX_VALUE = 999999999; 
 
-  const { sellers, getAllSellers } = useSales();
-  const { entities, getAllEntities } = useEntity();
-  const { clinics, getAllClinics } = useClinics();
+  const round2 = (num) => {
+    return Math.round((num + Number.EPSILON) * 100) / 100;
+  };
 
-  const oficinas = entities?.oficinas || [];
-  const depositos = entities?.depositos || [];
-
-  /* ===================== LOAD DATA ===================== */
-  useEffect(() => {
-    getAllPacientes();
-    getAllMedicos();
-    getAllSellers();
-    getAllEntities("oficinas");
-    getAllEntities("depositos");
-    getAllSeguros();
-    getAllClinics();
-  }, []);
-
-  /* ===================== VALIDATION ===================== */
-  useEffect(() => {
-    const isValid =
-      formData.id_paciente !== "" &&
-      formData.personal_asignado?.length > 0 &&
-      formData.id_vendedor !== "" &&
-      formData.id_oficina !== "" &&
-      formData.id_deposito !== "" &&
-      formData.id_clinica !== "";
-
-    onValidationChange?.(isValid);
-  }, [formData, onValidationChange]);
-
-  /* ===================== HELPERS ===================== */
-  const buildOptions = (data, labelKey = "nombre") =>
-    (data || []).map((item) => ({
-      ...item, // Mantenemos todas las propiedades originales (id_deposito, etc)
-      value: item.id,
-      label: item[labelKey]?.toUpperCase(),
-      tipo: item.tipo?.toUpperCase() || "MÉDICO GENERAL"
-    }));
-
-  const selectValue = (options, value) =>
-    options.find((opt) => opt.value === value) || null;
-
-  /* ===================== OPTIONS ===================== */
-  const pacienteOptions = useMemo(() => buildOptions(pacientes), [pacientes]);
-  const medicoOptions = useMemo(() => buildOptions(medicos), [medicos]);
-  const sellerOptions = useMemo(() => buildOptions(sellers), [sellers]);
-  const insuranceOptions = useMemo(() => buildOptions(seguros), [seguros]);
-  const clinicOptions = useMemo(() => buildOptions(clinics), [clinics]);
-  const officeOptions = useMemo(() => buildOptions(oficinas), [oficinas]);
-
-  /* ===================== DEPOSIT LOGIC ===================== */
-  // Si la oficina seleccionada tiene un id_deposito, filtramos o priorizamos ese.
-  const depositOptions = useMemo(() => {
-    const allDeposits = buildOptions(depositos);
-    if (!formData.id_oficina) return [];
-
-    // Buscamos la oficina actual para ver su depósito sugerido
-    const currentOffice = oficinas.find(o => o.id === formData.id_oficina);
+  /**
+   * Ajuste clave: Si el valor viene de la DB como 123.00 (puntos),
+   * lo visualizamos con coma para que sea editable por nuestra lógica.
+   */
+  const formatInitialValue = (value) => {
+    if (value === null || value === undefined || value === "") return "";
     
-    // Si la oficina tiene un depósito asignado en su esquema, podrías filtrar por nombre o ID 
-    // Aquí filtramos los depósitos cuyo nombre coincida con el nombre_deposito de la oficina
-    if (currentOffice?.nombre_deposito) {
-      return allDeposits.filter(d => 
-        d.nombre.toUpperCase() === currentOffice.nombre_deposito.toUpperCase() ||
-        d.id === currentOffice.id_deposito
-      );
+    // Si detectamos que es un número puro o un string con punto decimal (tipo 123.50)
+    if (typeof value === "number" || (typeof value === "string" && value.includes(".") && !value.includes(","))) {
+      return value.toString().replace(".", ",");
     }
+    return value.toString();
+  };
 
-    return allDeposits;
-  }, [depositos, oficinas, formData.id_oficina]);
+  const parseToFloat = (value) => {
+    if (!value) return 0;
+    if (typeof value === "number") return value;
 
-  /* ===================== HANDLERS ===================== */
-  const handleClinicChange = (opt) => {
-    if (!opt) {
-      setFormData((prev) => ({
-        ...prev,
-        id_clinica: "", nombre_clinica: "",
-        id_oficina: "", nombre_oficina: "",
-        id_deposito: "", nombre_deposito: ""
-      }));
+    const standardNumber = value
+      .toString()
+      .replace(/\./g, "") 
+      .replace(",", "."); 
+    
+    return parseFloat(standardNumber) || 0;
+  };
+
+  const calculateWidth = (value) => {
+    const text = value ? value.toString() : "";
+    const length = text.length; 
+    return `${Math.max(6, length + 2)}ch`;
+  };
+
+  /* =========================================
+      MANEJO DE INPUTS
+  ========================================= */
+
+  const handleInputChange = (id, field, value) => {
+    if (value === "") {
+      updateItemState(id, field, "");
       return;
     }
 
-    const rawClinic = clinics.find((c) => c.id === opt.value);
-    const relatedOffice = oficinas.find((o) => o.id === rawClinic?.id_oficina);
-
-    setFormData((prev) => ({
-      ...prev,
-      id_clinica: opt.value,
-      nombre_clinica: opt.label,
-      id_oficina: relatedOffice?.id || "",
-      nombre_oficina: relatedOffice?.nombre?.toUpperCase() || "",
-      // Si la oficina ya trae un depósito por defecto, lo asignamos de una vez
-      id_deposito: relatedOffice?.id_deposito || "",
-      nombre_deposito: relatedOffice?.nombre_deposito?.toUpperCase() || ""
-    }));
-  };
-
-  const handleOfficeChange = (opt) => {
-    if (!opt) {
-      setFormData(p => ({ ...p, id_oficina: "", nombre_oficina: "", id_deposito: "", nombre_deposito: "" }));
-      return;
+    let valToProcess = value;
+    if (value.includes(".") && !value.includes(",")) {
+       const parts = value.split(".");
+       if (parts.length === 2) {
+          valToProcess = value.replace(".", ",");
+       }
     }
 
-    setFormData((p) => ({
-      ...p,
-      id_oficina: opt.value,
-      nombre_oficina: opt.label,
-      // Al cambiar oficina, seteamos el depósito que esa oficina tiene vinculado
-      id_deposito: opt.id_deposito || "",
-      nombre_deposito: opt.nombre_deposito?.toUpperCase() || ""
-    }));
-  };
+    const regex = /^[0-9.]*(,[0-9]{0,2})?$/;
 
-  const handleAddPersonal = (opt) => {
-    if (!opt) return;
-    if (!formData.personal_asignado?.some((p) => p.id === opt.value)) {
-      setFormData((prev) => ({
-        ...prev,
-        personal_asignado: [...(prev.personal_asignado || []), { id: opt.value, nombre: opt.label, tipo: opt.tipo }]
-      }));
+    if (regex.test(valToProcess)) {
+      const numericValue = parseToFloat(valToProcess);
+
+      if (numericValue > MAX_VALUE) {
+        alert("El valor no puede superar 999.999.999,00");
+        return; 
+      }
+
+      let finalValue = valToProcess;
+      if (valToProcess.length > 1 && valToProcess.startsWith("0") && valToProcess[1] !== ",") {
+        finalValue = valToProcess.substring(1);
+      }
+
+      updateItemState(id, field, finalValue);
     }
   };
 
-  const siSelectStyles = {
-    control: (base, state) => ({
-      ...base,
-      borderRadius: "10px",
-      borderColor: state.isFocused ? "#ec3137" : "#e2e8f0",
-      minHeight: "48px",
-      boxShadow: "none",
-      "&:hover": { borderColor: "#ec3137" }
-    }),
-    placeholder: (base) => ({ ...base, fontSize: "0.9rem", color: "#a0aec0" }),
-    menu: (base) => ({ ...base, zIndex: 9999, borderRadius: "10px", overflow: "hidden" })
+  const updateItemState = (id, field, value) => {
+    const updatedItems = items.map((item) => {
+      if (item.id === id) return { ...item, [field]: value };
+      return item;
+    });
+    setItems(updatedItems);
   };
+
+  const handleBlurFormat = (id, field, value) => {
+    if (!value) return;
+
+    const number = parseToFloat(value);
+    const formatted = number.toLocaleString("de-DE", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
+    updateItemState(id, field, formatted);
+  };
+
+  const removeItem = (id) => {
+    setItems(items.filter((item) => item.id !== id));
+  };
+
+  /* =========================================
+      EFECTOS DE VALIDACIÓN
+  ========================================= */
+
+  useEffect(() => {
+    const updatedItems = items.map((item) => {
+      const qty = parseToFloat(item.cantidad);
+      const cost = parseToFloat(item.costo_unitario);
+      const isValid = qty > 0 && cost > 0;
+
+      if (item.isValid !== isValid) {
+        return { ...item, isValid };
+      }
+      return item;
+    });
+
+    if (JSON.stringify(updatedItems) !== JSON.stringify(items)) {
+      setItems(updatedItems);
+    }
+  }, [items, setItems]);
 
   return (
-    <section className="si-container">
-      <div className="si-header">
-        <div className="si-header-content">
-          <h3 className="si-title">Información de la Operación</h3>
-          <p className="si-subtitle">Gestión de ubicación, paciente y logística de inventario.</p>
-        </div>
+    <section className="pform-products-step">
+      <div className="section-header-alt">
+        <h2>Gestión de Productos</h2>
+        <p style={{ fontSize: "0.8rem", color: "#666" }}>
+          * Ingrese cantidad y costo. Use la coma (,) para decimales. Límite: 999.999.999,00
+        </p>
       </div>
 
-      <div className="si-grid">
-        <div className="si-column si-col-main">
-          {/* CLINICA */}
-          <div className="si-field-group">
-            <label className="si-label"><Building2 size={16} /> Clínica / Institución *</label>
-            <Select
-              options={clinicOptions}
-              value={selectValue(clinicOptions, formData.id_clinica)}
-              onChange={handleClinicChange}
-              placeholder="¿Dónde se realiza el servicio?"
-              styles={siSelectStyles}
-              isClearable
-            />
-          </div>
-
-          {/* OFICINA + DEPÓSITO */}
-          <div className="si-row-compact">
-            <div className="si-field-group">
-              <label className="si-label">Oficina *</label>
-              <Select
-                options={officeOptions}
-                value={selectValue(officeOptions, formData.id_oficina)}
-                onChange={handleOfficeChange}
-                placeholder="Seleccionar oficina..."
-                styles={siSelectStyles}
-              />
-            </div>
-
-            <div className="si-field-group">
-              <label className="si-label"><Warehouse size={16} /> Depósito de Salida *</label>
-              <Select
-                options={depositOptions}
-                value={selectValue(depositOptions, formData.id_deposito)}
-                onChange={(opt) => setFormData(p => ({
-                  ...p,
-                  id_deposito: opt?.value || "",
-                  nombre_deposito: opt?.label || ""
-                }))}
-                placeholder="Depósito..."
-                noOptionsMessage={() => "No hay depósitos para esta oficina"}
-                styles={siSelectStyles}
-                isDisabled={!formData.id_oficina}
-              />
-            </div>
-          </div>
-
-          <div className="si-row-compact">
-            <div className="si-field-group">
-              <label className="si-label">Vendedor *</label>
-              <Select
-                options={sellerOptions}
-                value={selectValue(sellerOptions, formData.id_vendedor)}
-                onChange={(opt) => setFormData(p => ({
-                  ...p,
-                  id_vendedor: opt?.value || "",
-                  nombre_vendedor: opt?.label || ""
-                }))}
-                placeholder="Vendedor..."
-                styles={siSelectStyles}
-              />
-            </div>
-            <div className="si-field-group">
-              <label className="si-label"><ShieldCheck size={16} /> Seguro (Opcional)</label>
-              <Select
-                options={insuranceOptions}
-                value={selectValue(insuranceOptions, formData.id_seguro)}
-                onChange={(opt) => setFormData(p => ({
-                  ...p,
-                  id_seguro: opt?.value || null,
-                  nombre_seguro: opt?.label || ""
-                }))}
-                isClearable
-                placeholder="Ninguno"
-                styles={siSelectStyles}
-              />
-            </div>
-          </div>
+      <div className="pform-products-toolbar">
+        <div className="search-container-full" onClick={onOpenSearch} style={{ cursor: "pointer" }}>
+          <Search size={18} className="search-icon" />
+          <input type="text" placeholder="Buscar por SKU o descripción..." readOnly />
         </div>
+        <button className="btn-add-new-product" onClick={onOpenCreate}>
+          <Plus size={18} /> Crear producto nuevo
+        </button>
+      </div>
 
-        <div className="si-column si-col-side">
-          <div className="si-field-group">
-            <label className="si-label"><UserCircle size={16} /> Paciente *</label>
-            <Select
-              options={pacienteOptions}
-              value={selectValue(pacienteOptions, formData.id_paciente)}
-              onChange={(opt) => setFormData(p => ({
-                ...p,
-                id_paciente: opt?.value || "",
-                nombre_paciente: opt?.label || ""
-              }))}
-              placeholder="Buscar paciente..."
-              styles={siSelectStyles}
-            />
-          </div>
+      {items.length === 0 ? (
+        <div className="pform-empty-table-container">
+          <p>No hay productos agregados.</p>
+        </div>
+      ) : (
+        <div className="pform-items-table-container">
+          <table className="pform-items-table">
+            <thead>
+              <tr>
+                <th>CÓDIGO</th>
+                <th>DESCRIPCIÓN</th>
+                <th className="center">CANTIDAD</th>
+                <th className="center">COSTO</th>
+                <th className="center">TOTAL</th>
+                <th className="center">ACCIONES</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item) => {
+                const qtyVal = parseToFloat(item.cantidad);
+                const costVal = parseToFloat(item.costo_unitario);
+                const totalLine = round2(qtyVal * costVal);
+                
+                const hasError = !item.cantidad || !item.costo_unitario || qtyVal <= 0 || costVal <= 0;
 
-          <div className="si-field-group si-personal-box">
-            <label className="si-label"><Stethoscope size={16} /> Equipo Médico *</label>
-            <Select
-              options={medicoOptions}
-              value={null}
-              onChange={handleAddPersonal}
-              formatOptionLabel={(opt) => (
-                <div className="si-option-info">
-                  <span className="si-option-label">{opt.label}</span>
-                  <span className="si-option-sublabel">{opt.tipo}</span>
-                </div>
-              )}
-              placeholder="Asignar médicos..."
-              styles={siSelectStyles}
-              getOptionLabel={(option) => `${option.label} ${option.tipo}`}
-            />
+                return (
+                  <tr key={item.id} style={{ backgroundColor: hasError ? "#fffafb" : "transparent" }}>
+                    <td className="sku-cell">{item.sku?.substring(0, 10) || "S/C"}</td>
+                    <td className="desc-cell">{item.descripcion}</td>
 
-            <div className="si-selected-list">
-              {formData.personal_asignado?.length > 0 ? (
-                formData.personal_asignado.map((med) => (
-                  <div key={med.id} className="si-member-card">
-                    <div className="si-member-info">
-                      <div className="si-member-avatar"><User size={14} /></div>
-                      <div className="si-member-text">
-                        <span className="si-member-name">{med.nombre}</span>
-                        <span className="si-member-type">{med.tipo}</span>
+                    <td className="center">
+                      <input
+                        type="text"
+                        className={`table-input-dynamic ${!qtyVal ? "input-error" : ""}`}
+                        style={{
+                          textAlign: "center",
+                          width: calculateWidth(item.cantidad),
+                          minWidth: "60px"
+                        }}
+                        value={formatInitialValue(item.cantidad)}
+                        onChange={(e) => handleInputChange(item.id, "cantidad", e.target.value)}
+                        onBlur={(e) => handleBlurFormat(item.id, "cantidad", e.target.value)}
+                        placeholder="0,00"
+                        inputMode="decimal"
+                      />
+                    </td>
+
+                    <td className="center">
+                      <div className="input" style={{ display: 'inline-flex', justifyContent: "center", alignItems: 'center' }}>
+                        <input
+                          type="text"
+                          className={`table-input-dynamic ${!costVal ? "input-error" : ""}`}
+                          style={{
+                            textAlign: "center",
+                            width: calculateWidth(item.costo_unitario),
+                            minWidth: "80px"
+                          }}
+                          value={formatInitialValue(item.costo_unitario)}
+                          onChange={(e) => handleInputChange(item.id, "costo_unitario", e.target.value)}
+                          onBlur={(e) => handleBlurFormat(item.id, "costo_unitario", e.target.value)}
+                          placeholder="0,00"
+                          inputMode="decimal"
+                        />
                       </div>
-                    </div>
-                    <button type="button" onClick={() => setFormData(prev => ({
-                      ...prev,
-                      personal_asignado: prev.personal_asignado.filter(p => p.id !== med.id)
-                    }))} className="si-member-remove">
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <div className="si-empty-state"><p>No hay personal asignado.</p></div>
-              )}
-            </div>
-          </div>
+                    </td>
+
+                    <td className="center total-cell" style={{ fontWeight: "700", color: "#333" }}>
+                      {totalLine.toLocaleString("de-DE", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </td>
+
+                    <td className="center">
+                      <div className="pform-actions-cell">
+                        {/* AJUSTE: Solo renderiza el botón de lotes si 
+                            estatus_lotes es estrictamente true 
+                        */}
+                        {item.estatus_lotes === true && (
+                          <button 
+                            className="btn-batch-row" 
+                            title="Lotes" 
+                            onClick={() => onOpenBatch(item)}
+                          >
+                            <Layers size={16} />
+                          </button>
+                        )}
+                        
+                        <button className="btn-edit-row" title="Editar" onClick={() => onEditProduct(item)}>
+                          <Edit2 size={16} />
+                        </button>
+                        <button className="btn-delete-row" title="Quitar" onClick={() => removeItem(item.id)}>
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
-      </div>
+      )}
     </section>
   );
 };
 
-export default StepInfo;
+export default StepProducts;

@@ -53,6 +53,8 @@ controller.getProductKardex = async (req, res) => {
     if (!id) return res.status(400).json({ error: "Product id required" });
 
     const result = await ProductsModel.getProductKardexById(id);
+    console.log(result)
+
     return res.status(result.code).json(result);
   } catch (error) {
     return res.status(500).json({ error: error.message });
@@ -84,7 +86,6 @@ controller.createProduct = async (req, res) => {
       return res.status(400).json({ error: "descripcion, id_categoria y id_marca son obligatorios" });
 
     const result = await ProductsModel.createProduct(data);
-    console.log(result)
     return res.status(result.code).json(result);
   } catch (error) {
     return res.status(500).json({ error: error.message });
@@ -99,7 +100,6 @@ controller.updateProduct = async (req, res) => {
     if (Object.keys(data).length === 0) return res.status(400).json({ error: "No data to update" });
 
     const result = await ProductsModel.updateProduct(id, data);
-    console.log(result)
     return res.status(result.code).json(result);
   } catch (error) {
     return res.status(500).json({ error: error.message });
@@ -215,7 +215,6 @@ controller.generateCatalogProd = async (req, res) => {
     console.log("Filtros recibidos:", filters);
 
     const result = await ProductsModel.getProductFilter(filters);
-    console.log(result)
     return res.status(result.code).json(result);
 
   } catch (error) {
@@ -231,7 +230,6 @@ controller.getProductEdeposit = async (req, res) => {
     if (!id) return res.status(400).json({ error: "Product id required" });
 
     const result = await ProductsModel.getProductWithDeposits(id);
-    console.log(result)
     return res.status(result.code).json(result);
   } catch (error) {
     return res.status(500).json({ error: error.message });
@@ -319,8 +317,6 @@ controller.createCategory = async (req, res) => {
   try {
     const { nombre, estatus } = req.body;
     if (!nombre) return res.status(400).json({ error: "nombre es obligatorio" });
-
-    console.log(req.body)
 
     const result = await ProductsModel.createCategory({ nombre, estatus });
     console.log(result)

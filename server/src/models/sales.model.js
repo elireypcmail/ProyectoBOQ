@@ -607,14 +607,11 @@ export class SalesModel {
         [idVenta]
       );
 
-      if (!ventaQuery.rows.length) {
-        throw new Error("La venta solicitada no existe.");
-      }
-
+      if (!ventaQuery.rows.length) throw new Error("La venta no existe.");
       const venta = ventaQuery.rows[0];
 
       if (venta.estado_venta !== "PENDIENTE") {
-        throw new Error("Esta venta ya fue confirmada o procesada previamente.");
+        throw new Error("Esta venta ya fue procesada.");
       }
 
       /* 2️⃣ OBTENER DETALLE */
@@ -623,43 +620,28 @@ export class SalesModel {
         [idVenta]
       );
 
-      if (!detalles.rows.length) {
-        throw new Error("La venta no tiene productos asignados.");
-      }
+      if (!detalles.rows.length) throw new Error("La venta no tiene productos.");
 
-      /* 3️⃣ VALIDAR LOTES */
-      const lotes = await connection.query(
-        `
-        SELECT 
-          vdl.cantidad AS cantidad_pedida,
-          l.id AS id_lote,
-          l.nro_lote,
-          l.cantidad AS stock_actual_lote,
-          l.id_producto,
-          l.id_deposito,
-          p.descripcion AS nombre_producto
+      /* 3️⃣ VALIDAR STOCK DE LOTES (SOLO SI EXISTEN) */
+      const lotesQuery = await connection.query(
+        `SELECT vdl.cantidad AS cantidad_pedida, l.id AS id_lote, l.nro_lote,
+                l.cantidad AS stock_actual_lote, l.id_producto, l.id_deposito,
+                p.descripcion AS nombre_producto
         FROM venta_detalle_lote vdl
         INNER JOIN ventas_detalle vd ON vd.id = vdl.id_detalle
         INNER JOIN lotes l ON l.id = vdl.id_lote
         INNER JOIN productos p ON p.id = l.id_producto
-        WHERE vd.id_venta = $1
-        FOR UPDATE
-        `,
+        WHERE vd.id_venta = $1 FOR UPDATE`,
         [idVenta]
       );
 
-      for (const lote of lotes.rows) {
-        const stock = Number(lote.stock_actual_lote);
-        const pedido = Number(lote.cantidad_pedida);
-
-        if (stock < pedido) {
-          throw new Error(
-            `Stock insuficiente en Lote: ${lote.nro_lote} para ${lote.nombre_producto}. (Disp: ${stock}, Req: ${pedido})`
-          );
+      for (const lote of lotesQuery.rows) {
+        if (Number(lote.stock_actual_lote) < Number(lote.cantidad_pedida)) {
+          throw new Error(`Stock insuficiente en Lote: ${lote.nro_lote} (${lote.nombre_producto})`);
         }
       }
 
-      /* 4️⃣ DESCONTAR INVENTARIO GENERAL + KARDEX GENERAL */
+      /* 4️⃣ DESCUENTO GENERAL (PARA TODOS LOS PRODUCTOS) */
       for (const item of detalles.rows) {
         const cantidad = Number(item.cantidad);
 
@@ -668,109 +650,80 @@ export class SalesModel {
           [item.id_inventario]
         );
 
-        if (!invQuery.rows.length) {
-          throw new Error("Producto no encontrado en inventario.");
-        }
+        if (!invQuery.rows.length) throw new Error("Producto no en inventario.");
 
         const inv = invQuery.rows[0];
-
         const existenciaInicial = Number(inv.existencia_general);
-        const costo = Number(inv.costo_unitario);
-        const precio = Number(item.precio_unitario_final);
+        
+        if (existenciaInicial < cantidad) {
+          throw new Error(`Stock global insuficiente para: ${item.descripcion}`);
+        }
 
         const nuevoStock = existenciaInicial - cantidad;
 
+        // Actualizar Inventario General
         await connection.query(
           `UPDATE inventario SET existencia_general = $1 WHERE id = $2`,
           [nuevoStock, inv.id]
         );
 
+        // Kardex General (Siempre se dispara)
         await connection.query(
           `INSERT INTO kardexg
           (id_producto, fecha, existencia_inicial, entrada, salida, existencia_final, costo, precio, detalle, documento, tipo)
           VALUES ($1, NOW(), $2, 0, $3, $4, $5, $6, $7, $8, 'VENTA')`,
-          [
-            inv.id_producto,
-            existenciaInicial,
-            cantidad,
-            nuevoStock,
-            costo,
-            precio,
-            `Venta Factura: ${venta.nro_factura}`,
-            venta.nro_factura
-          ]
+          [inv.id_producto, existenciaInicial, cantidad, nuevoStock, Number(inv.costo_unitario), Number(item.precio_unitario_final), `Venta Fac: ${venta.nro_factura}`, venta.nro_factura]
         );
+        
+        // NOTA: Aquí ya no hay lógica de edeposito para productos sin lotes.
       }
 
-      /* 5️⃣ DESCONTAR LOTES + DEPÓSITO + KARDEX DEPÓSITO */
-      for (const lote of lotes.rows) {
+      /* 5️⃣ DESCUENTO ESPECÍFICO DE LOTES Y DEPÓSITOS (SOLO PARA PRODUCTOS CON LOTES) */
+      for (const lote of lotesQuery.rows) {
         const cantidad = Number(lote.cantidad_pedida);
 
-        /* descontar lote */
+        // Descontar del lote
         await connection.query(
           `UPDATE lotes SET cantidad = cantidad - $1 WHERE id = $2`,
           [cantidad, lote.id_lote]
         );
 
-        /* descontar deposito */
+        // Como este producto SÍ tiene lote, entonces SÍ tiene depósito asociado
         const depQuery = await connection.query(
-          `SELECT existencia_deposito
-          FROM edeposito
-          WHERE id_producto = $1 AND id_deposito = $2
-          FOR UPDATE`,
+          `SELECT existencia_deposito FROM edeposito
+          WHERE id_producto = $1 AND id_deposito = $2 FOR UPDATE`,
           [lote.id_producto, lote.id_deposito]
         );
 
         if (depQuery.rows.length > 0) {
-          const existenciaInicial = Number(depQuery.rows[0].existencia_deposito);
-          const existenciaFinal = existenciaInicial - cantidad;
+          const exInicialDep = Number(depQuery.rows[0].existencia_deposito);
+          const exFinalDep = exInicialDep - cantidad;
 
           await connection.query(
-            `UPDATE edeposito
-            SET existencia_deposito = $1
+            `UPDATE edeposito SET existencia_deposito = $1
             WHERE id_producto = $2 AND id_deposito = $3`,
-            [existenciaFinal, lote.id_producto, lote.id_deposito]
+            [exFinalDep, lote.id_producto, lote.id_deposito]
           );
 
+          // Kardex por depósito (Solo para productos con lote)
           await connection.query(
             `INSERT INTO kardexdep
             (id_producto, id_deposito, fecha, existencia_inicial, entrada, salida, existencia_final, costo, precio, detalle, documento, tipo)
             VALUES ($1, $2, NOW(), $3, 0, $4, $5, 0, 0, $6, $7, 'VENTA')`,
-            [
-              lote.id_producto,
-              lote.id_deposito,
-              existenciaInicial,
-              cantidad,
-              existenciaFinal,
-              `Venta Factura: ${venta.nro_factura}`,
-              venta.nro_factura
-            ]
+            [lote.id_producto, lote.id_deposito, exInicialDep, cantidad, exFinalDep, `Venta Lote: ${lote.nro_lote}`, venta.nro_factura]
           );
         }
       }
 
-      /* 6️⃣ FINALIZAR VENTA */
-      await connection.query(
-        `UPDATE ventas SET estado_venta = 'CONFIRMADA' WHERE id = $1`,
-        [idVenta]
-      );
+      /* 6️⃣ FINALIZAR */
+      await connection.query(`UPDATE ventas SET estado_venta = 'CONFIRMADA' WHERE id = $1`, [idVenta]);
 
       await connection.query("COMMIT");
-
-      return {
-        status: true,
-        code: 200,
-        msg: "Venta confirmada exitosamente."
-      };
+      return { status: true, code: 200, msg: "Venta confirmada." };
 
     } catch (error) {
       if (connection) await connection.query("ROLLBACK");
-
-      return {
-        status: false,
-        code: 500,
-        msg: error.message || "Error al confirmar venta."
-      };
+      return { status: false, code: 500, msg: error.message };
     } finally {
       if (connection) connection.release();
     }
