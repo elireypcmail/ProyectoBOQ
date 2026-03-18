@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react"
-import { Search, Plus, Loader2 } from "lucide-react"
+import { Search, Plus, Loader2, ChevronLeft, ChevronRight } from "lucide-react"
 import { SlOptionsVertical } from "react-icons/sl"
 import { useIncExp } from "../../context/IncExpContext"
 import SaleFormModal from "./Ui/SalesFormModal"
@@ -14,9 +14,18 @@ const ListSales = () => {
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const [fetchingId, setFetchingId] = useState(null)
 
+  // --- Estado de Paginación ---
+  const [currentPage, setCurrentPage] = useState(1)
+  const ITEMS_PER_PAGE = 10
+
   useEffect(() => {
     getAllSales()
   }, [])
+
+  // Reiniciar a página 1 cuando el usuario busca algo
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm])
 
   const handleOpenDetail = async (id) => {
     try {
@@ -33,25 +42,31 @@ const ListSales = () => {
     }
   }
 
-  // Filtrado y Ordenación Alfabética
+  // Filtrado y Ordenación (Fecha e ID de manera decreciente)
   const filteredSales = useMemo(() => {
     if (!sales) return []
 
-    // 1. Filtrar por término de búsqueda
     const filtered = sales.filter((s) =>
       s.nro_factura?.toUpperCase().includes(searchTerm.toUpperCase()) ||
       s.paciente?.toUpperCase().includes(searchTerm.toUpperCase())
     )
 
-    // 2. Ordenar alfabéticamente por el nombre del paciente (cliente)
     return [...filtered].sort((a, b) => {
-      const nameA = (a.paciente || "").toUpperCase()
-      const nameB = (b.paciente || "").toUpperCase()
-      if (nameA < nameB) return -1
-      if (nameA > nameB) return 1
-      return 0
+      const dateA = new Date(a.fecha_creacion || a.created_at || 0)
+      const dateB = new Date(b.fecha_creacion || b.created_at || 0)
+      
+      if (dateB - dateA !== 0) {
+        return dateB - dateA // Fecha más reciente primero
+      }
+      return (b.id || 0) - (a.id || 0) // ID más alto primero si las fechas son iguales
     })
   }, [sales, searchTerm])
+
+  // --- Cálculos de Paginación ---
+  const totalPages = Math.ceil(filteredSales.length / ITEMS_PER_PAGE)
+  const indexOfLastItem = currentPage * ITEMS_PER_PAGE
+  const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE
+  const currentItems = filteredSales.slice(indexOfFirstItem, indexOfLastItem)
 
   const formatCurrency = (value) => {
     const num = parseFloat(value) || 0
@@ -61,17 +76,21 @@ const ListSales = () => {
     })
   }
 
-  const renderStatus = (sale) => {
-    if (sale.estatus === false) {
-      return <span className="v-status-pill v-status-anulada">Anulada</span>
-    }
+  const formatDate = (dateString) => {
+    if (!dateString) return "---"
+    const date = new Date(dateString)
+    return date.toLocaleDateString("es-ES", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    })
+  }
 
+  const getRowStatusClass = (sale) => {
+    if (sale.estatus === false) return "v-row-anulada"
     const estado = sale.estado_venta?.toUpperCase()
-    if (estado === "CONFIRMADA" || estado === "PAGADA") {
-      return <span className="v-status-pill v-status-confirmada">Confirmada</span>
-    }
-    
-    return <span className="v-status-pill v-status-pendiente">Pendiente</span>
+    if (estado === "CONFIRMADA" || estado === "PAGADA") return "v-row-confirmada"
+    return "v-row-pendiente"
   }
 
   return (
@@ -99,7 +118,7 @@ const ListSales = () => {
           <input
             placeholder="Buscar por factura o cliente..."
             value={searchTerm}
-            style={{ textTransform: 'uppercase' }} // Estética de mayúsculas
+            style={{ textTransform: 'uppercase' }}
             onChange={(e) => setSearchTerm(e.target.value.toUpperCase())}
           />
         </div>
@@ -109,21 +128,21 @@ const ListSales = () => {
         <table className="v-data-table">
           <thead>
             <tr>
+              <th className="v-text-center">Fecha</th>
               <th>Factura</th>
               <th>Cliente</th>
               <th className="v-text-right">Total</th>
-              <th className="v-text-center">Estatus</th>
               <th className="v-text-center">Acciones</th>
             </tr>
           </thead>
           <tbody>
-            {filteredSales.length > 0 ? (
-              filteredSales.map((s) => (
-                <tr key={s.id} className="v-table-row">
+            {currentItems.length > 0 ? (
+              currentItems.map((s) => (
+                <tr key={s.id} className={`v-table-row ${getRowStatusClass(s)}`}>
+                  <td className="v-text-center">{formatDate(s.fecha_creacion || s.created_at)}</td>
                   <td className="v-text-center v-bold">{s.nro_factura}</td>
                   <td>{s.paciente}</td>
                   <td className="v-text-right v-bold">{formatCurrency(s.total)}</td>
-                  <td className="v-text-center">{renderStatus(s)}</td>
                   <td className="v-text-center">
                     <button
                       className="v-action-btn"
@@ -145,6 +164,33 @@ const ListSales = () => {
           </tbody>
         </table>
       </div>
+
+      {/* --- Controles de Paginación --- */}
+      {totalPages > 1 && (
+        <div className="pagination-controls flex items-center justify-between" style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <button 
+            className="btn-secondary flex items-center gap-1"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            style={{ display: 'flex', alignItems: 'center', gap: '5px', opacity: currentPage === 1 ? 0.5 : 1, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+          >
+            <ChevronLeft size={16} /> Anterior
+          </button>
+          
+          <span className="v-page-info">
+            Página <strong>{currentPage}</strong> de <strong>{totalPages}</strong>
+          </span>
+
+          <button 
+            className="btn-secondary flex items-center gap-1"
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            style={{ display: 'flex', alignItems: 'center', gap: '5px', opacity: currentPage === totalPages ? 0.5 : 1, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+          >
+            Siguiente <ChevronRight size={16} />
+          </button>
+        </div>
+      )}
 
       <SaleFormModal isOpen={isFormOpen} onClose={() => { setIsFormOpen(false); setSelectedSale(null) }} editData={selectedSale} />
       <SaleDetailModal 

@@ -201,7 +201,7 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
       <div className="pform-form-grid">
         <div className="pform-group col-span-2">
           <label>
-            <UserCircle size={14} /> PACIENTE <span className="required">*</span>
+            <UserCircle size={14} /> CLIENTE O PACIENTE <span className="required">*</span>
           </label>
           <Select
             isClearable

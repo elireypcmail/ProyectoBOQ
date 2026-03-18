@@ -110,7 +110,7 @@ const SaleDetailModal = ({ isOpen, sale, onClose, onEdit }) => {
                 {!isActive ? "ANULADA" : isPending ? "PENDIENTE" : "CONFIRMADA"}
               </div>
               <div className={`sdm-badge ${sale.estado_pago === "Pagado" ? "paid" : "unpaid"}`}>
-                {sale.estado_pago === "Pagado" ? "PAGADO" : "IMPAGADO"}
+                {sale.estado_pago === "Pagado" ? "PAGADO" : "SALDO PENDIENTE"}
               </div>
             </div>
           </div>

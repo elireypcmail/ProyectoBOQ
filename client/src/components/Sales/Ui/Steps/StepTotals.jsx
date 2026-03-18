@@ -110,7 +110,7 @@ const StepTotals = ({ totals, setTotals }) => {
     <div className="ptotals-container">
       <div className="ptotals-header">
         <h3>Finalizar Venta</h3>
-        <p>Revisión de Costos, Pagos e Impuestos</p>
+        <p>Revisión de Totales y Pagos</p>
       </div>
 
       <div className="ptotals-main-grid">

@@ -14,10 +14,8 @@ const ListPurchases = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   
-  // Local state for fetching individual details
   const [fetchingId, setFetchingId] = useState(null);
 
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
@@ -25,7 +23,6 @@ const ListPurchases = () => {
     getAllShoppings();
   }, []);
 
-  // Reset pagination to page 1 whenever the user types a new search term
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm]);
@@ -45,26 +42,52 @@ const ListPurchases = () => {
     }
   };
 
+  // Filtrado y Ordenación por Fecha e ID (Decreciente)
   const filteredPurchases = useMemo(() => {
     if (!shoppings) return [];
-    return shoppings.filter(p =>
+    
+    // 1. Filtrar
+    const filtered = shoppings.filter(p =>
       p.nro_factura?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.proveedor?.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    // 2. Ordenar por fecha y luego por ID (ambos decrecientes)
+    return [...filtered].sort((a, b) => {
+      const dateA = new Date(a.fecha_emision || a.created_at || 0);
+      const dateB = new Date(b.fecha_emision || b.created_at || 0);
+
+      if (dateB - dateA !== 0) {
+        return dateB - dateA; // Ordenar por fecha
+      }
+      
+      // Si la fecha es igual, desempatar por ID decreciente
+      return (b.id || 0) - (a.id || 0);
+    });
   }, [shoppings, searchTerm]);
 
-  // Pagination Calculations
+  // Cálculos de Paginación
   const totalPages = Math.ceil(filteredPurchases.length / ITEMS_PER_PAGE);
   const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
   const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
   const currentItems = filteredPurchases.slice(indexOfFirstItem, indexOfLastItem);
 
-  // Formats to: $ 1.250,50 
   const formatCurrency = (value) => {
-    return `${parseFloat(value).toLocaleString("es-ES", {
+    const num = parseFloat(value) || 0;
+    return num.toLocaleString("es-ES", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    })}`;
+    });
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "---";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("es-ES", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    });
   };
 
   return (
@@ -108,7 +131,7 @@ const ListPurchases = () => {
         <table className="orders-table">
           <thead>
             <tr>
-              {/* <th>ID</th> */}
+              <th className="center">Fecha</th>
               <th>Factura</th>
               <th>Proveedor</th>
               <th className="right">Total</th>
@@ -119,7 +142,7 @@ const ListPurchases = () => {
             {currentItems.length > 0 ? (
               currentItems.map((p) => (
                 <tr key={p.id}>
-                  {/* <td className="id">#{p.id}</td> */}
+                  <td className="center">{formatDate(p.fecha_emision || p.created_at)}</td>
                   <td className="bold">{p.nro_factura}</td>
                   <td>{p.proveedor}</td>
                   <td className="right bold">
@@ -160,11 +183,11 @@ const ListPurchases = () => {
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             style={{ opacity: currentPage === 1 ? 0.5 : 1, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
           >
-            <ChevronLeft size={16} /> Previous
+            <ChevronLeft size={16} /> Anterior
           </button>
           
           <span className="text-sm">
-            Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
+            Página <strong>{currentPage}</strong> de <strong>{totalPages}</strong>
           </span>
 
           <button 
@@ -173,7 +196,7 @@ const ListPurchases = () => {
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
             style={{ opacity: currentPage === totalPages ? 0.5 : 1, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
           >
-            Next <ChevronRight size={16} />
+            Siguiente <ChevronRight size={16} />
           </button>
         </div>
       )}
