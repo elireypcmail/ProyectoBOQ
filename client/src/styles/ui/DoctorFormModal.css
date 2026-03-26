@@ -1,0 +1,187 @@
+/* DoctorFormModal.css - Unique Prefixes (dfm-) */
+
+.dfm-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 20px;
+}
+
+.dfm-modal-content {
+  background: #ffffff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 650px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 2rem;
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+  animation: dfmFadeIn 0.3s ease-out;
+  display: flex;
+  flex-direction: column;
+}
+
+.dfm-modal-title {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: #1e293b;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 10px;
+}
+
+.dfm-modal-label {
+  display: block;
+  margin: 12px 0 6px 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dfm-modal-input {
+  width: 100%;
+  padding: 0.65rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: #1e293b;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.dfm-modal-input:focus {
+  border-color: #ec4e53;
+  box-shadow: 0 0 0 2px rgba(236, 78, 83, 0.1);
+}
+
+.dfm-grid-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+/* Checkbox */
+.dfm-checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.dfm-checkbox-input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #ec4e53;
+}
+
+.dfm-checkbox-label {
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #334155;
+}
+
+/* Select & New Specialty */
+.dfm-select-container {
+  display: flex;
+  gap: 10px;
+}
+
+.dfm-select-flex {
+  flex: 1;
+}
+
+.dfm-btn-new {
+  background: linear-gradient(135deg, #ec4e53, #d43d42);
+  color: #fff;
+  height: 38px;
+  padding: 0 1rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.dfm-new-tipo-box {
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px dashed #e2e8f0;
+}
+
+.dfm-new-tipo-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dfm-new-tipo-actions {
+  display: flex;
+  gap: 5px;
+}
+
+/* Buttons */
+.dfm-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.dfm-btn-primary {
+  background: #ec4e53;
+  color: white;
+  padding: 0.6rem 1.25rem;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.dfm-btn-secondary {
+  background: #f1f5f9;
+  color: #475569;
+  padding: 0.6rem 1.25rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+}
+
+.dfm-btn-save-mini, .dfm-btn-cancel-mini {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  color: white;
+}
+
+.dfm-btn-save-mini { background: #16a34a; }
+.dfm-btn-cancel-mini { background: #64748b; }
+
+@keyframes dfmFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 600px) {
+  .dfm-grid-container { grid-template-columns: 1fr; gap: 0; }
+  .dfm-modal-footer { flex-direction: column-reverse; }
+  .dfm-btn-primary, .dfm-btn-secondary { width: 100%; justify-content: center; }
+}

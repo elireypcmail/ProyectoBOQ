@@ -1,22 +1,12 @@
 import React, { useEffect } from "react";
-import { Search, Plus, Trash2, Edit2, Layers } from "lucide-react";
+import { Search, Trash2 } from "lucide-react";
 import "../../../../styles/ui/stepsSales/StepProducts.css";
 
 const StepProducts = ({
   items = [],
   setItems,
   onOpenSearch,
-  onOpenCreate,
-  onOpenBatch,
-  onEditProduct,
 }) => {
-  
-  console.log("# StepProducts Render");
-  console.log(items);
-
-  /* =========================================
-      CONSTANTS & HELPERS
-  ========================================= */
   
   const MAX_VALUE = 999999999; 
 
@@ -24,13 +14,16 @@ const StepProducts = ({
     return Math.round((num + Number.EPSILON) * 100) / 100;
   };
 
+  // Corregido para manejar strings con puntos (base de datos) y convertirlos a comas visuales
   const formatInitialValue = (value) => {
     if (value === null || value === undefined || value === "") return "";
     
-    if (typeof value === "number" || (typeof value === "string" && value.includes(".") && !value.includes(","))) {
-      return value.toString().replace(".", ",");
+    let strValue = value.toString();
+    // Si viene de la DB con punto (ej: "150.00"), lo pasamos a coma para el input
+    if (strValue.includes(".") && !strValue.includes(",")) {
+      return strValue.replace(".", ",");
     }
-    return value.toString();
+    return strValue;
   };
 
   const parseToFloat = (value) => {
@@ -38,7 +31,7 @@ const StepProducts = ({
     if (typeof value === "number") return value;
 
     let standardNumber = value.toString();
-    
+    // Limpieza estricta: quitar puntos de miles y cambiar coma decimal por punto
     if (standardNumber.includes(",") && standardNumber.includes(".")) {
       standardNumber = standardNumber.replace(/\./g, "").replace(",", ".");
     } else if (standardNumber.includes(",")) {
@@ -50,13 +43,8 @@ const StepProducts = ({
 
   const calculateWidth = (value) => {
     const text = value ? value.toString() : "";
-    const length = text.length; 
-    return `${Math.max(6, length + 2)}ch`;
+    return `${Math.max(6, text.length + 2)}ch`;
   };
-
-  /* =========================================
-      INPUT HANDLING
-  ========================================= */
 
   const handleInputChange = (id, field, value) => {
     if (value === "") {
@@ -64,30 +52,12 @@ const StepProducts = ({
       return;
     }
 
-    let valToProcess = value;
-    if (value.includes(".") && !value.includes(",")) {
-       const parts = value.split(".");
-       if (parts.length === 2) {
-          valToProcess = value.replace(".", ",");
-       }
-    }
-
-    const regex = /^[0-9.]*(,[0-9]{0,2})?$/;
-
-    if (regex.test(valToProcess)) {
-      const numericValue = parseToFloat(valToProcess);
-
-      if (numericValue > MAX_VALUE) {
-        alert("El valor no puede superar 999.999.999,00");
-        return; 
-      }
-
-      let finalValue = valToProcess;
-      if (valToProcess.length > 1 && valToProcess.startsWith("0") && valToProcess[1] !== ",") {
-        finalValue = valToProcess.substring(1);
-      }
-
-      updateItemState(id, field, finalValue);
+    // Permitir solo números y una coma decimal
+    const regex = /^[0-9]*(,[0-9]{0,2})?$/;
+    if (regex.test(value)) {
+      const numericValue = parseToFloat(value);
+      if (numericValue > MAX_VALUE) return;
+      updateItemState(id, field, value);
     }
   };
 
@@ -101,13 +71,11 @@ const StepProducts = ({
 
   const handleBlurFormat = (id, field, value) => {
     if (!value) return;
-
     const number = parseToFloat(value);
     const formatted = number.toLocaleString("de-DE", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
-
     updateItemState(id, field, formatted);
   };
 
@@ -115,21 +83,11 @@ const StepProducts = ({
     setItems(items.filter((item) => item.id !== id));
   };
 
-  /* =========================================
-      VALIDATION EFFECTS
-  ========================================= */
-
   useEffect(() => {
     const updatedItems = items.map((item) => {
       const qty = parseToFloat(item.cantidad);
       const price = parseToFloat(item.precio_venta);
-      
-      // Sumamos la cantidad de los lotes asignados (usando lotes_compra o lotes)
-      const lotesAsignados = (item.lotes_compra || item.lotes || []).reduce((acc, l) => acc + parseToFloat(l.cantidad), 0);
-      
-      // Validación: Cantidad y Precio > 0, y la suma de lotes debe coincidir exactamente con la cantidad
-      const lotesCompletos = Math.abs(qty - lotesAsignados) < 0.0001;
-      const isValid = qty > 0 && price > 0 && lotesCompletos;
+      const isValid = qty > 0 && price > 0;
 
       if (item.isValid !== isValid) {
         return { ...item, isValid };
@@ -137,7 +95,9 @@ const StepProducts = ({
       return item;
     });
 
-    if (JSON.stringify(updatedItems) !== JSON.stringify(items)) {
+    // Solo actualizar si realmente hubo un cambio en la validez para evitar loops
+    const hasChanges = updatedItems.some((item, index) => item.isValid !== items[index].isValid);
+    if (hasChanges) {
       setItems(updatedItems);
     }
   }, [items, setItems]);
@@ -147,7 +107,7 @@ const StepProducts = ({
       <div className="step-prod-header">
         <h2>Gestión de Productos</h2>
         <p className="step-prod-subtitle">
-          * Ingrese la cantidad. Use la coma (,) para decimales. Límite: 999.999.999,00
+          * Ingrese la cantidad. Use la coma (,) para decimales.
         </p>
       </div>
 
@@ -156,9 +116,6 @@ const StepProducts = ({
           <Search size={18} className="step-prod-search-icon" />
           <input type="text" placeholder="Buscar por SKU o descripción..." readOnly />
         </div>
-        <button className="step-prod-btn-add" onClick={onOpenCreate}>
-          <Plus size={18} /> Crear producto nuevo
-        </button>
       </div>
 
       {items.length === 0 ? (
@@ -183,8 +140,6 @@ const StepProducts = ({
                 const qtyVal = parseToFloat(item.cantidad);
                 const priceVal = parseToFloat(item.precio_venta);
                 const totalLine = round2(qtyVal * priceVal);
-                
-                // Marcamos error visual si no es válido
                 const hasError = !item.isValid;
 
                 return (
@@ -203,18 +158,16 @@ const StepProducts = ({
                         placeholder="0,00"
                         inputMode="decimal"
                       />
-                      {hasError && <div style={{ fontSize: '10px', color: '#ec3137' }}>Lotes incompletos</div>}
                     </td>
 
                     <td className="step-prod-text-right">
                       <div className="step-prod-currency-wrapper">
                         <input
                           type="text"
-                          className={`step-prod-input step-prod-input-readonly ${!priceVal ? "step-prod-input-error" : ""}`}
+                          className="step-prod-input step-prod-input-readonly"
                           style={{ width: calculateWidth(item.precio_venta) }}
                           value={formatInitialValue(item.precio_venta)}
                           readOnly
-                          placeholder="0,00"
                         />
                       </div>
                     </td>
@@ -228,13 +181,7 @@ const StepProducts = ({
 
                     <td className="step-prod-text-center">
                       <div className="step-prod-actions">
-                        <button className="step-prod-action-btn step-prod-btn-batch" title="Lotes" onClick={() => onOpenBatch?.(item)}>
-                          <Layers size={16} />
-                        </button>
-                        <button className="step-prod-action-btn step-prod-btn-edit" title="Editar" onClick={() => onEditProduct?.(item)}>
-                          <Edit2 size={16} />
-                        </button>
-                        <button className="step-prod-action-btn step-prod-btn-delete" title="Quitar" onClick={() => removeItem(item.id)}>
+                        <button className="step-prod-action-btn step-prod-btn-delete" onClick={() => removeItem(item.id)}>
                           <Trash2 size={16} />
                         </button>
                       </div>

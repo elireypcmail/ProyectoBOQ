@@ -109,7 +109,7 @@
 }
 
 .step-prod-table th {
-  text-align: left;
+  text-align: center;
   padding: 14px 16px;
   border-bottom: 2px solid #e2e8f0;
   font-size: 0.8rem;
@@ -124,6 +124,7 @@
   border-bottom: 1px solid #f1f5f9;
   font-size: 0.95rem;
   color: #334155;
+  text-align: center;
   vertical-align: middle;
 }
 

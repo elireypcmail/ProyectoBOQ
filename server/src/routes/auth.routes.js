@@ -15,10 +15,11 @@ import { loginSchema } from "../schemas/auth.schema.js"
 
 /* ================= AUTH ================= */
 // router.post(_var.LOGIN, validateSchema(loginSchema), controller.login)
-router.post(_var.LOGIN, controller.login)
-router.post(_var.REGISTER, controller.register)
-router.post(_var.LOGOUT, controller.logout)
-router.get(_var.VERIFY, controller.verifyToken)
+router.post("/login", controller.login)
+router.post("/register", controller.register)
+// router.post("/usuarios", controller.getAllUsers)
+router.post("/logout", controller.logout)
+router.get("/verify", controller.verifyToken)
 
 /* ================= ENTITIES USER ================= */
 /*

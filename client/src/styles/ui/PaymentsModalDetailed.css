@@ -1,0 +1,108 @@
+.paydm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.6); /* Azul muy oscuro traslúcido */
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1050;
+}
+
+.paydm-container {
+  background: #ffffff;
+  width: 100%;
+  max-width: 650px;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  position: relative;
+  overflow: hidden;
+  animation: paydmFadeIn 0.3s ease-out;
+}
+
+@keyframes paydmFadeIn {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.paydm-header {
+  padding: 24px 30px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.paydm-title-group h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #1e293b;
+  letter-spacing: 1px;
+}
+
+.paydm-title-group span {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.paydm-body {
+  padding: 0 30px 24px 30px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.paydm-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+}
+
+.paydm-table th {
+  position: sticky;
+  top: 0;
+  background: white;
+  text-align: left;
+  padding: 12px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: #94a3b8;
+  border-bottom: 2px solid #f8fafc;
+}
+
+.paydm-row td {
+  padding: 14px 12px;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 0.9rem;
+}
+
+.paydm-row td:first-child { border-radius: 8px 0 0 8px; }
+.paydm-row td:last-child { border-radius: 0 8px 8px 0; font-weight: 600; }
+
+.paydm-footer {
+  padding: 16px 30px;
+  background: #f8fafc;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.paydm-btn-add {
+  background: #0f172a;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+}
+
+.paydm-btn-add:hover { background: #334155; }

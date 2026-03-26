@@ -9,7 +9,6 @@ export const controller = {}
 
 controller.getAllDoctors = async (req, res) => {
   try {
-    console.log(12)
     const result = await DoctorsModel.getAllsDoctors()
     return res.status(result.code).json(result)
   } catch (error) {
@@ -29,7 +28,7 @@ controller.getByIdDoctors = async (req, res) => {
 
 controller.createDoctors = async (req, res) => {
   try {
-    const { id_tipoMedico, nombre, telefono, estatus } = req.body
+    const { id_tipoMedico, nombre, telefono, email, notificaciones, estatus } = req.body
 
     if (!id_tipoMedico || !nombre) {
       return res.status(400).json({
@@ -41,6 +40,8 @@ controller.createDoctors = async (req, res) => {
       id_tipoMedico,
       nombre,
       telefono,
+      email,
+      notificaciones,
       estatus
     })
 
@@ -62,6 +63,8 @@ controller.updateDoctors = async (req, res) => {
     if (Object.keys(data).length === 0) {
       return res.status(400).json({ error: "No data to update" })
     }
+
+    console.log(data)
 
     const result = await DoctorsModel.updateDoctor(id, data)
     return res.status(result.code).json(result)

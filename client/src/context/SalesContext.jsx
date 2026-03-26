@@ -16,12 +16,12 @@ export const useSales = () => {
 };
 
 export const SalesProvider = ({ children }) => {
-
   // -------------------- SELLERS --------------------
   const [sellers, setSellers] = useState([]);
-
   // -------------------- BUDGETS --------------------
   const [budgets, setBudgets] = useState([]);
+  // -------------------- PAYMENTS --------------------
+  const [payments, setPayments] = useState([]);
 
   // -------------------- ERRORS --------------------
   const [errors, setErrors] = useState([]);
@@ -273,6 +273,118 @@ export const SalesProvider = ({ children }) => {
     }
   };
 
+  // ====================================================
+  // PAYMENTS
+  // ====================================================
+
+  const getPaymentById = async (id) => {
+    try {
+      const res = await SellersAPI.getPaymentById(id);
+      const paymentsData = res.data?.data;
+
+      if (!paymentsData) return [];
+
+      // 🔥 FORZAR a array (por si acaso)
+      const normalizedPayments = Array.isArray(paymentsData)
+        ? paymentsData
+        : [paymentsData];
+
+      // 🔥 Reemplazar completamente (NO merge)
+      setPayments(normalizedPayments);
+
+      return normalizedPayments;
+
+    } catch (error) {
+      setErrors((prev) => [
+        ...prev,
+        error.response?.data || ["Error fetching payments"],
+      ]);
+
+      return [];
+    }
+  };
+  
+  const createNewPayment = async (data) => {
+    try {
+
+      const res = await SellersAPI.createPayment(data);
+
+      setPayments(prev => [res.data.data, ...prev]);
+
+      return {
+        status: true,
+        data: res.data.data
+      };
+
+    } catch (error) {
+
+      setErrors(prev => [
+        ...prev,
+        error.response?.data || ["Error creating payment"]
+      ]);
+
+      return {
+        status: false,
+        error: error.response?.data || error.message
+      };
+    }
+  };
+
+  const editPayment = async (id, data) => {
+    try {
+
+      const res = await SellersAPI.updatePayment(id, data);
+
+      const updated = res.data.data;
+
+      setPayments(prev =>
+        prev.map(p => p.id === id ? updated : p)
+      );
+
+      return {
+        status: true,
+        data: updated
+      };
+
+    } catch (error) {
+
+      setErrors(prev => [
+        ...prev,
+        error.response?.data || ["Error editing payment"]
+      ]);
+
+      return {
+        status: false,
+        error: error.response?.data || error.message
+      };
+    }
+  };
+
+  const deletePaymentById = async (id) => {
+    try {
+
+      await SellersAPI.deletePayment(id);
+
+      setPayments(prev =>
+        prev.filter(p => p.id !== id)
+      );
+
+      return { status: true };
+
+    } catch (error) {
+
+      setErrors(prev => [
+        ...prev,
+        error.response?.data || ["Error deleting payment"]
+      ]);
+
+      return {
+        status: false,
+        error: error.response?.data || error.message
+      };
+    }
+  };
+
   return (
     <SalesContext.Provider
       value={{
@@ -292,6 +404,13 @@ export const SalesProvider = ({ children }) => {
         createNewBudget,
         editBudget,
         deleteBudgetById,
+
+        // Payments
+        payments,
+        getPaymentById,
+        createNewPayment,
+        editPayment,
+        deletePaymentById,
 
         // errors
         errors

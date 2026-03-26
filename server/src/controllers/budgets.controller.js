@@ -35,9 +35,9 @@ controller.createBudget = async (req, res) => {
   try {
     const data = req.body;
 
-    if (!data.nombre || !data.direccion)
+    if (!data.cliente || !data.id_paciente)
       return res.status(400).json({
-        error: "nombre y direccion son obligatorios",
+        error: "El cliente es obligatorio",
       });
 
     const result = await BudgetsModel.createBudget(data);

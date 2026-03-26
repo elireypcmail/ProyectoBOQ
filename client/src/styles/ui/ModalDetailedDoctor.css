@@ -1,0 +1,208 @@
+/* ModalDetailedDoctor.css - Unique Prefixes (ddm-) */
+
+.ddm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.ddm-content {
+  background: #ffffff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: ddmSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+/* Header & Profile */
+.ddm-header {
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background: linear-gradient(to bottom, #f8fafc, #ffffff);
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.ddm-profile-section {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.ddm-avatar {
+  width: 60px;
+  height: 60px;
+  background: #fecdd3; /* Color primario suave */
+  color: #ec4e53;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ddm-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.ddm-badge-active {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #16a34a;
+  background: #dcfce7;
+  padding: 2px 8px;
+  border-radius: 99px;
+  display: inline-block;
+  margin-top: 4px;
+}
+
+.ddm-close-btn {
+  background: #f1f5f9;
+  border: none;
+  border-radius: 8px;
+  padding: 6px;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s;
+}
+
+.ddm-close-btn:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+/* Body & Info Grid */
+.ddm-body {
+  padding: 24px;
+}
+
+.ddm-info-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.ddm-info-item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #f1f5f9;
+}
+
+.ddm-icon-box {
+  color: #64748b;
+  background: #ffffff;
+  padding: 8px;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  display: flex;
+  align-items: center;
+}
+
+.ddm-text-group label {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.025em;
+}
+
+.ddm-text-group span {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+/* Footer & Actions */
+.ddm-footer {
+  padding: 20px 24px;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ddm-actions-main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.ddm-btn-edit {
+  background: #ec4e53;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.ddm-btn-edit:hover {
+  background: #d43d42;
+  transform: translateY(-1px);
+}
+
+.ddm-btn-close {
+  background: white;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  padding: 10px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ddm-btn-delete {
+  background: transparent;
+  color: #94a3b8;
+  border: none;
+  font-size: 0.85rem;
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: color 0.2s;
+}
+
+.ddm-btn-delete:hover {
+  color: #ec4e53;
+}
+
+/* Animations */
+@keyframes ddmSlideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 480px) {
+  .ddm-content {
+    max-width: 100%;
+    border-radius: 20px 20px 0 0;
+    position: absolute;
+    bottom: 0;
+  }
+}

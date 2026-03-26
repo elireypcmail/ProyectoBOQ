@@ -29,5 +29,8 @@ export const getBudgetById = (id) => instanceApp.get(`/presupuestos/${id}`);
 export const createBudget = (data) => instanceApp.post("/presupuestos", data);
 export const updateBudget = (id, data) => instanceApp.put(`/presupuestos/${id}`, data);
 export const deleteBudget = (id) => instanceApp.delete(`/presupuestos/${id}`);
-
-
+// -------------------- Pagos --------------------
+export const getPaymentById = (id) => instanceApp.get(`/pagos/${id}`);
+export const createPayment = (data) => instanceApp.post("/pagos", data);
+export const updatePayment = (id, data) => instanceApp.put(`/pagos/${id}`, data);
+export const deletePayment = (id) => instanceApp.delete(`/pagos/${id}`);

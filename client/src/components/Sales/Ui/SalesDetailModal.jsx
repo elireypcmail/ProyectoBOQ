@@ -1,30 +1,45 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
-  X, FileText, Trash2, Edit3, CheckCircle2, Loader2, Clipboard
+  X, Trash2, Edit3, CheckCircle2, Loader2, Clipboard, CreditCard
 } from "lucide-react";
 import { useIncExp } from "../../../context/IncExpContext";
 import ModalConfirmSale from "./ModalConfirmSale";
+import PaymentsDetailModal from "./PaymentsDetailModal";
 import "../../../styles/ui/SalesDetailModal.css";
 
 const SaleDetailModal = ({ isOpen, sale, onClose, onEdit }) => {
-  const { confirmSale, getAllSales, deleteSaleById } = useIncExp();
+  const { confirmSale, getAllSales, deleteSaleById, sales } = useIncExp();
   const [isProcessing, setIsProcessing] = useState(false);
   const [showModalResult, setShowModalResult] = useState(false);
   const [modalConfig, setModalConfig] = useState({ title: "", message: "", type: "success" });
+  
+  // 🔥 ESTADO SOLO PARA EL ABONO (Sincronización reactiva)
+  const [currentAbonado, setCurrentAbonado] = useState(sale?.abonado || 0);
+  const [showPaymentsModal, setShowPaymentsModal] = useState(false);
+
+  // 🔄 Sincronizar abono cuando se abre el modal o cambia la lista global de ventas
+  useEffect(() => {
+    if (isOpen && sale?.id) {
+      const updatedSale = sales?.find(s => s.id === sale.id);
+      setCurrentAbonado(updatedSale ? updatedSale.abonado : sale.abonado);
+    }
+  }, [sales, isOpen, sale]);
 
   if (!isOpen || !sale) return null;
 
   // --- LÓGICA DE ESTADO ---
-  // Si sale.estatus es false, la venta no es editable ni accionable.
   const isActive = sale.estatus !== false;
   const isPending = sale.estado_venta?.toLowerCase() === "pendiente";
-  
-  // Solo se permiten acciones si está activa Y está pendiente
   const canModify = isActive && isPending;
+
+  // Cálculos dinámicos basados en el abono actualizado
+  const totalNeto = Number(sale.total || 0);
+  const saldoPendiente = totalNeto - Number(currentAbonado || 0);
+  const esPagado = saldoPendiente <= 0.01;
 
   // --- HELPERS ---
   const formatNum = (val) => {
-    return Number(val || 0).toLocaleString('de-DE', { 
+    return Number(val || 0).toLocaleString('es-ES', { 
       minimumFractionDigits: 2, 
       maximumFractionDigits: 2 
     });
@@ -33,11 +48,7 @@ const SaleDetailModal = ({ isOpen, sale, onClose, onEdit }) => {
   const formatDate = (dateStr) => {
     if (!dateStr) return "-";
     return new Date(dateStr).toLocaleDateString("es-ES", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit"
+      day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit"
     });
   };
 
@@ -78,9 +89,6 @@ const SaleDetailModal = ({ isOpen, sale, onClose, onEdit }) => {
     }
   };
 
-  const items = sale.items || [];
-  const saldoPendiente = (parseFloat(sale.total) || 0) - (parseFloat(sale.abonado) || 0);
-
   return (
     <div className="sdm-overlay">
       <div className="sdm-modal-container">
@@ -105,12 +113,11 @@ const SaleDetailModal = ({ isOpen, sale, onClose, onEdit }) => {
               <p>Seguro: {sale.seguro_nombre || "N/A"}</p>
             </div>
             <div className="status-info">
-              {/* Badge Dinámico: Cancelada tiene prioridad */}
               <div className={`sdm-badge ${!isActive ? "cancelled" : isPending ? "pending" : "confirmed"}`}>
                 {!isActive ? "ANULADA" : isPending ? "PENDIENTE" : "CONFIRMADA"}
               </div>
-              <div className={`sdm-badge ${sale.estado_pago === "Pagado" ? "paid" : "unpaid"}`}>
-                {sale.estado_pago === "Pagado" ? "PAGADO" : "SALDO PENDIENTE"}
+              <div className={`sdm-badge ${esPagado ? "paid" : "unpaid"}`}>
+                {esPagado ? "PAGADO" : "SALDO PENDIENTE"}
               </div>
             </div>
           </div>
@@ -126,15 +133,15 @@ const SaleDetailModal = ({ isOpen, sale, onClose, onEdit }) => {
                 </tr>
               </thead>
               <tbody>
-                {items.map((item, idx) => (
+                {(sale.items || []).map((item, idx) => (
                   <tr key={idx}>
                     <td>
                       <div className="item-name">{item.producto}</div>
                       <div className="item-sku">SKU: {item.sku || "N/A"}</div>
                     </td>
                     <td className="text-right">{parseFloat(item.cantidad)}</td>
-                    <td className="text-right font-mono">{formatNum(item.precio_venta)}</td>
-                    <td className="text-right font-mono">{formatNum(item.cantidad * item.precio_venta)}</td>
+                    <td className="text-right font-mono">$ {formatNum(item.precio_venta)}</td>
+                    <td className="text-right font-mono">$ {formatNum(item.cantidad * item.precio_venta)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -164,19 +171,20 @@ const SaleDetailModal = ({ isOpen, sale, onClose, onEdit }) => {
             <div className="sdm-totals-box">
               <div className="sdm-total-row">
                 <span>Subtotal</span>
-                <span className="font-mono">{formatNum(sale.subtotal1)}</span>
+                <span className="font-mono">$ {formatNum(sale.subtotal1)}</span>
               </div>
               <div className="sdm-total-row text-red">
                 <span>Descuento ({sale.descuentopor}%)</span>
-                <span className="font-mono">-{formatNum(sale.descuento)}</span>
+                <span className="font-mono">-$ {formatNum(sale.descuento)}</span>
               </div>
               <div className="sdm-total-row sdm-grand-total">
                 <span className="bold">Total Neto</span>
-                <span className="bold amount font-mono">$ {formatNum(sale.total)}</span>
+                <span className="bold amount font-mono">$ {formatNum(totalNeto)}</span>
               </div>
-              <div className="sdm-balance-card">
+              
+              <div className={`sdm-balance-card ${esPagado ? 'bg-green-light' : ''}`}>
                 <span className="bold">Saldo Pendiente</span>
-                <span className={`bold font-mono ${saldoPendiente > 0.01 ? 'text-red' : 'text-green'}`}>
+                <span className={`bold font-mono ${esPagado ? 'text-green' : 'text-red'}`}>
                   $ {formatNum(saldoPendiente)}
                 </span>
               </div>
@@ -186,7 +194,10 @@ const SaleDetailModal = ({ isOpen, sale, onClose, onEdit }) => {
 
         <footer className="sdm-modal-actions">
           <div className="action-group">
-            {/* Solo se muestran botones de acción si la venta NO está cancelada y está pendiente */}
+            <button className="btn-action btn-payments" onClick={() => setShowPaymentsModal(true)}>
+              <CreditCard size={16} /> Ver Pagos
+            </button>
+            
             {canModify && (
               <>
                 <button className="btn-action btn-delete" onClick={handleDelete} disabled={isProcessing}>
@@ -217,6 +228,12 @@ const SaleDetailModal = ({ isOpen, sale, onClose, onEdit }) => {
           if (modalConfig.type === "success") onClose();
         }}
         {...modalConfig}
+      />
+
+      <PaymentsDetailModal 
+        isOpen={showPaymentsModal} 
+        onClose={() => setShowPaymentsModal(false)} 
+        sale={sale} 
       />
     </div>
   );

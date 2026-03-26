@@ -180,6 +180,8 @@ CREATE TABLE medicos (
   id_tipoMedico INT NOT NULL REFERENCES tipoMedicos(id) ON DELETE CASCADE,
   nombre VARCHAR(100) NOT NULL,
   telefono VARCHAR(20),
+  email VARCHAR(100),
+  notificaciones BOOLEAN NOT NULL DEFAULT FALSE,
   estatus BOOLEAN NOT NULL DEFAULT TRUE,
   fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
@@ -235,8 +237,6 @@ CREATE TABLE historia_images (
   is_main BOOLEAN NOT NULL DEFAULT FALSE
 );
 
-
-
 -- Fuerza de ventas
 
 CREATE TABLE vendedores (
@@ -254,8 +254,6 @@ CREATE TABLE vendedores (
 CREATE TABLE presupuestos (
   id SERIAL PRIMARY KEY,
   id_paciente INT NOT NULL REFERENCES pacientes(id) ON DELETE CASCADE,
-  id_personal INT REFERENCES personal(id) ON DELETE CASCADE,
-  id_oficina INT  REFERENCES oficinas(id) ON DELETE CASCADE,
   id_clinica INT REFERENCES clinicas(id) ON DELETE CASCADE,
   id_seguro INT REFERENCES seguros(id) ON DELETE CASCADE,
   nro_presupuesto VARCHAR(100) NOT NULL,
@@ -265,9 +263,14 @@ CREATE TABLE presupuestos (
   fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE personal (
+CREATE TABLE presupuestos_detalle (
   id SERIAL PRIMARY KEY,
-  id_medico INT REFERENCES medicos(id) ON DELETE CASCADE,
+  id_presupuesto INT NOT NULL REFERENCES presupuestos(id) ON DELETE CASCADE,
+  id_inventario INT NOT NULL REFERENCES inventario(id) ON DELETE CASCADE,
+  cantidad INT NOT NULL,
+  precio_venta DECIMAL(10,2) NOT NULL,
+  cantidad_vendida INT NOT NULL,
+  backorder INT NOT NULL,
   estatus BOOLEAN NOT NULL DEFAULT TRUE,
   fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
@@ -340,14 +343,15 @@ CREATE TABLE venta_detalle_lote (
   fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 )
 
-CREATE TABLE presupuestos_detalle (
+CREATE TABLE ventas_pagos (
   id SERIAL PRIMARY KEY,
-  id_presupuesto INT NOT NULL REFERENCES presupuestos(id) ON DELETE CASCADE,
-  id_inventario INT NOT NULL REFERENCES inventario(id) ON DELETE CASCADE,
-  cantidad INT NOT NULL,
-  precio_venta DECIMAL(10,2) NOT NULL,
-  cantidad_vendida INT NOT NULL,
-  backorder INT NOT NULL,
+  id_venta INT NOT NULL 
+    REFERENCES ventas(id) ON DELETE CASCADE,
+  monto DECIMAL(10,2) NOT NULL CHECK (monto > 0),
+  notas TEXT,
+  fecha_pago TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  -- id_usuario INT NOT NULL 
+    -- REFERENCES usuarios(id) ON DELETE CASCADE,
   estatus BOOLEAN NOT NULL DEFAULT TRUE,
   fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );

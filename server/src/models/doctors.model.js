@@ -14,11 +14,14 @@ export class DoctorsModel {
           m.id,
           m.nombre,
           m.telefono,
+          m.email,
+          m.notificaciones,
           m.estatus,
           m.id_tipoMedico,
           tm.nombre AS tipo
         FROM medicos m
         INNER JOIN tipomedicos tm ON tm.id = m.id_tipoMedico
+        WHERE m.estatus = TRUE
         ORDER BY m.id DESC
       `)
 
@@ -66,6 +69,8 @@ export class DoctorsModel {
           m.id,
           m.nombre,
           m.telefono,
+          m.email,
+          m.notificaciones,
           m.estatus,
           m.id_tipoMedico,
           tm.nombre AS tipo
@@ -109,7 +114,7 @@ export class DoctorsModel {
       const duplicate = await connection.query(
         `SELECT id FROM medicos
         WHERE LOWER(nombre) = LOWER($1)
-          AND id_tipoMedico = $2`,
+        AND id_tipoMedico = $2`,
         [data.nombre, data.id_tipoMedico]
       )
 
@@ -122,13 +127,16 @@ export class DoctorsModel {
       }
 
       const insert = await connection.query(
-        `INSERT INTO medicos (id_tipoMedico, nombre, telefono, estatus)
-        VALUES ($1,$2,$3,$4)
+        `INSERT INTO medicos 
+        (id_tipoMedico, nombre, telefono, email, notificaciones, estatus)
+        VALUES ($1,$2,$3,$4,$5,$6)
         RETURNING *`,
         [
           data.id_tipoMedico,
           data.nombre,
           data.telefono || null,
+          data.email || null,
+          data.notificaciones ?? false,
           data.estatus ?? true
         ]
       )

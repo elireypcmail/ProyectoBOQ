@@ -232,9 +232,9 @@ const StepProducts = ({
                             <Layers size={16} />
                           </button>
                         )}
-                        <button className="step-prod-action-btn step-prod-btn-edit" title="Editar" onClick={() => onEditProduct?.(item)}>
+                        {/* <button className="step-prod-action-btn step-prod-btn-edit" title="Editar" onClick={() => onEditProduct?.(item)}>
                           <Edit2 size={16} />
-                        </button>
+                        </button> */}
                         <button className="step-prod-action-btn step-prod-btn-delete" title="Quitar" onClick={() => removeItem(item.id)}>
                           <Trash2 size={16} />
                         </button>

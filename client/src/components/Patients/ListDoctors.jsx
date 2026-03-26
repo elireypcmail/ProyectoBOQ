@@ -73,9 +73,11 @@ const ListDoctors = () => {
   const handleSaveDoctor = async (formData) => {
     try {
       const payload = {
-        nombre: formData.nombre.toUpperCase(), // Guardamos en mayúsculas para consistencia
+        nombre: formData.nombre.toUpperCase(),
         telefono: formData.telefono,
         id_tipoMedico: Number(formData.id_tipomedico),
+        email: formData.email.trim(), // Added email
+        notificaciones: formData.notificaciones, // Added boolean
         estatus: true
       };
 
