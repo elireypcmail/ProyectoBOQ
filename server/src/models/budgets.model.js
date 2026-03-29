@@ -17,23 +17,29 @@ export class BudgetsModel {
     try {
       connection = await pool.connect();
 
+      // Nota: Eliminé p.estado_pago porque no existe en tu CREATE TABLE original.
+      // Si la agregaste después, puedes volver a incluirla.
       const result = await connection.query(`
         SELECT 
           p.id,
+          p.id_paciente,
+          p.id_clinica,
+          p.id_seguro,
           p.nro_presupuesto,
           p.total,
-          p.estado_pago,
+          p.estatus_uso,
           p.estatus,
           p.fecha_creacion,
           
-          -- Related Data
-          pac.nombre AS paciente,
-          c.nombre AS clinica,
-          s.nombre AS seguro
+          -- Datos Relacionados con alias claros
+          pac.nombre AS nombre_paciente,
+          c.nombre AS nombre_clinica,
+          s.nombre AS nombre_seguro
         FROM presupuestos p
         LEFT JOIN pacientes pac ON pac.id = p.id_paciente
         LEFT JOIN clinicas c ON c.id = p.id_clinica
         LEFT JOIN seguros s ON s.id = p.id_seguro
+        WHERE p.estatus = true
         ORDER BY p.fecha_creacion DESC, p.id DESC
       `);
 
@@ -67,48 +73,55 @@ export class BudgetsModel {
         SELECT 
           p.id,
           p.nro_presupuesto,
-          p.estado_pago,
           p.estatus,
+          p.estatus_uso,
           p.total,
           p.fecha_creacion,
 
+          -- Datos del Paciente
           p.id_paciente,
-          p.id_clinica,
-          p.id_seguro,
-
           pac.nombre AS paciente_nombre,
+          
+          -- Datos de Clínica y Seguro
+          p.id_clinica,
           c.nombre AS clinica_nombre,
+          p.id_seguro,
           s.nombre AS seguro_nombre,
 
-          /* BUDGET ITEMS */
-          COALESCE(
-            (
-              SELECT json_agg(
-                json_build_object(
-                  'id_detalle', pd.id,
-                  'id_inventario', pd.id_inventario,
-                  'cantidad', pd.cantidad,
-                  'precio_venta', pd.precio_venta,
-                  'cantidad_vendida', pd.cantidad_vendida,
-                  'backorder', pd.backorder
-                )
+          -- Detalle con relación a Inventario y Productos
+          (
+            SELECT COALESCE(json_agg(
+              json_build_object(
+                'id_detalle', pd.id,
+                'id_inventario', pd.id_inventario,
+                'id_producto', i.id_producto,
+                'descripcion', pr.descripcion, -- Ahora viene de la tabla productos
+                'sku', i.sku,
+                'cantidad', pd.cantidad,
+                'precio_venta', pd.precio_venta,
+                'cantidad_vendida', pd.cantidad_vendida,
+                'backorder', pd.backorder
               )
-              FROM presupuestos_detalle pd
-              WHERE pd.id_presupuesto = p.id
-            ),
-            '[]'::json
+            ), '[]'::json)
+            FROM presupuestos_detalle pd
+            INNER JOIN inventario i ON i.id = pd.id_inventario
+            INNER JOIN productos pr ON pr.id = i.id_producto -- Relación necesaria
+            WHERE pd.id_presupuesto = p.id
           ) AS items
 
         FROM presupuestos p
         LEFT JOIN pacientes pac ON pac.id = p.id_paciente
         LEFT JOIN clinicas c ON c.id = p.id_clinica
         LEFT JOIN seguros s ON s.id = p.id_seguro
-
         WHERE p.id = $1
       `, [id]);
 
-      if (!result.rows.length) {
-        return { status: false, code: 404, msg: "Budget not found" };
+      if (result.rows.length === 0) {
+        return { 
+          status: false, 
+          code: 404, 
+          msg: "Presupuesto no encontrado" 
+        };
       }
 
       return {
@@ -121,7 +134,7 @@ export class BudgetsModel {
       return {
         status: false,
         code: 500,
-        msg: "Error retrieving budget",
+        msg: "Error al obtener el presupuesto",
         error: error.message
       };
     } finally {
@@ -131,7 +144,7 @@ export class BudgetsModel {
 
   /* ================= CREATE BUDGET ================= */
 
-  static async createBudget(data) {
+  static async createBudgets(data) {
     let connection;
 
     try {
@@ -150,7 +163,6 @@ export class BudgetsModel {
       } = data;
 
       const targetPatient = id_paciente || cliente;
-      const formattedEstadoPago = estado_pago ? estado_pago.toUpperCase() : "PENDIENTE";
 
       /* 1️⃣ GENERATE BUDGET NUMBER */
       const lastBudget = await connection.query(`
@@ -175,8 +187,9 @@ export class BudgetsModel {
           id_seguro,
           nro_presupuesto,
           total,
-          estado_pago
-        ) VALUES ($1,$2,$3,$4,$5,$6)
+          estatus_uso,
+          estatus
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7)
         RETURNING id`,
         [
           targetPatient,
@@ -184,7 +197,8 @@ export class BudgetsModel {
           id_seguro || null,
           nroPresupuesto,
           parseMonto(total),
-          formattedEstadoPago
+          1,
+          true,
         ]
       );
 
@@ -334,7 +348,7 @@ export class BudgetsModel {
 
   /* ================= DELETE (DEACTIVATE) ================= */
   
-  static async deleteBudget(id) {
+  static async deleteBudgets(id) {
     let connection;
 
     try {

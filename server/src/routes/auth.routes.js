@@ -17,7 +17,10 @@ import { loginSchema } from "../schemas/auth.schema.js"
 // router.post(_var.LOGIN, validateSchema(loginSchema), controller.login)
 router.post("/login", controller.login)
 router.post("/register", controller.register)
-// router.post("/usuarios", controller.getAllUsers)
+router.get("/usuarios", controller.getAllUsers)
+router.get("/usuarios/:id", controller.getAllUsersById)
+router.put("/usuarios/:id", controller.updateUser)
+router.delete("/usuarios/:id", controller.setStatus)
 router.post("/logout", controller.logout)
 router.get("/verify", controller.verifyToken)
 

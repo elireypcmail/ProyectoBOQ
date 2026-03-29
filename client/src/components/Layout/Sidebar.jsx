@@ -3,13 +3,13 @@ import {
   Menu, X, ChevronLeft, ChevronRight, ChevronDown,
   Package, Tags, BadgeCheck, Stethoscope,
   HeartPulse, Map, Building2, Warehouse, Users,
-  LogOut, UserPlus, Shield, ShoppingCart, Truck, Briefcase
+  LogOut, UserPlus, Shield, ShoppingCart, Briefcase
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext"; 
 import "../../styles/layout/Sidebar.css";
 import { useNavigate } from "react-router-dom";
 
-const Sidebar = ({ setActiveComponent, activeComponent }) => {
+const Sidebar = ({ setActiveComponent, activeComponent, userRole }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [expandedMenus, setExpandedMenus] = useState({});
@@ -17,7 +17,8 @@ const Sidebar = ({ setActiveComponent, activeComponent }) => {
   const navigate = useNavigate();
   const { logout } = useAuth();
 
-  const menuItems = [
+  // Definición base de todos los items
+  const allMenuItems = [
     { 
       name: "Gestión Productos", 
       key: "products-group", 
@@ -37,6 +38,7 @@ const Sidebar = ({ setActiveComponent, activeComponent }) => {
         { name: "Compras", key: "purchases", icon: <ShoppingCart size={18} /> },
         { name: "Ventas", key: "sales", icon: <ShoppingCart size={18} /> },
         { name: "Proformas", key: "budgets", icon: <ShoppingCart size={18} /> },
+        { name: "Reportes", key: "reports", icon: <ShoppingCart size={18} /> },
       ]
     },
     { 
@@ -72,17 +74,27 @@ const Sidebar = ({ setActiveComponent, activeComponent }) => {
     },
   ];
 
-  /* 🔥 MODIFICADO: ahora se oculta o colapsa automáticamente */
+  // 🔥 FILTRADO POR ROL:
+  // Si el rol es OPRI, filtramos para que solo vea el grupo que contiene "Reportes"
+  // y dentro de ese grupo, solo dejamos el hijo "reports".
+  const menuItems = userRole === "OPRI" 
+    ? allMenuItems
+        .filter(item => item.key === "admin-group")
+        .map(item => ({
+          ...item,
+          name: "Instrumentación", // Renombramos el grupo para el OPRI
+          children: item.children.filter(child => child.key === "reports")
+        }))
+    : allMenuItems;
+
   const handleNavigation = (key) => {
     setActiveComponent(key);
-
     if (window.innerWidth < 1024) {
-      setIsOpen(false);      // móvil → cerrar completamente
+      setIsOpen(false);
     } else {
-      setIsCollapsed(true);  // escritorio → colapsar
+      setIsCollapsed(true);
     }
-
-    setExpandedMenus({});    // cerrar submenús
+    setExpandedMenus({});
   };
 
   const handleLogout = () => {
@@ -105,7 +117,6 @@ const Sidebar = ({ setActiveComponent, activeComponent }) => {
 
   return (
     <>
-      {/* Header móvil */}
       <header className="mobile-header">
         <button className="menu-toggle" onClick={() => setIsOpen(true)}>
           <Menu size={28} />
@@ -113,7 +124,6 @@ const Sidebar = ({ setActiveComponent, activeComponent }) => {
         <span className="mobile-logo-text">Panel de Operaciones</span>
       </header>
 
-      {/* Overlay móvil */}
       <div 
         className={`sidebar-overlay ${isOpen ? "active" : ""}`} 
         onClick={() => setIsOpen(false)} 
@@ -123,7 +133,7 @@ const Sidebar = ({ setActiveComponent, activeComponent }) => {
         <div className="sidebar-header">
           {showText && (
             <div className="logo-container">
-              <span className="logo-text">Panel de Operaciones</span>
+              <span className="logo-text">Panel</span>
             </div>
           )}
 

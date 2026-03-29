@@ -24,6 +24,7 @@ import SalesRouter from "./routes/sales.routes.js"
 import SellerRouter from "./routes/sellers.routes.js"
 import ClinicsRouter from "./routes/clinics.routes.js"
 import BudgetsRouter from "./routes/budgets.routes.js"
+import ReportsRouter from "./routes/reports.routes.js"
 import PaymentsRouter from "./routes/payments.routes.js"
 
 const app = express()
@@ -64,4 +65,5 @@ app.use("/ventas", SalesRouter)
 app.use("/clinicas", ClinicsRouter)
 app.use("/pagos", PaymentsRouter)
 app.use("/presupuestos", BudgetsRouter)
+app.use("/reportes/instrumentacion", ReportsRouter)
 

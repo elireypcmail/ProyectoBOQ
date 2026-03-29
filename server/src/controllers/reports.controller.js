@@ -1,37 +1,37 @@
-// controllers/Budgets.controller.js
-import { BudgetsModel } from "../models/budgets.model.js";
+// controllers/Reports.controller.js
+import { ReportsModel } from "../models/Reports.model.js";
 
 export const controller = {};
 
-/* ================= Budgets ================= */
+/* ================= Reports ================= */
 
-// Obtener todos los presupuestos
-controller.getAllBudgets = async (req, res) => {
+// Obtener todos los reportes
+controller.getAllReports = async (req, res) => {
   try {
-    const result = await BudgetsModel.getAllBudgets();
+    const result = await ReportsModel.getAllReports();
     return res.status(result.code).json(result);
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
 };
 
-// Obtener presupuesto por ID
-controller.getBudgetById = async (req, res) => {
+// Obtener reporte por ID
+controller.getReportById = async (req, res) => {
   try {
     const { id } = req.params;
 
     if (!id)
-      return res.status(400).json({ error: "Budget id required" });
+      return res.status(400).json({ error: "Report id required" });
 
-    const result = await BudgetsModel.getBudgetById(id);
+    const result = await ReportsModel.getReportById(id);
     return res.status(result.code).json(result);
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
 };
 
-// Crear presupuesto
-controller.createBudget = async (req, res) => {
+// Crear reporte
+controller.createReport = async (req, res) => {
   try {
     const data = req.body;
 
@@ -42,7 +42,7 @@ controller.createBudget = async (req, res) => {
         error: "El cliente es obligatorio",
       });
 
-    const result = await BudgetsModel.createBudgets(data);
+    const result = await ReportsModel.createReports(data);
     console.log(result)
 
     return res.status(result.code).json(result);
@@ -51,15 +51,15 @@ controller.createBudget = async (req, res) => {
   }
 };
 
-// Actualizar presupuesto
-controller.updateBudget = async (req, res) => {
+// Actualizar reporte
+controller.updateReport = async (req, res) => {
   try {
     const { id } = req.params;
     const data = req.body;
 
     if (!id)
       return res.status(400).json({
-        error: "El id del budget es requerido",
+        error: "El id del Report es requerido",
       });
 
     console.log(data);
@@ -69,24 +69,24 @@ controller.updateBudget = async (req, res) => {
         error: "No data to update",
       });
 
-    const result = await BudgetsModel.updateBudget(id, data);
+    const result = await ReportsModel.updateReport(id, data);
     return res.status(result.code).json(result);
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
 };
 
-// Eliminar (desactivar) presupuesto
-controller.deleteBudget = async (req, res) => {
+// Eliminar (desactivar) reporte
+controller.deleteReport = async (req, res) => {
   try {
     const { id } = req.params;
 
     if (!id)
       return res.status(400).json({
-        error: "Budget id required",
+        error: "Report id required",
       });
 
-    const result = await BudgetsModel.deleteBudgets(id);
+    const result = await ReportsModel.deleteReports(id);
     console.log(result)
     return res.status(result.code).json(result);
   } catch (error) {

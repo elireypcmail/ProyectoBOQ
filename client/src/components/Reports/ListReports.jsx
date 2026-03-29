@@ -3,27 +3,27 @@ import { Search, Plus, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
 
 // Context
-import { useSales } from "../../context/SalesContext";
+import { useSales } from "../../context/SalesContext"
 
 // Modals
-import BudgetsFormModal from "./Ui/BudgetsFormModal";
-import BudgetDetailModal from "./Ui/BudgetDetailModal"; // ✅ Descomentado
+import ReportsFormModal from "./Ui/ReportsFormModal"; // ✅ Cambiado a ReportsFormModal
+import ReportDetailModal from "./Ui/ReportDetailModal"; // ✅ Cambiado a ReportDetailModal
 
 // CSS
 import "../../styles/components/ListSellers.css";
 
-const ListBudgets = () => {
+const ListReports = () => {
   const { 
-    budgets, 
-    getAllBudgets, 
-    getBudgetById,
+    reports, 
+    getAllReports, 
+    getReportById,
     loading 
-  } = useSales();
+  } = useSales(); // ✅ Cambiado a UseSales
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedBudget, setSelectedBudget] = useState(null);
+  const [selectedReport, setSelectedReport] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isDetailOpen, setIsDetailOpen] = useState(false); // ✅ Controla la visibilidad del detalle
+  const [isDetailOpen, setIsDetailOpen] = useState(false); 
   const [fetchingId, setFetchingId] = useState(null);
 
   // --- Estado de Paginación ---
@@ -31,7 +31,7 @@ const ListBudgets = () => {
   const ITEMS_PER_PAGE = 10;
 
   useEffect(() => {
-    getAllBudgets();
+    getAllReports();
   }, []);
 
   useEffect(() => {
@@ -42,27 +42,27 @@ const ListBudgets = () => {
     try {
       setFetchingId(id);
       
-      // Intentamos obtener el detalle completo (con productos) desde el backend
-      const response = await getBudgetById(id);
+      // Obtenemos el detalle completo del reporte
+      const response = await getReportById(id);
       
       if (response.status) {
-        setSelectedBudget(response.data);
+        setSelectedReport(response.data);
         setIsDetailOpen(true);
       }
     } catch (error) {
-      console.error("Error al obtener detalle:", error);
+      console.error("Error al obtener detalle del reporte:", error);
     } finally {
       setFetchingId(null);
     }
   };
 
   // Filtrado y Ordenación
-  const filteredBudgets = useMemo(() => {
-    if (!budgets) return [];
+  const filteredReports = useMemo(() => {
+    if (!reports) return [];
 
-    const filtered = budgets.filter((b) =>
-      String(b.nro_presupuesto).includes(searchTerm) ||
-      (b.nombre_paciente || "").toUpperCase().includes(searchTerm.toUpperCase())
+    const filtered = reports.filter((r) =>
+      String(r.nro_presupuesto).includes(searchTerm) ||
+      (r.nombre_paciente || "").toUpperCase().includes(searchTerm.toUpperCase())
     );
 
     return [...filtered].sort((a, b) => {
@@ -70,11 +70,11 @@ const ListBudgets = () => {
       const dateB = new Date(b.fecha_creacion || 0);
       return dateB - dateA || (b.id - a.id);
     });
-  }, [budgets, searchTerm]);
+  }, [reports, searchTerm]);
 
   // --- Cálculos de Paginación ---
-  const totalPages = Math.ceil(filteredBudgets.length / ITEMS_PER_PAGE);
-  const currentItems = filteredBudgets.slice(
+  const totalPages = Math.ceil(filteredReports.length / ITEMS_PER_PAGE);
+  const currentItems = filteredReports.slice(
     (currentPage - 1) * ITEMS_PER_PAGE, 
     currentPage * ITEMS_PER_PAGE
   );
@@ -99,12 +99,12 @@ const ListBudgets = () => {
     <div className="v-main-container">
       <div className="v-header-section">
         <div className="v-header-info">
-          <h2 className="v-title">Gestión de Proformas</h2>
+          <h2 className="v-title">Gestión de Reportes</h2>
           <p className="v-subtitle">
             {loading ? (
               <span className="v-loader-text"><Loader2 size={14} className="v-spin" /> Cargando...</span>
             ) : (
-              `${filteredBudgets.length} registros encontrados`
+              `${filteredReports.length} registros encontrados`
             )}
           </p>
         </div>
@@ -112,11 +112,11 @@ const ListBudgets = () => {
         <button 
           className="v-btn-add" 
           onClick={() => { 
-            setSelectedBudget(null); 
+            setSelectedReport(null); 
             setIsFormOpen(true); 
           }}
         >
-          <Plus size={16} /> Nuevo Proforma
+          <Plus size={16} /> Nuevo Reporte
         </button>
       </div>
 
@@ -137,27 +137,25 @@ const ListBudgets = () => {
           <thead>
             <tr>
               <th className="v-text-center">Fecha</th>
-              <th>Nro Presupuesto</th>
+              <th>Nro Reporte</th>
               <th>Paciente</th>
-              <th className="v-text-right">Total</th>
               <th className="v-text-center">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {currentItems.length > 0 ? (
-              currentItems.map((b) => (
-                <tr key={b.id} className="v-table-row">
-                  <td className="v-text-center">{formatDate(b.fecha_creacion)}</td>
-                  <td className="v-text-center v-bold">{b.nro_presupuesto}</td>
-                  <td style={{ textTransform: 'uppercase' }}>{b.nombre_paciente || "—"}</td>
-                  <td className="v-text-right v-bold">{formatCurrency(b.total)}</td>
+              currentItems.map((r) => (
+                <tr key={r.id} className="v-table-row">
+                  <td className="v-text-center">{formatDate(r.fecha_creacion)}</td>
+                  <td className="v-text-center v-bold">{r.nro_reporte}</td>
+                  <td style={{ textTransform: 'uppercase' }}>{r.nombre_paciente || "—"}</td>
                   <td className="v-text-center">
                     <button
                       className="v-action-btn"
-                      disabled={fetchingId === b.id}
-                      onClick={() => handleOpenDetail(b.id)}
+                      disabled={fetchingId === r.id}
+                      onClick={() => handleOpenDetail(r.id)}
                     >
-                      {fetchingId === b.id ? (
+                      {fetchingId === r.id ? (
                         <Loader2 size={16} className="v-spin" />
                       ) : (
                         <SlOptionsVertical size={16} />
@@ -169,7 +167,7 @@ const ListBudgets = () => {
             ) : (
               <tr>
                 <td colSpan="5" className="v-empty-state">
-                  {loading ? "Cargando datos..." : "No se encontraron Proformas."}
+                  {loading ? "Cargando datos..." : "No se encontraron Reportes."}
                 </td>
               </tr>
             )}
@@ -201,25 +199,24 @@ const ListBudgets = () => {
       )}
 
       {/* --- Modales --- */}
-      <BudgetsFormModal 
+      <ReportsFormModal 
         isOpen={isFormOpen} 
         onClose={() => { 
           setIsFormOpen(false); 
-          setSelectedBudget(null); 
+          setSelectedReport(null); 
         }} 
-        editData={selectedBudget} 
+        editData={selectedReport} 
       />
       
-      {/* ✅ Modal de Detalle Activado */}
-      <BudgetDetailModal 
+      <ReportDetailModal 
         isOpen={isDetailOpen} 
-        budget={selectedBudget} 
+        report={selectedReport} 
         onClose={() => { 
           setIsDetailOpen(false); 
-          setSelectedBudget(null); 
+          setSelectedReport(null); 
         }} 
-        onEdit={(budgetToEdit) => { 
-          setSelectedBudget(budgetToEdit); 
+        onEdit={(reportToEdit) => { 
+          setSelectedReport(reportToEdit); 
           setIsDetailOpen(false); 
           setIsFormOpen(true); 
         }} 
@@ -228,4 +225,4 @@ const ListBudgets = () => {
   );
 };
 
-export default ListBudgets;
+export default ListReports;
