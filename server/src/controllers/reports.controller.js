@@ -1,5 +1,5 @@
 // controllers/Reports.controller.js
-import { ReportsModel } from "../models/Reports.model.js";
+import { ReportsModel } from "../models/reports.model.js";
 
 export const controller = {};
 
