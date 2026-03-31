@@ -87,11 +87,26 @@ export class ReportsModel {
               SELECT 
                 rd.id AS id_detalle,
                 rd.id_inventario,
+
+                -- 🧾 PRODUCTO
                 prod.id AS id_producto,
                 prod.descripcion,
+
+                -- 📦 INVENTARIO COMPLETO
                 i.sku,
+                i.existencia_general,
+                i.costo_unitario,
+                i.precio_venta,
+                i.margen_ganancia,
+                i.stock_minimo_general,
+                i.estatus AS inventario_estatus,
+                i.estatus_lotes,
+                i.fecha_creacion AS inventario_fecha_creacion,
+
+                -- 📊 DETALLE REPORTE
                 rd.cantidad,
                 rd.backorder
+
               FROM reportes_detalle rd
               INNER JOIN inventario i ON i.id = rd.id_inventario
               INNER JOIN productos prod ON prod.id = i.id_producto
@@ -379,6 +394,42 @@ export class ReportsModel {
         status: true, 
         code: 200, 
         msg: "Report successfully deactivated" 
+      };
+    } catch (error) {
+      if (connection) await connection.query("ROLLBACK");
+      return { 
+        status: false, 
+        code: 500, 
+        msg: "Error deactivating report", 
+        error: error.message 
+      };
+    } finally {
+      if (connection) connection.release();
+    }
+  }
+
+  /* ================= Use ================= */
+  static async useReports(id) {
+    let connection;
+    try {
+      connection = await pool.connect();
+      await connection.query("BEGIN");
+
+      const result = await connection.query(
+        `UPDATE reportes SET estatus_uso = 2 WHERE id = $1`,
+        [id]
+      );
+
+      if (result.rowCount === 0) {
+        await connection.query("ROLLBACK");
+        return { status: false, code: 404, msg: "Report not found" };
+      }
+
+      await connection.query("COMMIT");
+      return { 
+        status: true, 
+        code: 200, 
+        msg: "Report successfully used" 
       };
     } catch (error) {
       if (connection) await connection.query("ROLLBACK");

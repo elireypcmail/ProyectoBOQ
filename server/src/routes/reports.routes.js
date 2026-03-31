@@ -10,6 +10,7 @@ import { controller } from "../controllers/reports.controller.js"
 router.get("/", controller.getAllReports)
 router.post("/", controller.createReport)
 router.get("/:id", controller.getReportById)
+router.put("/use/:id", controller.useReport)
 router.put("/:id", controller.updateReport)
 router.delete("/:id", controller.deleteReport)
 

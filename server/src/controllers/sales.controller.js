@@ -44,7 +44,7 @@ controller.createSale = async (req, res) => {
     //   });
     // }
 
-    const result = await SalesModel.createSale(data);
+    const result = await SalesModel.createSale(data)
     console.log(result)
 
     return res.status(result.code).json(result);

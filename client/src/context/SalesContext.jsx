@@ -78,6 +78,15 @@ export const SalesProvider = ({ children }) => {
     }
   };
 
+  const getBudgetById = async (id) => {
+    try {
+      const res = await SalesAPI.getBudgetById(id);
+      return { status: true, data: res.data.data };
+    } catch (error) {
+      return { status: false, error: error.response?.data || error.message };
+    }
+  };
+
   const createNewBudget = async (data) => {
     try {
       const res = await SalesAPI.createBudget(data);
@@ -190,7 +199,7 @@ export const SalesProvider = ({ children }) => {
     <SalesContext.Provider
       value={{
         sellers, getAllSellers, createNewSeller, editSeller, deleteSellerById,
-        budgets, getAllBudgets, createNewBudget, editBudget, deleteBudgetById,
+        budgets, getAllBudgets, getBudgetById, createNewBudget, editBudget, deleteBudgetById,
         reports, getAllReports, getReportById, createNewReport, editReport, deleteReportById,
         payments, getPaymentById, createNewPayment,
         errors

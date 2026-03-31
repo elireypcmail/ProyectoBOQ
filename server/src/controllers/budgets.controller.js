@@ -76,6 +76,25 @@ controller.updateBudget = async (req, res) => {
   }
 };
 
+// Usar Presupuesto
+controller.useBudget = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id)
+      return res.status(400).json({
+        error: "Budget id required",
+      });
+
+    const result = await BudgetsModel.useBudgets(id);
+    console.log(result)
+    
+    return res.status(result.code).json(result);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
 // Eliminar (desactivar) presupuesto
 controller.deleteBudget = async (req, res) => {
   try {

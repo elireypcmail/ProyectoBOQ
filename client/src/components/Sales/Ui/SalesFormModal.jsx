@@ -5,6 +5,8 @@ import {
   ChevronLeft,
   CheckCircle,
   Loader2,
+  FileText,
+  ClipboardList
 } from "lucide-react";
 
 import { useProducts } from "../../../context/ProductsContext";
@@ -18,24 +20,32 @@ import ModalConfirm from "./ModalConfirm";
 
 import SearchProductModal from "./SubModals/SearchProductModal";
 import BatchModal from "./SubModals/BatchModal";
+import SearchReportModal from "./SubModals/SearchReportModal";
+import SearchBudgetModal from "./SubModals/SearchBudgetModal";
 
 import "../../../styles/ui/SalesFormModal.css";
 
 const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
   const { getAllProducts } = useProducts();
   const { createNewSale, editSale, sales, getAllSales } = useIncExp();
-  const [isStep1Valid, setIsStep1Valid] = useState(false)
+  const [isStep1Valid, setIsStep1Valid] = useState(false);
   const [processedItems, setProcessedItems] = useState([]);
-  
+
   const initialFormState = {
     nro_factura: "",
     id_paciente: "",
-    personal_asignado: [], 
+    nombre_paciente: "",
+    personal_asignado: [],
     id_vendedor: "",
+    nombre_vendedor: "",
     id_oficina: "",
-    id_clinica: "", 
-    id_deposito: "", 
+    nombre_oficina: "",
+    id_clinica: "",
+    nombre_clinica: "",
+    id_deposito: "",
+    nombre_deposito: "",
     id_seguro: "",
+    nombre_seguro: "",
     id_presupuesto: "",
   };
 
@@ -46,7 +56,7 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
     total: 0,
     monto_abonado: "0",
     notas_abono: "",
-    estado_pago: "Pendiente",
+    estado_pago: "Pending",
   };
 
   const [step, setStep] = useState(1);
@@ -56,8 +66,14 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+  const [usedReports, setUsedReports] = useState([]);
+  const [usedBudgets, setUsedBudgets] = useState([]);
+
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
+
   const [selectedProductForBatch, setSelectedProductForBatch] = useState(null);
 
   const isStep2Valid = items.length > 0 && items.every(item => item.isValid);
@@ -68,22 +84,20 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
         id: editData.id,
         nro_factura: editData.nro_factura || "",
         id_paciente: editData.id_paciente || "",
-        nombre_paciente: editData.paciente_nombre || "", 
-        
+        nombre_paciente: editData.paciente_nombre || "",
         personal_asignado: editData.personal?.map((p) => ({
           id: p.id_medico,
           nombre: p.medico,
           tipo: p.tipo_medico,
         })) || [],
-
         id_vendedor: editData.id_vendedor || "",
-        nombre_vendedor: editData.vendedor_nombre || "", 
+        nombre_vendedor: editData.vendedor_nombre || "",
         id_oficina: editData.id_oficina || "",
-        nombre_oficina: editData.oficina_nombre || "", 
+        nombre_oficina: editData.oficina_nombre || "",
         id_clinica: editData.id_clinica || "",
-        nombre_clinica: editData.clinica_nombre || "", 
+        nombre_clinica: editData.clinica_nombre || "",
         id_deposito: editData.id_deposito || "",
-        nombre_deposito: editData.deposito_nombre || "", 
+        nombre_deposito: editData.deposito_nombre || "",
         id_seguro: editData.id_seguro || "",
         nombre_seguro: editData.seguro_nombre || "",
         id_presupuesto: editData.id_presupuesto || "",
@@ -91,29 +105,32 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
 
       setItems(editData.items?.map(item => ({
         ...item,
-        id: item.id_producto || item.id, 
-        descripcion: item.producto || item.descripcion, 
+        id: item.id_producto || item.id,
+        descripcion: item.producto || item.descripcion,
         sku: item.sku || "",
         cantidad: item.cantidad,
         precio_venta: item.precio_venta,
         lotes_compra: item.lotes || [],
-        // Aseguramos mantener la bandera de si usa lotes o no (ajusta el nombre según tu BD)
-        maneja_lotes: item.maneja_lotes || item.usa_lotes || false
+        maneja_lotes: item.maneja_lotes || item.usa_lotes || false,
+        isValid: true
       })) || []);
 
       setTotals({
         subtotal: parseFloat(editData.subtotal) || 0,
         porcentaje_impuesto: parseFloat(editData.porcentaje_impuesto) || 0,
-        impuesto: parseFloat(editData.impuesto) || 0, 
+        impuesto: parseFloat(editData.impuesto) || 0,
         total: parseFloat(editData.total) || 0,
         abonado: parseFloat(editData.abonado) || 0,
         notas_abono: editData.notas_abono || "",
-        estado_pago: editData.estado_pago || "Pendiente",
-        
+        estado_pago: editData.estado_pago || "Pending",
         impuestos_monto: parseFloat(editData.impuesto) || 0,
         monto_abonado: parseFloat(editData.abonado) || 0,
         monto_descuento_fijo: editData.descuento?.toString() || "0",
       });
+
+      setUsedReports(editData.reportes_usados || []);
+      setUsedBudgets(editData.presupuestos_usados || []);
+
     } else if (isOpen && !editData) {
       handleReset();
     }
@@ -139,14 +156,14 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
     );
 
     const descuentoManual = safeParse(totals.monto_descuento_fijo);
-    const impuestoManual  = safeParse(totals.impuestos_monto);
-    const abonadoManual   = safeParse(totals.monto_abonado);
+    const impuestoManual = safeParse(totals.impuestos_monto);
+    const abonadoManual = safeParse(totals.monto_abonado);
 
     const itemsConDescuento = items.map((item) => {
       const itemSubtotal = safeParse(item.cantidad) * safeParse(item.precio_venta);
       const proporcion = subtotalProductos > 0 ? itemSubtotal / subtotalProductos : 0;
       const descAsignado = descuentoManual * proporcion;
-      
+
       return {
         ...item,
         descuento_unitario: safeParse(item.cantidad) > 0 ? descAsignado / safeParse(item.cantidad) : 0,
@@ -158,11 +175,11 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
 
     const totalFactura = (subtotalProductos - descuentoManual) + impuestoManual;
 
-    let estado_pago = "Pendiente";
+    let estado_pago = "Pending";
     if (totalFactura > 0 && abonadoManual >= totalFactura) {
-      estado_pago = "Pagado";
+      estado_pago = "Paid";
     } else if (abonadoManual > 0) {
-      estado_pago = "Abono Parcial";
+      estado_pago = "Partial Payment";
     }
 
     setTotals((prev) => ({
@@ -170,7 +187,7 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
       subtotal: subtotalProductos,
       total: totalFactura,
       estado_pago,
-      abonado: abonadoManual 
+      abonado: abonadoManual
     }));
   }, [items, totals.monto_descuento_fijo, totals.impuestos_monto, totals.monto_abonado]);
 
@@ -194,7 +211,8 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
         abonado: parseFloat(safeParse(totals.abonado).toFixed(2)),
         notas_abono: totals.notas_abono,
         estado_pago: totals.estado_pago,
-        
+        reportes_usados: usedReports,
+        presupuestos_usados: usedBudgets,
         detalle: processedItems.map((item) => ({
           id_producto: item.id || item.id_producto,
           id_inventario: item.inventario_id || item.id_inventario,
@@ -207,7 +225,7 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
         })),
       };
 
-      const res = editData 
+      const res = editData
         ? await editSale(editData.id, payload)
         : await createNewSale(payload);
 
@@ -219,7 +237,7 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
         alert(res.msg || "Ocurrió un error al procesar la venta.");
       }
     } catch (error) {
-      console.error("Error al procesar la venta:", error);
+      console.error("Error processing sale:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -230,6 +248,8 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
     setItems([]);
     setFormData(initialFormState);
     setTotals(initialTotalsState);
+    setUsedReports([]);
+    setUsedBudgets([]);
   };
 
   const handleClose = () => {
@@ -239,8 +259,8 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
   };
 
   const handleSelectProduct = (product) => {
-    if (items.some((i) => (i.id || i.id_producto) === product.id))
-      return alert("Producto ya agregado");
+    if (items.some((i) => String(i.id || i.id_producto) === String(product.id)))
+      return alert("El producto ya fue agregado");
 
     setItems([
       ...items,
@@ -248,10 +268,148 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
         ...product,
         cantidad: 1,
         precio_venta: product.precio_venta || 0,
-        lotes_compra: []
+        lotes_compra: [],
+        isValid: false
       },
     ]);
     setIsSearchModalOpen(false);
+  };
+
+  // ✅ LOGICA DE REPORTES
+  const handleToggleReport = (report, isRemoving = false) => {
+    if (isRemoving) {
+      const updatedReports = usedReports.filter((r) => String(r.id) !== String(report.id));
+      setUsedReports(updatedReports);
+
+      const fullReportToRemove = usedReports.find(r => String(r.id) === String(report.id)) || report;
+      if (fullReportToRemove.detalle) {
+        const productIdsToRemove = fullReportToRemove.detalle.map((det) => String(det.id_producto || det.id));
+        setItems((prevItems) => prevItems.filter((item) => !productIdsToRemove.includes(String(item.id || item.id_producto))));
+      }
+
+      if (updatedReports.length === 0 && usedBudgets.length === 0) {
+        setFormData(initialFormState);
+      }
+      return;
+    }
+
+    const repPacienteId = String(report.id_paciente || report.paciente_id || "");
+    const formPacienteId = String(formData.id_paciente || "");
+    if (formData.id_paciente && repPacienteId && repPacienteId !== formPacienteId) {
+      return alert("Este reporte pertenece a un paciente diferente.");
+    }
+
+    if (!usedReports.some((r) => String(r.id) === String(report.id))) {
+      setUsedReports([...usedReports, report]);
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      id_paciente: prev.id_paciente || report.id_paciente,
+      nombre_paciente: prev.nombre_paciente || report.nombre_paciente || report.paciente_nombre,
+      id_vendedor: prev.id_vendedor || report.id_vendedor,
+      nombre_vendedor: prev.nombre_vendedor || report.vendedor_nombre,
+      id_oficina: prev.id_oficina || report.id_oficina,
+      nombre_oficina: prev.nombre_oficina || report.oficina_nombre,
+      id_clinica: prev.id_clinica || report.id_clinica,
+      nombre_clinica: prev.nombre_clinica || report.clinica_nombre,
+      id_deposito: prev.id_deposito || report.id_deposito,
+      nombre_deposito: prev.nombre_deposito || report.deposito_nombre,
+      id_seguro: prev.id_seguro || report.id_seguro,
+      nombre_seguro: prev.nombre_seguro || report.seguro_nombre,
+      personal_asignado: [
+        ...prev.personal_asignado,
+        ...(report.personal_asignado || [])
+          .filter(pNew => !prev.personal_asignado.some(pOld => pOld.id === pNew.id_medico))
+          .map(p => ({
+            id: p.id_medico,
+            nombre: p.nombre || p.medico,
+            tipo: p.tipo || p.tipo_medico
+          }))
+      ],
+    }));
+
+    if (report.detalle && report.detalle.length > 0) {
+      const newItems = report.detalle.map((det) => {
+        const exists = items.find(i => String(i.id || i.id_producto) === String(det.id_producto));
+        if (exists) return null;
+
+        return {
+          id: det.id_producto,
+          id_producto: det.id_producto,
+          inventario_id: det.id_inventario,
+          descripcion: det.descripcion || det.producto,
+          sku: det.sku || "",
+          cantidad: det.cantidad || 1,
+          precio_venta: det.precio_venta || 0,
+          lotes_compra: [],
+          maneja_lotes: det.usa_lotes || det.maneja_lotes || false,
+          isValid: false
+        };
+      }).filter(Boolean);
+
+      setItems((prevItems) => [...prevItems, ...newItems]);
+    }
+  };
+
+  // ✅ LOGICA DE PRESUPUESTOS (Ahora igual que reportes)
+  const handleToggleBudget = (budget, isRemoving = false) => {
+    if (isRemoving) {
+      const updatedBudgets = usedBudgets.filter((b) => String(b.id) !== String(budget.id));
+      setUsedBudgets(updatedBudgets);
+
+      const fullBudgetToRemove = usedBudgets.find(b => String(b.id) === String(budget.id)) || budget;
+      if (fullBudgetToRemove.detalle) {
+        const productIdsToRemove = fullBudgetToRemove.detalle.map((det) => String(det.id_producto || det.id));
+        setItems((prevItems) => prevItems.filter((item) => !productIdsToRemove.includes(String(item.id || item.id_producto))));
+      }
+
+      if (updatedBudgets.length === 0 && usedReports.length === 0) {
+        setFormData(initialFormState);
+      }
+      return;
+    }
+
+    const budPacienteId = String(budget.id_paciente || budget.paciente_id || "");
+    const formPacienteId = String(formData.id_paciente || "");
+    
+    if (formData.id_paciente && budPacienteId && budPacienteId !== formPacienteId) {
+      return alert("Este presupuesto pertenece a un paciente diferente.");
+    }
+
+    if (!usedBudgets.some((b) => String(b.id) === String(budget.id))) {
+      setUsedBudgets([...usedBudgets, budget]);
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      id_paciente: prev.id_paciente || budget.id_paciente,
+      nombre_paciente: prev.nombre_paciente || budget.nombre_paciente || budget.paciente_nombre,
+      id_vendedor: prev.id_vendedor || budget.id_vendedor,
+      nombre_vendedor: prev.nombre_vendedor || budget.vendedor_nombre,
+      id_presupuesto: budget.id
+    }));
+
+    if (budget.detalle && budget.detalle.length > 0) {
+      const newItems = budget.detalle.map((det) => {
+        const exists = items.find(i => String(i.id || i.id_producto) === String(det.id_producto));
+        if (exists) return null;
+
+        return {
+          id: det.id_producto,
+          id_producto: det.id_producto,
+          descripcion: det.descripcion || det.producto,
+          sku: det.sku || "",
+          cantidad: det.cantidad || 1,
+          precio_venta: det.precio_venta || 0,
+          lotes_compra: [],
+          maneja_lotes: det.usa_lotes || det.maneja_lotes || false,
+          isValid: true 
+        };
+      }).filter(Boolean);
+
+      setItems((prevItems) => [...prevItems, ...newItems]);
+    }
   };
 
   if (!isOpen) return null;
@@ -278,7 +436,11 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
 
         <div className="sform-body-scroll">
           {step === 1 && (
-            <StepInfo formData={formData} setFormData={setFormData} onValidationChange={setIsStep1Valid} />
+            <StepInfo
+              formData={formData}
+              setFormData={setFormData}
+              onValidationChange={setIsStep1Valid}
+            />
           )}
 
           {step === 2 && (
@@ -321,16 +483,38 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
             )}
 
             {step < 4 ? (
-              <button
-                className="sform-btn-next"
-                onClick={() => setStep(step + 1)}
-                disabled={
-                  (step === 1 && !isStep1Valid) || 
-                  (step === 2 && !isStep2Valid)
-                }
-              >
-                Siguiente <ChevronRight size={18} />
-              </button>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className="sform-btn-secondary"
+                  onClick={() => setIsReportModalOpen(true)}
+                  disabled={isSubmitting}
+                  title="Añadir Reportes"
+                >
+                  <FileText size={18} /> Reportes ({usedReports.length})
+                </button>
+
+                <button
+                  type="button"
+                  className="sform-btn-secondary"
+                  onClick={() => setIsBudgetModalOpen(true)}
+                  disabled={isSubmitting}
+                  title="Añadir Presupuestos"
+                >
+                  <ClipboardList size={18} /> Presupuestos ({usedBudgets.length})
+                </button>
+
+                <button
+                  className="sform-btn-next"
+                  onClick={() => setStep(step + 1)}
+                  disabled={
+                    (step === 1 && !isStep1Valid) ||
+                    (step === 2 && !isStep2Valid)
+                  }
+                >
+                  Siguiente <ChevronRight size={18} />
+                </button>
+              </div>
             ) : (
               <button
                 className="sform-btn-finish"
@@ -370,6 +554,24 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
         />
       )}
 
+      {isReportModalOpen && (
+        <SearchReportModal
+          onClose={() => setIsReportModalOpen(false)}
+          onToggle={handleToggleReport}
+          selectedItems={usedReports}
+          filterByPacienteId={formData.id_paciente}
+        />
+      )}
+
+      {isBudgetModalOpen && (
+        <SearchBudgetModal
+          onClose={() => setIsBudgetModalOpen(false)}
+          onToggle={handleToggleBudget}
+          selectedItems={usedBudgets}
+          filterByPacienteId={formData.id_paciente}
+        />
+      )}
+
       <ModalConfirm
         isOpen={showSuccessModal}
         onClose={() => {
@@ -377,7 +579,7 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
           handleClose();
         }}
         title={editData ? "Venta Actualizada" : "Venta Registrada"}
-        message={editData ? "Los cambios se guardaron correctamente." : "La venta fue registrada exitosamente."}
+        message={editData ? "Cambios guardados exitosamente." : "La venta se registró exitosamente."}
       />
     </div>
   );

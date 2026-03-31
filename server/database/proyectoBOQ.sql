@@ -271,8 +271,8 @@ CREATE TABLE personal (
 );
 
 
--- 0 SIN USAR
--- 1 USADO
+-- 1 SIN USAR
+-- 2 USADO
 
 CREATE TABLE presupuestos_detalle (
   id SERIAL PRIMARY KEY,
@@ -303,8 +303,8 @@ CREATE TABLE reportes_personal (
   fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
--- 0 SIN USAR
--- 1 USADO
+-- 1 SIN USAR
+-- 2 USADO
 
 CREATE TABLE reportes_detalle (
   id SERIAL PRIMARY KEY,

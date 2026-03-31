@@ -10,7 +10,10 @@ const ReportDetailModal = ({ isOpen, report, onClose }) => {
 
   if (!isOpen || !report) return null;
 
-  const isActive = report.estatus_uso !== 0;
+  // Lógica ajustada: 1 = SIN USAR (Verde/Activo), 2 = USADO (Azul/Completado)
+  // Se mantiene isActive para estilos, pero podrías expandir las clases CSS si lo deseas
+  const usageStatus = report.estatus_uso === 1 ? 'SIN USAR' : report.estatus_uso === 2 ? 'USADO' : 'ANULADO';
+  const statusClass = report.estatus_uso === 1 ? 'text-green' : report.estatus_uso === 2 ? 'text-blue' : 'text-red';
 
   // --- HELPERS ---
   const formatDate = (dateStr) => {
@@ -21,15 +24,14 @@ const ReportDetailModal = ({ isOpen, report, onClose }) => {
     });
   };
 
-  // --- LÓGICA GENERACIÓN PDF (ENFOQUE OPERATIVO) ---
+  // --- LÓGICA GENERACIÓN PDF ---
   const generatePDF = () => {
     const doc = new jsPDF();
     const margin = 15;
     const pageWidth = doc.internal.pageSize.width;
     let y = 20;
 
-    // 1. HEADER: Branding Operativo
-    doc.setFillColor(30, 41, 59); // Slate-800
+    doc.setFillColor(30, 41, 59); 
     doc.rect(0, 0, pageWidth, 40, 'F');
     
     doc.setTextColor(255, 255, 255);
@@ -41,8 +43,7 @@ const ReportDetailModal = ({ isOpen, report, onClose }) => {
     doc.setFont("helvetica", "normal");
     doc.text("CONTROL DE CONSUMO Y PERSONAL MÉDICO", margin, 32);
 
-    // Bloque de Referencia
-    doc.setFillColor(51, 65, 85); // Slate-700
+    doc.setFillColor(51, 65, 85); 
     doc.rect(pageWidth - 70, 0, 70, 40, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(8);
@@ -54,7 +55,6 @@ const ReportDetailModal = ({ isOpen, report, onClose }) => {
     doc.setFont("helvetica", "normal");
     doc.text(`Registro: ${formatDate(report.fecha_creacion)}`, pageWidth - 65, 33);
 
-    // 2. DATOS DEL PACIENTE Y EQUIPO
     y = 55;
     doc.setTextColor(100);
     doc.setFontSize(8);
@@ -80,7 +80,6 @@ const ReportDetailModal = ({ isOpen, report, onClose }) => {
     const splitMedicos = doc.splitTextToSize(medicos || "Sin asignar", pageWidth - (margin * 2) - 40);
     doc.text(splitMedicos, margin + 40, y);
 
-    // 3. TABLA DE CONSUMO (SIN PRECIOS)
     y += (splitMedicos.length * 5) + 10;
     doc.setFillColor(248, 250, 252); 
     doc.rect(margin, y, pageWidth - (margin * 2), 10, 'F');
@@ -99,24 +98,18 @@ const ReportDetailModal = ({ isOpen, report, onClose }) => {
         doc.addPage();
         y = 20;
       }
-
       const desc = (item.descripcion || "SIN DESCRIPCIÓN").toUpperCase();
       const splitDesc = doc.splitTextToSize(desc, 140);
-      
       doc.setDrawColor(241, 245, 249);
       doc.line(margin, y + 2, pageWidth - margin, y + 2);
-
       doc.setTextColor(40);
       doc.text(splitDesc, margin + 3, y);
-      
       doc.setFont("helvetica", "bold");
       doc.text(item.cantidad.toString(), 185, y, { align: 'right' });
       doc.setFont("helvetica", "normal");
-
       y += (splitDesc.length * 5) + 5;
     });
 
-    // 4. FOOTER
     doc.setFontSize(8);
     doc.setTextColor(150);
     doc.text("Este documento certifica el uso de los materiales arriba descritos en el procedimiento médico.", margin, 285);
@@ -149,8 +142,9 @@ const ReportDetailModal = ({ isOpen, report, onClose }) => {
             </div>
             <div className="sdm-meta-top">
               <p><strong>Registro:</strong> {formatDate(report.fecha_creacion)}</p>
-              <p><strong>Status:</strong> <span className={isActive ? 'text-green' : 'text-red'}>
-                {isActive ? 'ACTIVO' : 'ANULADO'}
+              {/* Ajuste de visualización de Estatus */}
+              <p><strong>Status:</strong> <span className={statusClass}>
+                {usageStatus}
               </span></p>
             </div>
           </div>
@@ -190,12 +184,6 @@ const ReportDetailModal = ({ isOpen, report, onClose }) => {
                 ))}
               </tbody>
             </table>
-          </div>
-
-          <div className="sdm-invoice-footer-grid">
-            <div className="sdm-footer-left">
-              {/* <p className="disclaimer">Total de ítems registrados: {report.detalle?.length}</p> */}
-            </div>
           </div>
         </div>
 

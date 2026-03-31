@@ -10,6 +10,9 @@ const StepProducts = ({
   onOpenBatch,
   onEditProduct,
 }) => {
+
+  console.log("items")
+  console.log(items)
   
   const MAX_VALUE = 999999999; 
 

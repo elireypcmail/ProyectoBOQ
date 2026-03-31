@@ -121,6 +121,19 @@
     cursor: pointer;
 }
 
+.sform-btn-secondary{
+    padding: 12px 24px;
+    background: white;
+    border: 1px solid var(--sform-primary);
+    color: var(--sform-primary);
+    font-weight: 700;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
 .sform-btn-next {
     padding: 12px 30px;
     background: var(--sform-primary);

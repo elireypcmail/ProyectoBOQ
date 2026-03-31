@@ -107,7 +107,7 @@ export class BudgetsModel {
             INNER JOIN inventario i ON i.id = pd.id_inventario
             INNER JOIN productos pr ON pr.id = i.id_producto -- Relación necesaria
             WHERE pd.id_presupuesto = p.id
-          ) AS items
+          ) AS detalle
 
         FROM presupuestos p
         LEFT JOIN pacientes pac ON pac.id = p.id_paciente
@@ -338,6 +338,59 @@ export class BudgetsModel {
         status: false,
         code: 500,
         msg: "Error updating budget",
+        error: error.message
+      };
+
+    } finally {
+      if (connection) connection.release();
+    }
+  }
+
+  /* ================= USE  ================= */
+  
+  static async useBudgets(id) {
+    let connection;
+
+    try {
+      connection = await pool.connect();
+      await connection.query("BEGIN");
+
+      /* 1️⃣ Verify budget exists */
+      const budget = await connection.query(
+        `SELECT id FROM presupuestos WHERE id = $1`,
+        [id]
+      );
+
+      if (!budget.rowCount) {
+        await connection.query("ROLLBACK");
+        return {
+          status: false,
+          code: 404,
+          msg: "Budget not found"
+        };
+      }
+
+      /* 2️⃣ Change status to false */
+      await connection.query(
+        `UPDATE presupuestos SET estatus_uso = 2 WHERE id = $1`,
+        [id]
+      );
+
+      await connection.query("COMMIT");
+
+      return {
+        status: true,
+        code: 200,
+        msg: "Budget successfully deactivated"
+      };
+
+    } catch (error) {
+      if (connection) await connection.query("ROLLBACK");
+
+      return {
+        status: false,
+        code: 500,
+        msg: "Error deactivating budget",
         error: error.message
       };
 

@@ -35,15 +35,12 @@ controller.createReport = async (req, res) => {
   try {
     const data = req.body;
 
-    console.log(data)
-
     if (!data.id_paciente)
       return res.status(400).json({
         error: "El cliente es obligatorio",
       });
 
     const result = await ReportsModel.createReports(data);
-    console.log(result)
 
     return res.status(result.code).json(result);
   } catch (error) {
@@ -87,7 +84,22 @@ controller.deleteReport = async (req, res) => {
       });
 
     const result = await ReportsModel.deleteReports(id);
-    console.log(result)
+    return res.status(result.code).json(result);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+controller.useReport = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id)
+      return res.status(400).json({
+        error: "Report id required",
+      });
+
+    const result = await ReportsModel.useReports(id);
     return res.status(result.code).json(result);
   } catch (error) {
     return res.status(500).json({ error: error.message });

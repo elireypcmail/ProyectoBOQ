@@ -10,6 +10,7 @@ import { controller } from "../controllers/budgets.controller.js"
 router.get("/", controller.getAllBudgets)
 router.post("/", controller.createBudget)
 router.get("/:id", controller.getBudgetById)
+router.put("/use/:id", controller.useBudget)
 router.put("/:id", controller.updateBudget)
 router.delete("/:id", controller.deleteBudget)
 
