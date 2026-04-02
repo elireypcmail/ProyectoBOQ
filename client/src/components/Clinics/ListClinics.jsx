@@ -2,13 +2,17 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useClinics } from "../../context/ClinicsContext";
 import { useEntity } from "../../context/EntityContext";
 import { 
-  Search, Plus, Trash2, AlertTriangle, Loader2, 
+  Search, Plus, AlertTriangle, Loader2, 
   ChevronLeft, ChevronRight, MapPin
 } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
 
+// Componentes UI
 import ClinicFormModal from "./Ui/ClinicFormModal";
 import ModalDetailedClinic from "./Ui/ModalDetailedClinic";
+import ModalDeleteConfirm from "./Ui/ModalDeleteConfirm";
+import StatusModal from "./Ui/StatusModal";
+
 import "../../styles/components/ListClinics.css";
 
 const ListClinics = () => {
@@ -24,14 +28,22 @@ const ListClinics = () => {
   const { entities, getAllEntities } = useEntity();
   const zones = entities.zonas || [];
 
+  // Estados de UI
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
+  // Estados de Modales
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [statusModal, setStatusModal] = useState({ 
+    isOpen: false, 
+    type: "success", 
+    message: "" 
+  });
 
+  // Estados de Datos y Carga
   const [selectedClinic, setSelectedClinic] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingDetails, setIsLoadingDetails] = useState(null);
@@ -49,23 +61,18 @@ const ListClinics = () => {
     getAllEntities("zonas");
   }, []);
 
-  // -------------------- Filtrado y Ordenación Alfabética --------------------
+  // -------------------- Filtrado y Ordenación --------------------
   const filteredClinics = useMemo(() => {
     const list = clinics || [];
-    
-    // 1. Filtrar por Nombre o RIF
     const filtered = list.filter((c) =>
       c.nombre?.toUpperCase().includes(searchTerm.toUpperCase()) ||
       c.rif?.toUpperCase().includes(searchTerm.toUpperCase())
     );
 
-    // 2. Ordenar A-Z por Nombre
     return [...filtered].sort((a, b) => {
       const nameA = (a.nombre || "").toUpperCase();
       const nameB = (b.nombre || "").toUpperCase();
-      if (nameA < nameB) return -1;
-      if (nameA > nameB) return 1;
-      return 0;
+      return nameA.localeCompare(nameB);
     });
   }, [clinics, searchTerm]);
 
@@ -75,7 +82,7 @@ const ListClinics = () => {
     currentPage * itemsPerPage
   );
 
-  // Handlers
+  // -------------------- Handlers --------------------
   const handleOpenDetails = async (id) => {
     setIsLoadingDetails(id);
     try {
@@ -93,7 +100,6 @@ const ListClinics = () => {
   const handleSaveClinic = async (payload) => {
     setIsSaving(true);
     try {
-      // Forzamos mayúsculas en los campos críticos antes de enviar
       const formattedPayload = {
         ...payload,
         nombre: payload.nombre?.toUpperCase(),
@@ -106,10 +112,22 @@ const ListClinics = () => {
       } else {
         await createNewClinic(formattedPayload);
       }
+      
       setIsFormModalOpen(false);
       await getAllClinics();
+      
+      setStatusModal({
+        isOpen: true,
+        type: "success",
+        message: "LA CLÍNICA HA SIDO REGISTRADA/ACTUALIZADA CORRECTAMENTE."
+      });
     } catch (error) {
       console.error("Error al guardar:", error);
+      setStatusModal({
+        isOpen: true,
+        type: "error",
+        message: "HUBO UN PROBLEMA AL PROCESAR EL REGISTRO."
+      });
     } finally {
       setIsSaving(false);
     }
@@ -121,8 +139,19 @@ const ListClinics = () => {
       await deleteClinicById(selectedClinic.id);
       setIsDeleteModalOpen(false);
       await getAllClinics();
+      
+      setStatusModal({
+        isOpen: true,
+        type: "success",
+        message: "EL REGISTRO SE ELIMINÓ CON ÉXITO."
+      });
     } catch (error) {
       console.error("Error al eliminar:", error);
+      setStatusModal({
+        isOpen: true,
+        type: "error",
+        message: "NO SE PUDO ELIMINAR EL REGISTRO."
+      });
     }
   };
 
@@ -249,7 +278,7 @@ const ListClinics = () => {
         </div>
       )}
 
-      {/* MODALS */}
+      {/* MODALES */}
       <ClinicFormModal
         isOpen={isFormModalOpen}
         onClose={() => setIsFormModalOpen(false)}
@@ -271,28 +300,19 @@ const ListClinics = () => {
         onDelete={() => setIsDeleteModalOpen(true)}
       />
 
-      {isDeleteModalOpen && (
-        <div className="cln-overlay-delete">
-          <div className="cln-delete-card">
-            <div className="cln-delete-icon-box">
-              <AlertTriangle size={40} />
-            </div>
-            <h2>¿ELIMINAR REGISTRO?</h2>
-            <p>
-              ESTA ACCIÓN ELIMINARÁ PERMANENTEMENTE A:<br/>
-              <strong className="cln-delete-target">
-                {selectedClinic?.nombre?.toUpperCase()}
-              </strong>
-            </p>
-            <div className="cln-delete-footer">
-              <button className="cln-cancel-btn" onClick={() => setIsDeleteModalOpen(false)}>CANCELAR</button>
-              <button className="cln-confirm-btn" onClick={handleDeleteConfirm}>
-                <Trash2 size={18} /> CONFIRMAR
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ModalDeleteConfirm 
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        clinicName={selectedClinic?.nombre}
+      />
+
+      <StatusModal 
+        isOpen={statusModal.isOpen}
+        type={statusModal.type}
+        message={statusModal.message}
+        onClose={() => setStatusModal({ ...statusModal, isOpen: false })}
+      />
     </div>
   );
 };

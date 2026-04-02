@@ -38,12 +38,12 @@ const ProductFormModal = ({
   const [showSuggestions, setShowSuggestions] = useState({ field: null, visible: false });
 
   const categoryOptions = useMemo(
-    () => categories.map(c => ({ value: c.id, label: c.nombre.toUpperCase() })),
+    () => categories.map(c => ({ value: c.id, label: (c.nombre || "").toUpperCase() })),
     [categories]
   );
 
   const brandOptions = useMemo(
-    () => brands.map(b => ({ value: b.id, label: b.nombre.toUpperCase() })),
+    () => brands.map(b => ({ value: b.id, label: (b.nombre || "").toUpperCase() })),
     [brands]
   );
 

@@ -8,6 +8,7 @@
   box-shadow: var(--shadow-md);
   font-family: 'Inter', system-ui, sans-serif;
   color: var(--text-main);
+  margin: 0 auto;
 }
 
 /* Header */

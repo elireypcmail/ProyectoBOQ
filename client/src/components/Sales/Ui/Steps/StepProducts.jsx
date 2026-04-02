@@ -7,8 +7,7 @@ const StepProducts = ({
   setItems,
   onOpenSearch,
   onOpenCreate,
-  onOpenBatch,
-  onEditProduct,
+  onOpenBatch
 }) => {
 
   console.log("items")

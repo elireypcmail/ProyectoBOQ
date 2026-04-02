@@ -12,6 +12,8 @@ import {
 import { useProducts } from "../../../context/ProductsContext";
 import { useIncExp } from "../../../context/IncExpContext";
 
+import ProductFormModal from "../../Ui/ProductFormModal";
+
 import StepInfo from "./Steps/StepInfo";
 import StepProducts from "./Steps/StepProducts";
 import StepTotals from "./Steps/StepTotals";
@@ -26,7 +28,7 @@ import SearchBudgetModal from "./SubModals/SearchBudgetModal";
 import "../../../styles/ui/SalesFormModal.css";
 
 const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
-  const { getAllProducts } = useProducts();
+  const { categories, brands, getAllProducts, createNewProduct, editProduct } = useProducts();
   const { createNewSale, editSale, sales, getAllSales } = useIncExp();
   const [isStep1Valid, setIsStep1Valid] = useState(false);
   const [processedItems, setProcessedItems] = useState([]);
@@ -68,6 +70,8 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
 
   const [usedReports, setUsedReports] = useState([]);
   const [usedBudgets, setUsedBudgets] = useState([]);
+
+  const [isCreateProductOpen, setIsCreateProductOpen] = useState(false);
 
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
@@ -452,6 +456,7 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
                 setSelectedProductForBatch(item);
                 setIsBatchModalOpen(true);
               }}
+            onOpenCreate={() => setIsCreateProductOpen(true)}
             />
           )}
 
@@ -544,6 +549,17 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
           onSelect={handleSelectProduct}
         />
       )}
+
+      <ProductFormModal
+        isOpen={isCreateProductOpen}
+        onClose={() => setIsCreateProductOpen(false)}
+        onSubmit={async (data) => {
+          await createNewProduct(data);
+          setIsCreateProductOpen(false);
+        }}
+        categories={categories}
+        brands={brands}
+      />
 
       {isBatchModalOpen && (
         <BatchModal

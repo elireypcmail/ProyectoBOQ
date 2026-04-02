@@ -56,7 +56,7 @@ CREATE TABLE clinicas (
   telefono VARCHAR(20),
   email VARCHAR(100),
   direccion TEXT NOT NULL,
-  notas TEXT NOT NULL,
+  notas TEXT,
   estatus BOOLEAN NOT NULL DEFAULT TRUE,
   fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
