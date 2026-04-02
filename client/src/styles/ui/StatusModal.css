@@ -1,0 +1,140 @@
+/* --- Overlay (Fondo oscuro) --- */
+.cln-overlay-status {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2100; /* Un poco más alto que el de borrado por si acaso */
+  padding: 20px;
+  animation: clnFadeInStatus 0.2s ease-out;
+}
+
+/* --- Card del Modal --- */
+.cln-status-card {
+  background-color: #ffffff;
+  width: 100%;
+  max-width: 400px;
+  border-radius: 16px;
+  padding: 35px 25px;
+  text-align: center;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+  animation: clnPopIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* --- Contenedor del Icono --- */
+.cln-status-icon-box {
+  width: 85px;
+  height: 85px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 20px;
+  transition: all 0.3s ease;
+}
+
+/* Variantes del Icono */
+.cln-status-icon-box.success {
+  background-color: #f0fff4;
+  border: 2px solid #c6f6d5;
+}
+
+.cln-status-icon-box.error {
+  background-color: #fff5f5;
+  border: 2px solid #fed7d7;
+}
+
+/* --- Textos --- */
+.cln-status-card h2 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Color del título según el estado */
+.cln-status-icon-box.success + h2 {
+  color: #2f855a;
+}
+
+.cln-status-icon-box.error + h2 {
+  color: #c53030;
+}
+
+.cln-status-card p {
+  color: #718096;
+  font-size: 1rem;
+  line-height: 1.5;
+  margin-bottom: 30px;
+  font-weight: 500;
+}
+
+/* --- Botón --- */
+.cln-status-footer {
+  display: flex;
+  justify-content: center;
+}
+
+.cln-status-card .cln-confirm-btn {
+  width: 100%;
+  max-width: 200px;
+  padding: 12px 24px;
+  background-color: #2d3748; /* Color neutro oscuro para el botón de aceptar */
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+}
+
+.cln-status-card .cln-confirm-btn:hover {
+  background-color: #1a202c;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.cln-status-card .cln-confirm-btn:active {
+  transform: translateY(0);
+}
+
+/* --- Animaciones --- */
+@keyframes clnFadeInStatus {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes clnPopIn {
+  0% { 
+    opacity: 0; 
+    transform: scale(0.5); 
+  }
+  100% { 
+    opacity: 1; 
+    transform: scale(1); 
+  }
+}
+
+/* --- Responsive --- */
+@media (max-width: 480px) {
+  .cln-status-card {
+    padding: 30px 20px;
+  }
+  
+  .cln-status-card h2 {
+    font-size: 1.4rem;
+  }
+
+  .cln-status-card .cln-confirm-btn {
+    max-width: 100%; /* Botón ancho completo en móvil */
+  }
+}
