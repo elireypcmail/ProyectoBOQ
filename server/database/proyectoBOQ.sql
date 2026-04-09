@@ -258,6 +258,7 @@ CREATE TABLE presupuestos (
   id_seguro INT REFERENCES seguros(id) ON DELETE CASCADE,
   nro_presupuesto VARCHAR(100) NOT NULL,
   total DECIMAL(10,2) NOT NULL,
+  notas TEXT,
   estatus_uso INT NOT NULL DEFAULT 1,
   estatus BOOLEAN NOT NULL DEFAULT TRUE,
   fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()

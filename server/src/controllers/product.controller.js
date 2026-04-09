@@ -96,10 +96,16 @@ controller.updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
     const data = req.body;
+
+    console.log(id)
+    console.log(data)
+
     if (!id) return res.status(400).json({ error: "El id del producto es requerido" });
     if (Object.keys(data).length === 0) return res.status(400).json({ error: "No data to update" });
 
     const result = await ProductsModel.updateProduct(id, data);
+    console.log(result)
+
     return res.status(result.code).json(result);
   } catch (error) {
     return res.status(500).json({ error: error.message });

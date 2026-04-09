@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from "react";
 import Select from "react-select";
-import { UserCircle, Building2, ShieldCheck } from "lucide-react";
+import { UserCircle, Building2, ShieldCheck, FileText } from "lucide-react"; // <-- Added FileText icon
 import "../../../../styles/ui/stepsBudgets/StepInfo.css";
 
 import { useHealth } from "../../../../context/HealtContext";
@@ -128,6 +128,35 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
             />
           </div>
         </div>
+
+        {/* --- Added Notes Field --- */}
+        <div className="prof-field-group" style={{ marginTop: "20px" }}>
+          <label className="prof-label">
+            <FileText size={18} className="prof-icon" /> NOTAS / OBSERVACIONES
+          </label>
+          <textarea
+            value={formData.notas}
+            onChange={(e) => setFormData(p => ({ ...p, notas: e.target.value.toUpperCase() }))}
+            placeholder="OPCIONAL: Ingrese notas o comentarios adicionales..."
+            rows={3}
+            style={{
+              width: "100%",
+              borderRadius: "12px",
+              border: "1px solid #e2e8f0",
+              padding: "12px 14px",
+              fontSize: "0.9rem",
+              color: "#334155",
+              fontFamily: "inherit",
+              resize: "vertical",
+              outline: "none",
+              transition: "border-color 0.3s ease",
+            }}
+            onFocus={(e) => (e.target.style.borderColor = "#ec3137")}
+            onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
+          />
+        </div>
+        {/* ------------------------- */}
+
       </div>
     </section>
   );

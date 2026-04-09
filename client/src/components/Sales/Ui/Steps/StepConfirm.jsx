@@ -3,6 +3,8 @@ import '../../../../styles/ui/steps/StepSalesConfirm.css';
 
 const StepConfirm = ({ formData, items, totals }) => {
   
+  console.log(formData)
+
   const safeParse = (val) => {
     if (val === null || val === undefined || val === "") return 0;
     if (typeof val === "number") return val;
@@ -50,6 +52,7 @@ const StepConfirm = ({ formData, items, totals }) => {
         <div className="invoice-client-info" style={{ flex: 1 }}>
           <label style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600 }}>Factura a:</label>
           <h4 style={{ margin: '5px 0', fontSize: '1.1rem' }}>{formData.nombre_paciente || "Paciente General"}</h4>
+          <h4 style={{ margin: '5px 0', fontSize: '1.1rem' }}>{formData.documento_paciente}</h4>
           <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Depósito: {formData.nombre_deposito}</p>
         </div>
         

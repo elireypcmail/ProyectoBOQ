@@ -146,8 +146,12 @@ const ProductFormModal = ({
   };
 
   const handleSubmit = () => {
-    const usuario_id = Number(localStorage.getItem("UserId"));
+
+    const userInfo = localStorage.getItem("UserId");
+    const infoJson = JSON.parse(userInfo);
+    const usuario_id = infoJson ? infoJson.id : null;
     const { descripcion, sku, id_categoria, id_marca } = form;
+
 
     if (!descripcion.trim()) return alert("LA DESCRIPCIÓN ES OBLIGATORIA.");
     if (!sku.trim()) return alert("EL SKU ES OBLIGATORIO.");

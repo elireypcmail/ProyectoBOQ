@@ -76,6 +76,7 @@ export class BudgetsModel {
           p.estatus,
           p.estatus_uso,
           p.total,
+          p.notas,
           p.fecha_creacion,
 
           -- Datos del Paciente
@@ -159,6 +160,7 @@ export class BudgetsModel {
         id_seguro,
         detalle = [],
         total,
+        notas,
         estado_pago
       } = data;
 
@@ -187,9 +189,10 @@ export class BudgetsModel {
           id_seguro,
           nro_presupuesto,
           total,
+          notas,
           estatus_uso,
           estatus
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7)
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7, $8)
         RETURNING id`,
         [
           targetPatient,
@@ -197,6 +200,7 @@ export class BudgetsModel {
           id_seguro || null,
           nroPresupuesto,
           parseMonto(total),
+          notas || null,
           1,
           true,
         ]

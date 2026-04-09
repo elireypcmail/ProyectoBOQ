@@ -210,10 +210,10 @@ const StepProducts = ({
                       <div className="step-prod-currency-wrapper">
                         <input
                           type="text"
-                          className={`step-prod-input step-prod-input-readonly ${!priceVal ? "step-prod-input-error" : ""}`}
+                          className={`step-prod-input ${!priceVal ? "step-prod-input-error" : ""}`}
                           style={{ width: calculateWidth(item.precio_venta) }}
                           value={formatInitialValue(item.precio_venta)}
-                          readOnly
+                          // readOnly
                           placeholder="0,00"
                         />
                       </div>

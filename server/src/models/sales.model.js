@@ -549,6 +549,8 @@ export class SalesModel {
 
     /* 5️⃣ DETALLE */
     for (const item of detalle) {
+      console.log(item)
+
       const detRes = await connection.query(
         `INSERT INTO ventas_detalle (
           id_venta, id_inventario, descripcion, cantidad, precio_venta,

@@ -3,14 +3,15 @@ import '../../../../styles/ui/steps/StepSalesConfirm.css';
 
 const StepConfirm = ({ formData, items, totals }) => {
   
-  console.log("formData recibida:", formData);
-
   const safeParse = (val) => {
     if (val === null || val === undefined || val === "" || val === false) return 0;
     if (typeof val === "number") return val;
-    let sVal = String(val);
-    const cleanVal = sVal.replace(/\./g, "").replace(",", ".");
-    return parseFloat(cleanVal) || 0;
+    let sVal = String(val).trim();
+    if (sVal.includes(',')) {
+      const cleanVal = sVal.replace(/\./g, "").replace(",", ".");
+      return parseFloat(cleanVal) || 0;
+    }
+    return parseFloat(sVal) || 0;
   };
 
   const formatNum = (val) => {
@@ -29,26 +30,24 @@ const StepConfirm = ({ formData, items, totals }) => {
   return (
     <div className="invoice-container">
       <div className="invoice-header-section">
-        <h3 className="invoice-title">Resumen de Proforma</h3>
-        <p className="invoice-subtitle">Confirme los detalles antes de finalizar el registro.</p>
+        <div className="invoice-title-group">
+          <h3 className="invoice-title">RESUMEN DE PROFORMA</h3>
+          <p className="invoice-subtitle">Confirme los valores antes de finalizar el registro.</p>
+        </div>
       </div>
       
       <div className="invoice-info-grid">
         <div className="invoice-grid-item">
           <label>Paciente</label>
-          <span className="bold">{formData.nombre_paciente || "No asignado"}</span>
+          <span className="bold uppercase">{(formData.nombre_paciente || "No asignado").toUpperCase()}</span>
         </div>
         <div className="invoice-grid-item">
           <label>Seguro / Pagador</label>
-          <span>{formData.nombre_seguro || "Particular"}</span>
+          <span className="uppercase">{(formData.nombre_seguro || "Particular").toUpperCase()}</span>
         </div>
         <div className="invoice-grid-item">
           <label>Clínica / Centro</label>
-          <span>{formData.nombre_clinica || "No especificada"}</span>
-        </div>
-        <div className="invoice-grid-item">
-          <label>Estado</label>
-          <span className="text-blue">{totals.estado || "Pendiente"}</span>
+          <span className="uppercase">{(formData.nombre_clinica || "No especificada").toUpperCase()}</span>
         </div>
       </div>
 
@@ -71,10 +70,15 @@ const StepConfirm = ({ formData, items, totals }) => {
               return (
                 <tr key={index}>
                   <td className="desc">
-                    <div className="sku-text">{item.sku}</div>
-                    {item.descripcion || item.producto}
+                    <div className="sku-text">SKU: {item.sku || 'N/A'}</div>
+                    <div className="product-name">{(item.descripcion || item.producto || "").toUpperCase()}</div>
+                    <div className="brand-text" style={{fontSize: '0.7rem', color: '#64748b', marginTop: '2px'}}>
+                      MARCA: {(item.marca || 'N/A').toUpperCase()}
+                    </div>
                   </td>
-                  <td className="text-right font-mono">{qty.toFixed(2).replace('.', ',')}</td>
+                  <td className="text-right font-mono">
+                    {qty.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                  </td>
                   <td className="text-right font-mono">{formatNum(price)}</td>
                   <td className="text-right font-mono">{formatNum(itemSubtotal)}</td>
                 </tr>
@@ -84,17 +88,30 @@ const StepConfirm = ({ formData, items, totals }) => {
         </table>
       </div>
 
-      <div className="invoice-totals-section">
-        <div className="invoice-total-row">
-          <span>Subtotal Productos</span>
-          <span className="font-mono">{formatNum(subtotalBruto)}</span>
+      <div className="invoice-footer-layout">
+        <div className="invoice-notes-section">
+          {formData.notas && formData.notas.trim() !== "" ? (
+            <div className="notes-content">
+              <label className="notes-label">NOTAS / OBSERVACIONES:</label>
+              <p className="notes-text">{(formData.notas).toUpperCase()}</p>
+            </div>
+          ) : (
+            <div className="notes-placeholder">Sin observaciones adicionales.</div>
+          )}
         </div>
-        
-        <div className="invoice-total-row invoice-grand-total">
-          <span className="bold">TOTAL PROFORMA</span>
-          <span className="invoice-amount-large font-mono">
-             $ {formatNum(totalFinal)}
-          </span>
+
+        <div className="invoice-totals-section">
+          <div className="invoice-total-row">
+            <span>Subtotal Bruto</span>
+            <span className="font-mono">{formatNum(subtotalBruto)}</span>
+          </div>
+
+          <div className="invoice-total-row invoice-grand-total">
+            <span className="bold">TOTAL</span>
+            <div className="invoice-amount-large font-mono">
+              {formatNum(totalFinal)}
+            </div>
+          </div>
         </div>
       </div>
     </div>

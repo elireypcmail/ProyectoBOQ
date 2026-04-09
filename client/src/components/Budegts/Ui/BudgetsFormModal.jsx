@@ -15,14 +15,15 @@ const BudgetsFormModal = ({ isOpen, onClose, editData = null }) => {
   
   const [isStep1Valid, setIsStep1Valid] = useState(false);
   
-  // Estado inicial extendido para incluir nombres
+  // Extended initial state to include names and notes
   const initialFormState = {
     id_paciente: "",
     nombre_paciente: "",
     id_seguro: null,
     nombre_seguro: "",
     id_clinica: null,
-    nombre_clinica: ""
+    nombre_clinica: "",
+    notas: "" // <-- Added notes field
   };
 
   const initialTotalsState = {
@@ -41,12 +42,12 @@ const BudgetsFormModal = ({ isOpen, onClose, editData = null }) => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 
-  // Validación Step 2: Al menos un item y que todos sean válidos (cantidad/precio > 0)
+  // Validation Step 2: At least one item and all must be valid
   const isStep2Valid = items.length > 0 && items.every(item => item.isValid);
 
   useEffect(() => {
     if (isOpen && editData) {
-      // Al editar, mapeamos IDs y Nombres desde editData
+      // Map IDs, Names, and Notes from editData when editing
       setFormData({
         id: editData.id,
         id_paciente: editData.id_paciente || "",
@@ -54,7 +55,8 @@ const BudgetsFormModal = ({ isOpen, onClose, editData = null }) => {
         id_seguro: editData.id_seguro || null,
         nombre_seguro: editData.nombre_seguro || editData.seguro_nombre || "",
         id_clinica: editData.id_clinica || null,
-        nombre_clinica: editData.nombre_clinica || editData.clinica_nombre || ""
+        nombre_clinica: editData.nombre_clinica || editData.clinica_nombre || "",
+        notas: editData.notas || "" // <-- Populate notes if editing
       });
 
       setItems(editData.items?.map(item => ({
@@ -80,7 +82,7 @@ const BudgetsFormModal = ({ isOpen, onClose, editData = null }) => {
 
   const safeParse = (val) => (val !== "" && val !== null && val !== undefined ? parseFloat(val) || 0 : 0);
 
-  // Cálculo de totales automático
+  // Automatic totals calculation
   useEffect(() => {
     const subtotalProductos = items.reduce((acc, item) => acc + safeParse(item.cantidad) * safeParse(item.precio_venta), 0);
     const descuentoManual = safeParse(totals.monto_descuento_fijo);
@@ -93,7 +95,7 @@ const BudgetsFormModal = ({ isOpen, onClose, editData = null }) => {
   const handleFinalSubmit = async () => {
     setIsSubmitting(true);
     try {
-      // Payload final con IDs, nombres y detalle de productos
+      // Final payload includes formData (which now has 'notas')
       const payload = {
         ...formData,
         subtotal: parseFloat(totals.subtotal.toFixed(2)),
@@ -103,7 +105,7 @@ const BudgetsFormModal = ({ isOpen, onClose, editData = null }) => {
         detalle: items.map((item) => ({
           id_producto: item.id || item.id_producto,
           id_inventario: item.inventario_id || item.id_inventario,
-          nombre_producto: item.descripcion || item.producto, // Incluimos nombre del producto
+          nombre_producto: item.descripcion || item.producto,
           cantidad: parseFloat(item.cantidad),
           precio_venta: parseFloat(item.precio_venta)
         })),

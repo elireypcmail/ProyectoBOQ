@@ -1,13 +1,17 @@
 .sdm-overlay {
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     background: rgba(15, 23, 42, 0.7);
     backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 9999;
+    z-index: 99999;
     padding: 20px;
+    box-sizing: border-box;
 }
 
 .sdm-modal-container {
@@ -21,14 +25,29 @@
     position: relative;
     box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
     animation: sdm-fadeIn 0.3s ease;
+    overflow: hidden;
 }
 
 .sdm-invoice-paper {
     padding: 40px;
     overflow-y: auto;
-    flex: 1;
+    flex: 1 1 auto;
+    min-height: 0; /* CRITICAL for flexbox scrolling inside the modal */
+    background: #ffffff;
     font-family: 'Inter', sans-serif;
     color: #1e293b;
+}
+
+/* Optional: Make the scrollbar look cleaner */
+.sdm-invoice-paper::-webkit-scrollbar {
+    width: 8px;
+}
+.sdm-invoice-paper::-webkit-scrollbar-track {
+    background: #f1f5f9; 
+}
+.sdm-invoice-paper::-webkit-scrollbar-thumb {
+    background: #cbd5e1; 
+    border-radius: 4px;
 }
 
 /* Header Estilo StepConfirm */

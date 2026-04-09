@@ -7,12 +7,14 @@ import {
   Stethoscope,
   Warehouse,
   Plus,
+  Fingerprint,
 } from "lucide-react";
 
 import { useHealth } from "../../../../context/HealtContext";
 import { useSales } from "../../../../context/SalesContext";
 import { useEntity } from "../../../../context/EntityContext";
 import { useClinics } from "../../../../context/ClinicsContext";
+import { useProducts } from "../../../../context/ProductsContext";
 import DoctorFormModal from "../../../Patients/ui/DoctorFormModal";
 
 import "../../../../styles/ui/stepsSales/StepInfo.css";
@@ -29,12 +31,7 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
     createNewMedico,
   } = useHealth();
 
-  console.log("formData")
-  console.log(formData)
-
-  // console.log("setformData")
-  // console.log(setFormData)
-
+  const { getAllDeposits } = useProducts();
   const { sellers, getAllSellers } = useSales();
   const { entities, getAllEntities } = useEntity();
   const { clinics, getAllClinics } = useClinics();
@@ -45,6 +42,7 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
     const fetchData = async () => {
       await Promise.all([
         getAllPacientes(),
+        getAllDeposits(),
         getAllMedicos(),
         getAllTipoMedicos(),
         getAllSellers(),
@@ -72,6 +70,8 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
       pacientes: (pacientes || []).map((p) => ({
         value: p.id,
         label: p.nombre?.toUpperCase(),
+        // Capturamos el documento (ajusta 'documento' o 'cedula' según tu API)
+        documento: p.documento || p.cedula || "S/D",
       })),
       sellers: (sellers || []).map((s) => ({
         value: s.id,
@@ -84,14 +84,12 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
         label: m.nombre?.toUpperCase(),
         tipo: m.tipo?.toUpperCase() || "GENERAL",
       })),
-      // Oficinas: Filtradas por el vendedor si existe uno seleccionado
       oficinas: (entities?.oficinas || [])
         .filter(o => !formData.id_vendedor || o.id === selectedSellerData?.id_oficina)
         .map((o) => ({
           value: o.id,
           label: o.nombre?.toUpperCase(),
         })),
-      // Depósitos: Filtrados por zona del vendedor
       depositos: (entities?.depositos || [])
         .filter(d => {
           if (!formData.id_vendedor || !selectedSellerData?.zona) return true;
@@ -109,6 +107,15 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
     }),
     [pacientes, sellers, medicos, entities, clinics, formData.id_vendedor, selectedSellerData]
   );
+
+  const handlePatientChange = (opt) => {
+    setFormData((p) => ({
+      ...p,
+      id_paciente: opt?.value || "",
+      nombre_paciente: opt?.label || "",
+      documento_paciente: opt?.documento || "", // Se guarda el documento en el form
+    }));
+  };
 
   const handleSellerChange = (opt) => {
     if (!opt) {
@@ -213,16 +220,16 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
             isClearable
             options={options.pacientes}
             value={options.pacientes.find((o) => o.value === formData.id_paciente) || null}
-            onChange={(opt) =>
-              setFormData((p) => ({
-                ...p,
-                id_paciente: opt?.value || "",
-                nombre_paciente: opt?.label || "",
-              }))
-            }
+            onChange={handlePatientChange}
             placeholder="Seleccionar paciente..."
             styles={siSelectStyles}
           />
+          {/* Muestra el documento debajo si existe */}
+          {formData.documento_paciente && (
+            <div className="si-document-hint" style={{ marginTop: '5px', fontSize: '0.8rem', color: '#666', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Fingerprint size={12} /> <span className="bold">Documento:</span> {formData.documento_paciente}
+            </div>
+          )}
         </div>
 
         {/* VENDEDOR */}

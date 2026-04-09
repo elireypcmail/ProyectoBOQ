@@ -27,15 +27,15 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
     });
   };
 
-  // --- LÓGICA GENERACIÓN PDF (ESTILO FACTURA) ---
+  // --- LÓGICA GENERACIÓN PDF ---
   const generatePDF = () => {
     const doc = new jsPDF();
     const margin = 15;
     const pageWidth = doc.internal.pageSize.width;
     let y = 20;
 
-    // 1. HEADER: Branding y Título
-    doc.setFillColor(30, 41, 59); // Color oscuro Slate-800
+    // 1. HEADER
+    doc.setFillColor(30, 41, 59);
     doc.rect(0, 0, pageWidth, 40, 'F');
     
     doc.setTextColor(255, 255, 255);
@@ -47,8 +47,7 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
     doc.setFont("helvetica", "normal");
     doc.text("DOCUMENTO NO VÁLIDO COMO FACTURA", margin, 32);
 
-    // Bloque de Referencia (Esquina superior derecha)
-    doc.setFillColor(236, 49, 55); // Rojo corporativo
+    doc.setFillColor(236, 49, 55);
     doc.rect(pageWidth - 65, 0, 65, 40, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(9);
@@ -60,7 +59,7 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
     doc.setFont("helvetica", "normal");
     doc.text(`Emisión: ${formatDate(budget.fecha_creacion)}`, pageWidth - 60, 33);
 
-    // 2. DATOS DEL CLIENTE / PACIENTE
+    // 2. DATOS DEL CLIENTE
     y = 55;
     doc.setTextColor(100);
     doc.setFontSize(8);
@@ -86,7 +85,7 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
     // 3. TABLA DE PRODUCTOS
     y += 20;
     const tableHeaderY = y;
-    doc.setFillColor(248, 250, 252); // Background gris muy claro
+    doc.setFillColor(248, 250, 252);
     doc.rect(margin, tableHeaderY, pageWidth - (margin * 2), 10, 'F');
     
     doc.setFontSize(9);
@@ -100,16 +99,12 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
     y += 16;
     doc.setFont("helvetica", "normal");
     
-    (budget.items || []).forEach((item, index) => {
-      if (y > 260) {
-        doc.addPage();
-        y = 20;
-      }
+    (budget.items || budget.detalle || []).forEach((item) => {
+      if (y > 250) { doc.addPage(); y = 20; }
 
-      const desc = (item.descripcion || "SIN DESCRIPCIÓN").toUpperCase();
+      const desc = (item.descripcion || item.producto || "SIN DESCRIPCIÓN").toUpperCase();
       const splitDesc = doc.splitTextToSize(desc, 90);
       
-      // Zebra striping o líneas tenues
       doc.setDrawColor(241, 245, 249);
       doc.line(margin, y + 2, pageWidth - margin, y + 2);
 
@@ -140,28 +135,37 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
     y += 8;
     doc.setFontSize(10);
     doc.setTextColor(100);
-    doc.text("SUBTOTAL", totalBoxX, y);
-    doc.text(formatNum(budget.total), pageWidth - margin, y, { align: 'right' });
-
-    y += 8;
-    doc.setFontSize(14);
-    doc.setTextColor(236, 49, 55); // Rojo para resaltar el total
-    doc.setFont("helvetica", "bold");
-    doc.text("TOTAL", totalBoxX, y);
+    doc.text("TOTAL PRESUPUESTADO", totalBoxX, y);
     doc.text(`${formatNum(budget.total)}`, pageWidth - margin, y, { align: 'right' });
 
-    // 5. FOOTER / NOTAS
+    // --- SECCIÓN DE NOTAS EN PDF ---
+    if (budget.notas && budget.notas.trim() !== "") {
+      y += 15;
+      if (y > 250) { doc.addPage(); y = 20; }
+      
+      doc.setFontSize(8);
+      doc.setTextColor(100);
+      doc.setFont("helvetica", "bold");
+      doc.text("NOTAS Y OBSERVACIONES:", margin, y);
+      
+      y += 5;
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(40);
+      const splitNotes = doc.splitTextToSize(budget.notas.toUpperCase(), pageWidth - (margin * 2));
+      doc.text(splitNotes, margin, y);
+      y += (splitNotes.length * 4);
+    }
+
+    // 5. FOOTER
     y = 275;
-    doc.setFontSize(8);
+    doc.setFontSize(7);
     doc.setTextColor(150);
-    doc.setFont("helvetica", "normal");
     doc.text("Este presupuesto tiene una validez de 15 días continuos a partir de la fecha de emisión.", margin, y);
     doc.text("Los precios están sujetos a cambios sin previo aviso según disponibilidad de inventario.", margin, y + 4);
     
     doc.setFont("helvetica", "bold");
     doc.text("Página 1 de 1", pageWidth - margin, y + 4, { align: 'right' });
 
-    // Guardar
     doc.save(`PRESUPUESTO_${budget.nro_presupuesto || budget.id}.pdf`);
   };
 
@@ -199,6 +203,7 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
               <label>Paciente:</label>
               <h4 className="bold">{budget.paciente_nombre || "General"}</h4>
               <p>Clínica: {budget.clinica_nombre || "N/A"}</p>
+              <p>Seguro: {budget.seguro_nombre || "N/A"}</p>
             </div>
             <div className="status-info">
                <div className={`sdm-badge ${isActive ? 'confirmed' : 'pending'}`}>
@@ -218,11 +223,11 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
                 </tr>
               </thead>
               <tbody>
-                {(budget.items || []).map((item, i) => (
+                {(budget.items || budget.detalle || []).map((item, i) => (
                   <tr key={i}>
                     <td>
-                      <div className="item-name">{item.descripcion}</div>
-                      <div className="item-sku">SKU: {item.sku}</div>
+                      <div className="item-name">{item.descripcion || item.producto}</div>
+                      <div className="item-sku">SKU: {item.sku || 'N/A'}</div>
                     </td>
                     <td className="text-right">{item.cantidad}</td>
                     <td className="text-right font-mono">{formatNum(item.precio_venta)}</td>
@@ -235,9 +240,17 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
 
           <div className="sdm-invoice-footer-grid">
             <div className="sdm-footer-left">
-               <div className="sdm-notes-box">
-                  {/* <p className="notes-text">Este documento no representa una factura fiscal.</p> */}
-               </div>
+               {/* SECCIÓN DE NOTAS VISUAL */}
+               {budget.notas && budget.notas.trim() !== "" && (
+                 <div className="sdm-notes-box">
+                    <label className="sdm-section-label" style={{ display: 'flex', alignItems: 'center', gap: '5px', border: 'none', marginBottom: '5px' }}>
+                      <FileText size={14} /> NOTAS / OBSERVACIONES
+                    </label>
+                    <p className="notes-text" style={{ whiteSpace: 'pre-wrap', textTransform: 'uppercase' }}>
+                      {budget.notas}
+                    </p>
+                 </div>
+               )}
             </div>
             <div className="sdm-totals-box">
               <div className="sdm-total-row sdm-grand-total">
