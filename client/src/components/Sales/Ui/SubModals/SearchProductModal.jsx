@@ -7,6 +7,9 @@ const SearchProductModal = ({ onClose, onSelect, selectedItems = [] }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const { products, getAllProducts } = useProducts();
 
+  console.log("products search modal")
+  console.log(products)
+
   useEffect(() => {
     if (products.length === 0) getAllProducts();
   }, []);
@@ -56,7 +59,8 @@ const SearchProductModal = ({ onClose, onSelect, selectedItems = [] }) => {
                     <span className="spm-item-desc">{p.descripcion}</span>
                   </div>
                   <div className="spm-item-stats">
-                    <span className="spm-stat">Costo: <b>${p.costo_unitario}</b></span>
+                    {/* <span className="spm-stat">Costo: <b>${p.costo_unitario}</b></span> */}
+                    <span className="spm-stat">Costo: <b>${p.precio_venta}</b></span>
                     <span className="spm-stat">Stock: <b>{p.existencia_general}</b></span>
                   </div>
                 </div>

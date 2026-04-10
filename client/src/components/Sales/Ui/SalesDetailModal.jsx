@@ -55,25 +55,46 @@ const SaleDetailModal = ({ isOpen, sale, onClose, onEdit }) => {
   // --- ACCIONES ---
   const handleConfirm = async () => {
     if (!canModify) return;
+    
     setIsProcessing(true);
+    
     try {
       const res = await confirmSale(sale.id);
-      if (res.status || res.code === 200) {
+      console.log("Respuesta del servidor:", res);
+
+      // Verificamos el status que definimos en el backend
+      if (res.status) {
         setModalConfig({
           title: "VENTA CONFIRMADA",
-          message: res.msg || "El inventario se ha actualizado correctamente.",
+          message: res.msg || "EL INVENTARIO SE HA ACTUALIZADO CORRECTAMENTE.",
           type: "success",
         });
         setShowModalResult(true);
+        
+        // Refrescar la lista de ventas si la función existe
         if (getAllSales) await getAllSales();
+        
+      } else {
+        // Corregido: message ahora recibe el string directamente
+        setModalConfig({ 
+          title: "ERROR AL CONFIRMAR", 
+          message: res.msg || "NO SE PUDO COMPLETAR LA OPERACIÓN.", 
+          type: "error" 
+        });
+        setShowModalResult(true);
       }
     } catch (error) {
-      setModalConfig({ title: "ERROR", message: "Error al procesar la transacción.", type: "error" });
+      console.error("Error en handleConfirm:", error);
+      setModalConfig({ 
+        title: "ERROR DE RED", 
+        message: "HUBO UN FALLO AL COMUNICAR CON EL SERVIDOR.", 
+        type: "error" 
+      });
       setShowModalResult(true);
     } finally {
       setIsProcessing(false);
     }
-  };
+  }
 
   const handleDelete = async () => {
     if (!canModify || !window.confirm("¿Desea eliminar esta venta permanentemente?")) return;

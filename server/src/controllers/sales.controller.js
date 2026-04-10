@@ -36,14 +36,6 @@ controller.createSale = async (req, res) => {
     console.log(data)
     console.log(data.items)
 
-    // Validaciones de datos obligatorios para el flujo de venta
-    // if (!data.id_paciente || !data.nro_factura || !data.items) {
-    //   return res.status(400).json({ 
-    //     status: false, 
-    //     msg: "Paciente, Número de factura y Productos son obligatorios." 
-    //   });
-    // }
-
     const result = await SalesModel.createSale(data) 
     console.log(result)
 
@@ -85,12 +77,8 @@ controller.updateSale = async (req, res) => {
 controller.confirmSale = async (req, res) => {
   try {
     const { id } = req.params;
-    // const data = req.body;
 
-    console.log(id)
-
-    if (!id) return res.status(400).json({ error: "El id de la venta es requerido" });
-    // if (Object.keys(data).length === 0) return res.status(400).json({ error: "No data to update" });
+    if (!id) return res.status(400).json({ error: "El id de la venta es requerido" })
 
     const result = await SalesModel.confirmSale(id);
     console.log(result)

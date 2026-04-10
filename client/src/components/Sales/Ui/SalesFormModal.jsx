@@ -34,6 +34,7 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
   const [processedItems, setProcessedItems] = useState([]);
 
   const initialFormState = {
+    idUser: "",
     nro_factura: "",
     id_paciente: "",
     nombre_paciente: "",
@@ -84,8 +85,21 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
 
   useEffect(() => {
     if (isOpen && editData) {
+
+    const user = JSON.parse(localStorage.getItem("UserId"));
+    if (!user) {
+      alert("Usuario no autenticado.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    let infoUser = JSON.parse(localStorage.getItem("UserInfo"));
+
+    console.log(infoUser.id)
+
       setFormData({
         id: editData.id,
+        idUser: infoUser.id,
         nro_factura: editData.nro_factura || "",
         id_paciente: editData.id_paciente || "",
         nombre_paciente: editData.paciente_nombre || "",
@@ -110,6 +124,7 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
       setItems(editData.items?.map(item => ({
         ...item,
         id: item.id_producto || item.id,
+        id_inventario: item.id_inventario || item.inventario_id,
         descripcion: item.producto || item.descripcion,
         sku: item.sku || "",
         cantidad: item.cantidad,
@@ -204,9 +219,19 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
 
     setIsSubmitting(true);
 
+    // console.log("processedItems")
+    // console.log(processedItems)
+
+    console.log("formData")
+    console.log(formData)
+
     try {
+      const infoUser = JSON.parse(localStorage.getItem("UserId"));
+      const userId = infoUser?.id || "";
+
       const payload = {
         ...formData,
+        idUser: userId,
         subtotal: parseFloat(totals.subtotal.toFixed(2)),
         descuento: parseFloat(safeParse(totals.monto_descuento_fijo).toFixed(2)),
         porcentaje_impuesto: parseFloat(safeParse(totals.porcentaje_impuesto).toFixed(2)),
@@ -265,6 +290,9 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
   const handleSelectProduct = (product) => {
     if (items.some((i) => String(i.id || i.id_producto) === String(product.id)))
       return alert("El producto ya fue agregado");
+
+    console.log("product")
+    console.log(product)
 
     setItems([
       ...items,
@@ -401,6 +429,7 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
 
         return {
           id: det.id_producto,
+          id_inventario: det.id_inventario || det.inventario_id,
           id_producto: det.id_producto,
           descripcion: det.descripcion || det.producto,
           sku: det.sku || "",

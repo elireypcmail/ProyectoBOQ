@@ -460,10 +460,118 @@ export class ProductsModel {
     }
   }
 
+  // static async createProduct(data) {
+  //   let connection;
+
+  //   console.log(data)
+
+  //   try {
+  //     connection = await pool.connect();
+  //     await connection.query("BEGIN");
+
+  //     // 1️⃣ Validar duplicado
+  //     const duplicate = await connection.query(
+  //       `SELECT id FROM productos WHERE LOWER(descripcion) = LOWER($1)`,
+  //       [data.descripcion]
+  //     );
+
+  //     if (duplicate.rows.length) {
+  //       await connection.query("ROLLBACK");
+  //       return { status: false, code: 409, msg: "El producto ya existe" };
+  //     }
+
+  //     // 2️⃣ Crear producto
+  //     const productResult = await connection.query(
+  //       `INSERT INTO productos (
+  //         descripcion,
+  //         id_categoria,
+  //         id_marca,
+  //         files
+  //       ) VALUES ($1,$2,$3,$4)
+  //       RETURNING *`,
+  //       [
+  //         data.descripcion,
+  //         data.id_categoria,
+  //         data.id_marca,
+  //         null
+  //       ]
+  //     );
+
+  //     const producto = productResult.rows[0];
+
+  //     // 3️⃣ Crear inventario general
+  //     await connection.query(
+  //       `INSERT INTO inventario (
+  //         id_producto,
+  //         sku,
+  //         existencia_general,
+  //         costo_unitario,
+  //         precio_venta,
+  //         margen_ganancia,
+  //         stock_minimo_general,
+  //         estatus_lotes
+  //       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+  //       [
+  //         producto.id,
+  //         data.sku,
+  //         data.existencia_general || 0,
+  //         data.costo_unitario,
+  //         data.precio_venta,
+  //         data.margen_ganancia,
+  //         data.stock_minimo_general || 0,
+  //         data.estatus_lotes ?? false
+  //       ]
+  //     );
+
+  //     // 4️⃣ Crear edeposito para TODOS los depósitos
+  //     await connection.query(
+  //       `
+  //       INSERT INTO edeposito (
+  //         id_producto,
+  //         id_deposito,
+  //         existencia_deposito,
+  //         stock_minimo_deposito
+  //       )
+  //       SELECT
+  //         $1,
+  //         d.id,
+  //         0,
+  //         0
+  //       FROM depositos d
+  //       WHERE d.estatus = TRUE
+  //       `,
+  //       [producto.id]
+  //     );
+
+  //     await connection.query("COMMIT");
+
+  //     return {
+  //       status: true,
+  //       code: 201,
+  //       msg: "Producto, inventario y depósitos creados correctamente",
+  //       data: {
+  //         ...data,
+  //         id: producto.id
+  //       }
+  //     };
+
+  //   } catch (error) {
+  //     if (connection) await connection.query("ROLLBACK");
+
+  //     return {
+  //       status: false,
+  //       code: 500,
+  //       msg: "Error al crear producto",
+  //       error: error.message
+  //     };
+
+  //   } finally {
+  //     if (connection) connection.release();
+  //   }
+  // }
+
   static async createProduct(data) {
     let connection;
-
-    console.log(data)
 
     try {
       connection = await pool.connect();
@@ -498,9 +606,12 @@ export class ProductsModel {
       );
 
       const producto = productResult.rows[0];
+      const existenciaInicial = parseFloat(data.existencia_general) || 0;
+      const costo = parseFloat(data.costo_unitario) || 0;
+      const precio = parseFloat(data.precio_venta) || 0;
 
       // 3️⃣ Crear inventario general
-      await connection.query(
+      const invResult = await connection.query(
         `INSERT INTO inventario (
           id_producto,
           sku,
@@ -510,20 +621,46 @@ export class ProductsModel {
           margen_ganancia,
           stock_minimo_general,
           estatus_lotes
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
         [
           producto.id,
           data.sku,
-          data.existencia_general || 0,
-          data.costo_unitario,
-          data.precio_venta,
-          data.margen_ganancia,
+          existenciaInicial,
+          costo,
+          precio,
+          data.margen_ganancia || 0,
           data.stock_minimo_general || 0,
           data.estatus_lotes ?? false
         ]
       );
 
-      // 4️⃣ Crear edeposito para TODOS los depósitos
+      // 4️⃣ Registro en Kardex (Solo si hay existencia inicial)
+      if (existenciaInicial > 0) {
+        await connection.query(
+          `INSERT INTO kardexg (
+            id_producto, 
+            fecha, 
+            existencia_inicial, 
+            entrada, 
+            salida, 
+            existencia_final, 
+            costo, 
+            precio, 
+            detalle, 
+            documento, 
+            tipo
+          ) VALUES ($1, CURRENT_TIMESTAMP, 0, $2, 0, $2, $3, $4, $5, $6, 'INICIAL')`,
+          [
+            producto.id, 
+            existenciaInicial, 
+            costo, 
+            precio, 
+            'REGISTRO INICIAL DE PRODUCTO', 
+            data.sku
+          ]
+        );
+      }
+
       await connection.query(
         `
         INSERT INTO edeposito (
@@ -548,7 +685,7 @@ export class ProductsModel {
       return {
         status: true,
         code: 201,
-        msg: "Producto, inventario y depósitos creados correctamente",
+        msg: "Producto, inventario y kardex creados correctamente",
         data: {
           ...data,
           id: producto.id
@@ -557,7 +694,7 @@ export class ProductsModel {
 
     } catch (error) {
       if (connection) await connection.query("ROLLBACK");
-
+      console.error("Error en createProduct:", error);
       return {
         status: false,
         code: 500,
@@ -577,65 +714,42 @@ export class ProductsModel {
       connection = await pool.connect();
       await connection.query("BEGIN");
 
-      // 1️⃣ Validar producto
-      const exists = await connection.query(
-        `SELECT id FROM productos WHERE id=$1`,
-        [id],
+      // 1️⃣ Validar producto e Inventario previo (necesario para comparar cambios)
+      const currentDataResult = await connection.query(
+        `SELECT i.*, p.descripcion 
+        FROM productos p 
+        JOIN inventario i ON p.id = i.id_producto 
+        WHERE p.id = $1`,
+        [id]
       );
 
-      if (!exists.rows.length) {
+      if (!currentDataResult.rows.length) {
         await connection.query("ROLLBACK");
         return { status: false, code: 404, msg: "Producto no encontrado" };
       }
 
+      const invPrevio = currentDataResult.rows[0];
       let productoActualizado = null;
       let inventarioActualizado = null;
 
-      // 2️⃣ Producto
+      // 2️⃣ Actualizar Tabla Productos
       const productoFields = ["descripcion", "id_categoria", "id_marca"];
       const productoData = Object.fromEntries(
-        Object.entries(data).filter(([k]) => productoFields.includes(k)),
+        Object.entries(data).filter(([k]) => productoFields.includes(k))
       );
 
       if (Object.keys(productoData).length) {
         const keys = Object.keys(productoData);
         const values = Object.values(productoData);
-
         const result = await connection.query(
-          `UPDATE productos SET ${keys
-            .map((k, i) => `${k}=$${i + 1}`)
-            .join(", ")}
-         WHERE id=$${keys.length + 1}
-         RETURNING *`,
-          [...values, id],
+          `UPDATE productos SET ${keys.map((k, i) => `${k}=$${i + 1}`).join(", ")}
+          WHERE id=$${keys.length + 1} RETURNING *`,
+          [...values, id]
         );
-
         productoActualizado = result.rows[0];
       }
 
-      // 3️⃣ Inventario previo (snapshot completo para auditoría)
-      const inventarioPrevioResult = await connection.query(
-        `SELECT 
-         costo_unitario,
-         margen_ganancia,
-         precio_venta
-       FROM inventario
-       WHERE id_producto=$1`,
-        [id],
-      );
-
-      if (!inventarioPrevioResult.rows.length) {
-        await connection.query("ROLLBACK");
-        return {
-          status: false,
-          code: 404,
-          msg: "Inventario no encontrado",
-        };
-      }
-
-      const inventarioPrevio = inventarioPrevioResult.rows[0];
-
-      // 4️⃣ Inventario
+      // 3️⃣ Actualizar Tabla Inventario
       const inventarioFields = [
         "sku",
         "existencia_general",
@@ -646,64 +760,71 @@ export class ProductsModel {
       ];
 
       const inventarioData = Object.fromEntries(
-        Object.entries(data).filter(([k]) => inventarioFields.includes(k)),
+        Object.entries(data).filter(([k]) => inventarioFields.includes(k))
       );
 
       if (Object.keys(inventarioData).length) {
         const keys = Object.keys(inventarioData);
         const values = Object.values(inventarioData);
-
         const result = await connection.query(
-          `UPDATE inventario SET ${keys
-            .map((k, i) => `${k}=$${i + 1}`)
-            .join(", ")}
-         WHERE id_producto=$${keys.length + 1}
-         RETURNING *`,
-          [...values, id],
+          `UPDATE inventario SET ${keys.map((k, i) => `${k}=$${i + 1}`).join(", ")}
+          WHERE id_producto=$${keys.length + 1} RETURNING *`,
+          [...values, id]
         );
-
         inventarioActualizado = result.rows[0];
       }
 
-      // 5️⃣ Auditoría (si cambia costo, margen o precio)
-      const costoNuevo =
-        data.costo_unitario !== undefined
-          ? Number(data.costo_unitario)
-          : Number(inventarioPrevio.costo_unitario);
+      // 4️⃣ Lógica de Kardex por Ajuste de Existencia
+      const existenciaNueva = data.existencia_general !== undefined 
+        ? Number(data.existencia_general) 
+        : Number(invPrevio.existencia_general);
 
-      const margenNuevo =
-        data.margen_ganancia !== undefined
-          ? Number(data.margen_ganancia)
-          : Number(inventarioPrevio.margen_ganancia);
+      if (existenciaNueva !== Number(invPrevio.existencia_general)) {
+        const diferencia = existenciaNueva - Number(invPrevio.existencia_general);
+        const entrada = diferencia > 0 ? diferencia : 0;
+        const salida = diferencia < 0 ? Math.abs(diferencia) : 0;
 
-      const precioNuevo =
-        data.precio_venta !== undefined
-          ? Number(data.precio_venta)
-          : Number(inventarioPrevio.precio_venta);
-
-      const hayCambios =
-        costoNuevo !== Number(inventarioPrevio.costo_unitario) ||
-        margenNuevo !== Number(inventarioPrevio.margen_ganancia) ||
-        precioNuevo !== Number(inventarioPrevio.precio_venta);
-
-      if (hayCambios) {
         await connection.query(
-          `INSERT INTO auditoria (
-          entidad,
-          id_entidad,
-          accion,
-          datos_previos,
-          datos_nuevos,
-          usuario_id
-        ) VALUES ($1, $2, $3, $4, $5, $6)`,
+          `INSERT INTO kardexg (
+            id_producto, fecha, existencia_inicial, entrada, salida, 
+            existencia_final, costo, precio, detalle, documento, tipo
+          ) VALUES ($1, CURRENT_TIMESTAMP, $2, $3, $4, $5, $6, $7, $8, $9, 'AJUSTE')`,
+          [
+            id,
+            invPrevio.existencia_general,
+            entrada,
+            salida,
+            existenciaNueva,
+            data.costo_unitario || invPrevio.costo_unitario,
+            data.precio_venta || invPrevio.precio_venta,
+            'AJUSTE MANUAL DESDE EDICIÓN DE PRODUCTO',
+            invPrevio.sku,
+          ]
+        );
+      }
+
+      // 5️⃣ Auditoría (si cambia costo, margen o precio)
+      const costoNuevo = data.costo_unitario !== undefined ? Number(data.costo_unitario) : Number(invPrevio.costo_unitario);
+      const margenNuevo = data.margen_ganancia !== undefined ? Number(data.margen_ganancia) : Number(invPrevio.margen_ganancia);
+      const precioNuevo = data.precio_venta !== undefined ? Number(data.precio_venta) : Number(invPrevio.precio_venta);
+
+      const hayCambiosCostos = 
+        costoNuevo !== Number(invPrevio.costo_unitario) ||
+        margenNuevo !== Number(invPrevio.margen_ganancia) ||
+        precioNuevo !== Number(invPrevio.precio_venta);
+
+      if (hayCambiosCostos) {
+        await connection.query(
+          `INSERT INTO auditoria (entidad, id_entidad, accion, datos_previos, datos_nuevos, usuario_id) 
+          VALUES ($1, $2, $3, $4, $5, $6)`,
           [
             "inventario",
             id,
             "ACTUALIZACION_COSTO_MARGEN_PRECIO",
             JSON.stringify({
-              costo_unitario: inventarioPrevio.costo_unitario,
-              margen_ganancia: inventarioPrevio.margen_ganancia,
-              precio_venta: inventarioPrevio.precio_venta,
+              costo_unitario: invPrevio.costo_unitario,
+              margen_ganancia: invPrevio.margen_ganancia,
+              precio_venta: invPrevio.precio_venta,
             }),
             JSON.stringify({
               costo_unitario: costoNuevo,
@@ -711,7 +832,7 @@ export class ProductsModel {
               precio_venta: precioNuevo,
             }),
             data.usuario_id,
-          ],
+          ]
         );
       }
 
@@ -724,11 +845,12 @@ export class ProductsModel {
         data: {
           ...(productoActualizado || {}),
           ...(inventarioActualizado || {}),
-          id: productoActualizado?.id ?? id,
+          id: id,
         },
       };
     } catch (error) {
       if (connection) await connection.query("ROLLBACK");
+      console.error("Error en updateProduct:", error);
       return {
         status: false,
         code: 500,

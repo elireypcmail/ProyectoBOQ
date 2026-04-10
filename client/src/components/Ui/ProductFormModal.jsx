@@ -20,7 +20,7 @@ const ProductFormModal = ({
     id_categoria: "",
     id_marca: "",
     sku: "",
-    existencia_general: 0,
+    existencia_general: "", 
     costo_unitario: "", 
     precio_venta: "0,00",
     margen_ganancia: "",
@@ -71,6 +71,7 @@ const ProductFormModal = ({
         descripcion: (initialData.descripcion || "").toUpperCase(),
         sku: (initialData.sku || "").toUpperCase(),
         stock_minimo_general: Number(initialData.stock_minimo_general) || 1,
+        existencia_general: initialData.existencia_general !== undefined && initialData.existencia_general !== null ? Number(initialData.existencia_general) : "",
         costo_unitario: initialData.costo_unitario ? String(initialData.costo_unitario).replace(".", ",") : "",
         margen_ganancia: initialData.margen_ganancia ? String(initialData.margen_ganancia).replace(".", ",") : "",
         precio_venta: initialData.precio_venta ? String(initialData.precio_venta).replace(".", ",") : "0,00",
@@ -107,20 +108,22 @@ const ProductFormModal = ({
     const { name, value, type } = e.target;
     let val = value;
 
-    // Convertir a mayúsculas si es texto (incluyendo los de moneda para consistencia de estado)
     if (type !== "number") {
       val = val.toUpperCase();
     } else {
       val = value === "" ? "" : Number(value);
     }
 
-    // Validación específica para campos con coma decimal
     if (name === "costo_unitario" || name === "margen_ganancia") {
       if (!/^[0-9,]*$/.test(val)) return; 
     }
     
     if (name === "stock_minimo_general" && val !== "") {
         val = Math.max(val, 1);
+    }
+
+    if (name === "existencia_general" && val !== "") {
+        val = Math.max(val, 0);
     }
 
     setForm(prev => ({ ...prev, [name]: val }));
@@ -152,7 +155,6 @@ const ProductFormModal = ({
     const usuario_id = infoJson ? infoJson.id : null;
     const { descripcion, sku, id_categoria, id_marca } = form;
 
-
     if (!descripcion.trim()) return alert("LA DESCRIPCIÓN ES OBLIGATORIA.");
     if (!sku.trim()) return alert("EL SKU ES OBLIGATORIO.");
     if (!id_categoria) return alert("DEBE SELECCIONAR UNA CATEGORÍA.");
@@ -164,6 +166,7 @@ const ProductFormModal = ({
       precio_venta: parseLocaleNumber(form.precio_venta), 
       margen_ganancia: parseLocaleNumber(form.margen_ganancia),
       stock_minimo_general: Number(form.stock_minimo_general),
+      existencia_general: Number(form.existencia_general) || 0, // Fallback to 0 if submitted empty
       usuario_id
     };
 
@@ -340,6 +343,12 @@ const ProductFormModal = ({
                 <label className="pfm-label">STOCK MÍNIMO *</label>
                 <input className="pfm-input" type="number" name="stock_minimo_general" min="1" value={form.stock_minimo_general} onChange={handleChange} />
               </div>
+
+              <div className="pfm-field">
+                <label className="pfm-label">EXISTENCIA *</label>
+                <input className="pfm-input" type="number" name="existencia_general" min="0" value={form.existencia_general} onChange={handleChange} />
+              </div>
+
             </div>
           </div>
 
@@ -361,7 +370,6 @@ const ProductFormModal = ({
             </div>
           </div>
 
-          {/* Resto del componente (Inventario, Multimedia, Footer) sin cambios funcionales extra */}
           <div className="pfm-section">
             <h4 className="pfm-section-title">GESTIÓN DE INVENTARIO</h4>
             <div className="pfm-toggle-group">

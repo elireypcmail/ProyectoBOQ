@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Search, Plus, Trash2, Edit2, Layers } from "lucide-react";
+import { Search, Plus, Trash2, Layers } from "lucide-react";
 import "../../../../styles/ui/stepsSales/StepProducts.css";
 
 const StepProducts = ({
@@ -9,10 +9,10 @@ const StepProducts = ({
   onOpenCreate,
   onOpenBatch
 }) => {
-
+  
   console.log("items")
   console.log(items)
-  
+
   const MAX_VALUE = 999999999; 
 
   const round2 = (num) => {
@@ -22,6 +22,7 @@ const StepProducts = ({
   const formatInitialValue = (value) => {
     if (value === null || value === undefined || value === "") return "";
     
+    // Si es un número o un string con punto decimal, lo convertimos a formato visual con coma
     if (typeof value === "number" || (typeof value === "string" && value.includes(".") && !value.includes(","))) {
       return value.toString().replace(".", ",");
     }
@@ -46,7 +47,7 @@ const StepProducts = ({
   const calculateWidth = (value) => {
     const text = value ? value.toString() : "";
     const length = text.length; 
-    return `${Math.max(6, length + 2)}ch`;
+    return `${Math.max(8, length + 2)}ch`;
   };
 
   const handleInputChange = (id, field, value) => {
@@ -63,6 +64,7 @@ const StepProducts = ({
        }
     }
 
+    // Regex para permitir números con hasta 2 decimales usando coma
     const regex = /^[0-9.]*(,[0-9]{0,2})?$/;
 
     if (regex.test(valToProcess)) {
@@ -117,10 +119,8 @@ const StepProducts = ({
       
       const lotesAsignados = (item.lotes_compra || item.lotes || []).reduce((acc, l) => acc + parseToFloat(l.cantidad), 0);
       
-      // Verificamos si usa lotes. Se omite si estatus_lotes es falso Y no tiene lotes pre-cargados.
       const usaLotes = Boolean(item.estatus_lotes || item.usa_lotes || (item.lotes_compra && item.lotes_compra.length > 0));
       
-      // Si el producto maneja lotes, exigimos validación estricta. Si no, `lotesCompletos` es true por defecto.
       const lotesCompletos = usaLotes ? (Math.abs(qty - lotesAsignados) < 0.0001) : true;
       const isValid = qty > 0 && price > 0 && lotesCompletos;
 
@@ -140,7 +140,7 @@ const StepProducts = ({
       <div className="step-prod-header">
         <h2>Gestión de Productos</h2>
         <p className="step-prod-subtitle">
-          * Ingrese la cantidad. Use la coma (,) para decimales. Límite: 999.999.999,00
+          * Ingrese cantidad y precio. Use la coma (,) para decimales. Límite: 999.999.999,00
         </p>
       </div>
 
@@ -166,8 +166,8 @@ const StepProducts = ({
                 <th>CÓDIGO</th>
                 <th>DESCRIPCIÓN</th>
                 <th className="step-prod-text-right">CANTIDAD</th>
-                <th className="step-prod-text-right">PRECIO</th>
-                <th className="step-prod-text-right">TOTAL</th>
+                <th className="step-prod-text-right">PRECIO ($)</th>
+                <th className="step-prod-text-right">TOTAL ($)</th>
                 <th className="step-prod-text-center">ACCIONES</th>
               </tr>
             </thead>
@@ -178,9 +178,8 @@ const StepProducts = ({
                 const totalLine = round2(qtyVal * priceVal);
                 
                 const hasError = !item.isValid;
-                
-                // Determinamos la razón del error para mostrar un mensaje más preciso
                 const isQtyError = qtyVal <= 0;
+                const isPriceError = priceVal <= 0;
                 const usaLotes = Boolean(item.estatus_lotes || item.usa_lotes || (item.lotes_compra && item.lotes_compra.length > 0));
                 const lotesAsignados = (item.lotes_compra || item.lotes || []).reduce((acc, l) => acc + parseToFloat(l.cantidad), 0);
                 const isLotesError = usaLotes && Math.abs(qtyVal - lotesAsignados) > 0.0001;
@@ -193,7 +192,7 @@ const StepProducts = ({
                     <td className="step-prod-text-right">
                       <input
                         type="text"
-                        className={`step-prod-input ${hasError ? "step-prod-input-error" : ""}`}
+                        className={`step-prod-input ${isQtyError ? "step-prod-input-error" : ""}`}
                         style={{ width: calculateWidth(item.cantidad) }}
                         value={formatInitialValue(item.cantidad)}
                         onChange={(e) => handleInputChange(item.id, "cantidad", e.target.value)}
@@ -201,7 +200,6 @@ const StepProducts = ({
                         placeholder="0,00"
                         inputMode="decimal"
                       />
-                      {/* Mensajes de error dinámicos */}
                       {isQtyError && <div style={{ fontSize: '10px', color: '#ec3137' }}>Cant. inválida</div>}
                       {isLotesError && !isQtyError && <div style={{ fontSize: '10px', color: '#ec3137' }}>Lotes incompletos</div>}
                     </td>
@@ -210,13 +208,16 @@ const StepProducts = ({
                       <div className="step-prod-currency-wrapper">
                         <input
                           type="text"
-                          className={`step-prod-input ${!priceVal ? "step-prod-input-error" : ""}`}
+                          className={`step-prod-input ${isPriceError ? "step-prod-input-error" : ""}`}
                           style={{ width: calculateWidth(item.precio_venta) }}
                           value={formatInitialValue(item.precio_venta)}
-                          // readOnly
+                          onChange={(e) => handleInputChange(item.id, "precio_venta", e.target.value)}
+                          onBlur={(e) => handleBlurFormat(item.id, "precio_venta", e.target.value)}
                           placeholder="0,00"
+                          inputMode="decimal"
                         />
                       </div>
+                      {isPriceError && <div style={{ fontSize: '10px', color: '#ec3137' }}>Precio inválido</div>}
                     </td>
 
                     <td className="step-prod-text-right step-prod-total">
@@ -228,15 +229,11 @@ const StepProducts = ({
 
                     <td className="step-prod-text-center">
                       <div className="step-prod-actions">
-                        {/* Ocultamos el botón de lotes si el producto no los maneja */}
                         {usaLotes && (
                           <button className="step-prod-action-btn step-prod-btn-batch" title="Lotes" onClick={() => onOpenBatch?.(item)}>
                             <Layers size={16} />
                           </button>
                         )}
-                        {/* <button className="step-prod-action-btn step-prod-btn-edit" title="Editar" onClick={() => onEditProduct?.(item)}>
-                          <Edit2 size={16} />
-                        </button> */}
                         <button className="step-prod-action-btn step-prod-btn-delete" title="Quitar" onClick={() => removeItem(item.id)}>
                           <Trash2 size={16} />
                         </button>
