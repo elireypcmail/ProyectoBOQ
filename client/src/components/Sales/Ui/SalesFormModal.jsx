@@ -93,13 +93,9 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
       return;
     }
 
-    let infoUser = JSON.parse(localStorage.getItem("UserInfo"));
-
-    console.log(infoUser.id)
-
       setFormData({
         id: editData.id,
-        idUser: infoUser.id,
+        idUser: user.id,
         nro_factura: editData.nro_factura || "",
         id_paciente: editData.id_paciente || "",
         nombre_paciente: editData.paciente_nombre || "",

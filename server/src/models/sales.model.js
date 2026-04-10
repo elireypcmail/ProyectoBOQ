@@ -794,141 +794,6 @@ export class SalesModel {
 
   /* ================= CONFIRMAR VENTA ================= */
 
-  // static async confirmSale(idVenta) {
-  //   let connection;
-
-  //   try {
-  //     connection = await pool.connect();
-  //     await connection.query("BEGIN");
-
-  //     /* 1️⃣ VALIDAR VENTA */
-  //     const ventaQuery = await connection.query(
-  //       `SELECT * FROM ventas WHERE id = $1 FOR UPDATE`,
-  //       [idVenta]
-  //     );
-
-  //     if (!ventaQuery.rows.length) throw new Error("La venta no existe.");
-  //     const venta = ventaQuery.rows[0];
-
-  //     if (venta.estado_venta !== "PENDIENTE") {
-  //       throw new Error("Esta venta ya fue procesada.");
-  //     }
-
-  //     /* 2️⃣ OBTENER DETALLE */
-  //     const detalles = await connection.query(
-  //       `SELECT * FROM ventas_detalle WHERE id_venta = $1`,
-  //       [idVenta]
-  //     );
-
-  //     if (!detalles.rows.length) throw new Error("La venta no tiene productos.");
-
-  //     /* 3️⃣ VALIDAR STOCK DE LOTES (SOLO SI EXISTEN) */
-  //     const lotesQuery = await connection.query(
-  //       `SELECT vdl.cantidad AS cantidad_pedida, l.id AS id_lote, l.nro_lote,
-  //               l.cantidad AS stock_actual_lote, l.id_producto, l.id_deposito,
-  //               p.descripcion AS nombre_producto
-  //       FROM venta_detalle_lote vdl
-  //       INNER JOIN ventas_detalle vd ON vd.id = vdl.id_detalle
-  //       INNER JOIN lotes l ON l.id = vdl.id_lote
-  //       INNER JOIN productos p ON p.id = l.id_producto
-  //       WHERE vd.id_venta = $1 FOR UPDATE`,
-  //       [idVenta]
-  //     );
-
-  //     for (const lote of lotesQuery.rows) {
-  //       if (Number(lote.stock_actual_lote) < Number(lote.cantidad_pedida)) {
-  //         throw new Error(`Stock insuficiente en Lote: ${lote.nro_lote} (${lote.nombre_producto})`);
-  //       }
-  //     }
-
-  //     /* 4️⃣ DESCUENTO GENERAL (PARA TODOS LOS PRODUCTOS) */
-  //     for (const item of detalles.rows) {
-  //       const cantidad = Number(item.cantidad);
-
-  //       const invQuery = await connection.query(
-  //         `SELECT * FROM inventario WHERE id = $1 FOR UPDATE`,
-  //         [item.id_inventario]
-  //       );
-
-  //       if (!invQuery.rows.length) throw new Error("Producto no en inventario.");
-
-  //       const inv = invQuery.rows[0];
-  //       const existenciaInicial = Number(inv.existencia_general);
-        
-  //       if (existenciaInicial < cantidad) {
-  //         throw new Error(`Stock global insuficiente para: ${item.descripcion}`);
-  //       }
-
-  //       const nuevoStock = existenciaInicial - cantidad;
-
-  //       // Actualizar Inventario General
-  //       await connection.query(
-  //         `UPDATE inventario SET existencia_general = $1 WHERE id = $2`,
-  //         [nuevoStock, inv.id]
-  //       );
-
-  //       // Kardex General (Siempre se dispara)
-  //       await connection.query(
-  //         `INSERT INTO kardexg
-  //         (id_producto, fecha, existencia_inicial, entrada, salida, existencia_final, costo, precio, detalle, documento, tipo)
-  //         VALUES ($1, NOW(), $2, 0, $3, $4, $5, $6, $7, $8, 'VENTA')`,
-  //         [inv.id_producto, existenciaInicial, cantidad, nuevoStock, Number(inv.costo_unitario), Number(item.precio_unitario_final), `Venta Fac: ${venta.nro_factura}`, venta.nro_factura]
-  //       );
-        
-  //       // NOTA: Aquí ya no hay lógica de edeposito para productos sin lotes.
-  //     }
-
-  //     /* 5️⃣ DESCUENTO ESPECÍFICO DE LOTES Y DEPÓSITOS (SOLO PARA PRODUCTOS CON LOTES) */
-  //     for (const lote of lotesQuery.rows) {
-  //       const cantidad = Number(lote.cantidad_pedida);
-
-  //       // Descontar del lote
-  //       await connection.query(
-  //         `UPDATE lotes SET cantidad = cantidad - $1 WHERE id = $2`,
-  //         [cantidad, lote.id_lote]
-  //       );
-
-  //       // Como este producto SÍ tiene lote, entonces SÍ tiene depósito asociado
-  //       const depQuery = await connection.query(
-  //         `SELECT existencia_deposito FROM edeposito
-  //         WHERE id_producto = $1 AND id_deposito = $2 FOR UPDATE`,
-  //         [lote.id_producto, lote.id_deposito]
-  //       );
-
-  //       if (depQuery.rows.length > 0) {
-  //         const exInicialDep = Number(depQuery.rows[0].existencia_deposito);
-  //         const exFinalDep = exInicialDep - cantidad;
-
-  //         await connection.query(
-  //           `UPDATE edeposito SET existencia_deposito = $1
-  //           WHERE id_producto = $2 AND id_deposito = $3`,
-  //           [exFinalDep, lote.id_producto, lote.id_deposito]
-  //         );
-
-  //         // Kardex por depósito (Solo para productos con lote)
-  //         await connection.query(
-  //           `INSERT INTO kardexdep
-  //           (id_producto, id_deposito, fecha, existencia_inicial, entrada, salida, existencia_final, costo, precio, detalle, documento, tipo)
-  //           VALUES ($1, $2, NOW(), $3, 0, $4, $5, 0, 0, $6, $7, 'VENTA')`,
-  //           [lote.id_producto, lote.id_deposito, exInicialDep, cantidad, exFinalDep, `Venta Lote: ${lote.nro_lote}`, venta.nro_factura]
-  //         );
-  //       }
-  //     }
-
-  //     /* 6️⃣ FINALIZAR */
-  //     await connection.query(`UPDATE ventas SET estado_venta = 'CONFIRMADA' WHERE id = $1`, [idVenta]);
-
-  //     await connection.query("COMMIT");
-  //     return { status: true, code: 200, msg: "Venta confirmada." };
-
-  //   } catch (error) {
-  //     if (connection) await connection.query("ROLLBACK");
-  //     return { status: false, code: 500, msg: error.message };
-  //   } finally {
-  //     if (connection) connection.release();
-  //   }
-  // }
-
   static async confirmSale(idVenta) {
       let connection;
       let msg = {
@@ -1021,28 +886,28 @@ export class SalesModel {
               }
 
               // 🟡 VALIDACIÓN Y ACTUALIZACIÓN DE PRECIO
-              if (precioVentaConfirmado !== precioActualInventario) {
-                  // 1. Actualizar precio en inventario
-                  await connection.query(
-                      `UPDATE inventario SET precio_venta = $1 WHERE id = $2`,
-                      [precioVentaConfirmado, inv.id]
-                  );
+              // if (precioVentaConfirmado !== precioActualInventario) {
+              //     // 1. Actualizar precio en inventario
+              //     await connection.query(
+              //         `UPDATE inventario SET precio_venta = $1 WHERE id = $2`,
+              //         [precioVentaConfirmado, inv.id]
+              //     );
 
-                  // 2. Registro en Kardex por Cambio de Precio (Entrada/Salida 0 ya que solo cambia valor)
-                  await connection.query(
-                      `INSERT INTO kardexg 
-                      (id_producto, fecha, existencia_inicial, entrada, salida, existencia_final, costo, precio, detalle, documento, tipo)
-                      VALUES ($1, NOW(), $2, 0, 0, $2, $3, $4, $5, $6, 'AJUSTE PRECIO')`,
-                      [
-                          inv.id_producto, 
-                          existenciaInicial, 
-                          Number(inv.costo_unitario), 
-                          precioVentaConfirmado, 
-                          `Cambio de precio detectado en Venta ${venta.nro_factura}. Anterior: ${precioActualInventario}`, 
-                          venta.nro_factura
-                      ]
-                  );
-              }
+              //     // 2. Registro en Kardex por Cambio de Precio (Entrada/Salida 0 ya que solo cambia valor)
+              //     await connection.query(
+              //         `INSERT INTO kardexg 
+              //         (id_producto, fecha, existencia_inicial, entrada, salida, existencia_final, costo, precio, detalle, documento, tipo)
+              //         VALUES ($1, NOW(), $2, 0, 0, $2, $3, $4, $5, $6, 'AJUSTE PRECIO')`,
+              //         [
+              //             inv.id_producto, 
+              //             existenciaInicial, 
+              //             Number(inv.costo_unitario), 
+              //             precioVentaConfirmado, 
+              //             `Cambio de precio detectado en Venta ${venta.nro_factura}. Anterior: ${precioActualInventario}`, 
+              //             venta.nro_factura
+              //         ]
+              //     );
+              // }
 
               const nuevoStock = existenciaInicial - cantidad;
 
