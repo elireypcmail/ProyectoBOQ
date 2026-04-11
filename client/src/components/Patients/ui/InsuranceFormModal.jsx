@@ -1,5 +1,5 @@
 import React from "react";
-import { X, Save } from "lucide-react";
+import { X, Save, Shield } from "lucide-react";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 
@@ -15,62 +15,63 @@ const InsuranceFormModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="insurances-modal-overlay">
-      <div className="insurances-modal-card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <h3 className="insurances-modal-title">{title}</h3>
-          <button
-            onClick={onClose}
-            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-          >
+    <div className="is-modal-overlay">
+      <div className="is-modal-box form-card">
+        {/* HEADER DEL MODAL */}
+        <div className="is-modal-header">
+          <div className="is-modal-title-wrapper">
+            <div className="is-modal-icon-small">
+              <Shield size={20} />
+            </div>
+            <h3 className="is-modal-title">{title}</h3>
+          </div>
+          <button className="is-close-btn" onClick={onClose}>
             <X size={24} />
           </button>
         </div>
 
-        <div className="insurances-modal-grid">
-          <div className="ins-col-span-2">
-            <label>Nombre de la Empresa</label>
+        {/* CUERPO DEL FORMULARIO */}
+        <div className="is-modal-grid">
+          <div className="is-col-span-2">
+            <label className="is-modal-label">Nombre de la Aseguradora</label>
             <input
-              className="insurances-modal-input"
+              className="is-modal-input"
+              placeholder="EJ: SEGUROS CARACAS"
               value={formData.nombre}
               onChange={e => handleNameInput(e.target.value, (val) => setFormData({...formData, nombre: val}))}
             />
           </div>
 
-          <div>
-            <label>Persona de Contacto</label>
+          <div className="is-col-mobile-full">
+            <label className="is-modal-label">Persona de Contacto</label>
             <input
-              className="insurances-modal-input"
+              className="is-modal-input"
+              placeholder="NOMBRE DEL ASESOR"
               value={formData.contacto}
               onChange={e => handleNameInput(e.target.value, (val) => setFormData({...formData, contacto: val}))}
             />
           </div>
 
-          <div>
-            <label>Teléfono</label>
+          <div className="is-col-mobile-full">
+            <label className="is-modal-label">Teléfono de Soporte</label>
             <PhoneInput
               country={'ve'}
               value={formData.telefono}
               onChange={(val) => setFormData({...formData, telefono: val})}
-              inputStyle={{ width: '100%', height: '45px', borderRadius: '10px' }}
+              containerClass="is-phone-container"
+              inputClass="is-phone-input"
+              buttonClass="is-phone-button"
             />
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-          <button
-            className="insurances-btn-secondary"
-            style={{ flex: 1 }}
-            onClick={onClose}
-          >
-            Cancelar
+        {/* ACCIONES */}
+        <div className="is-modal-footer">
+          <button className="is-btn-secondary-outline" onClick={onClose}>
+            CANCELAR
           </button>
-          <button
-            className="insurances-btn-primary"
-            style={{ flex: 1 }}
-            onClick={onSave}
-          >
-            <Save size={18} /> Guardar
+          <button className="is-btn-primary" onClick={onSave}>
+            <Save size={18} /> GUARDAR CAMBIOS
           </button>
         </div>
       </div>

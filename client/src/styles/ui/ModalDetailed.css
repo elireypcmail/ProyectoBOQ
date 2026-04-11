@@ -426,21 +426,167 @@
 .pdm-btn-primary:hover { background: #1e293b; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2); }
 
 /* --- Responsividad --- */
-@media (max-width: 768px) {
-  .pdm-container { border-radius: 0; max-height: 100vh; height: 100vh; }
-  .pdm-overlay { padding: 0; }
-  
-  .pdm-general-hero { flex-direction: column; align-items: center; text-align: center; }
-  .pdm-image-section { width: 100%; align-items: center; }
-  .pdm-main-info { grid-template-columns: 1fr; width: 100%; }
-  .pdm-info-item label { justify-content: center; }
-  
-  .pdm-stats-grid { grid-template-columns: 1fr; }
-  .pdm-stat-card.inventory { grid-column: span 1; }
-  
-  .pdm-footer { flex-direction: column; gap: 16px; }
-  .pdm-footer-right { width: 100%; }
-  .pdm-footer-right button { flex: 1; }
+/* ==========================================================================
+   RESPONSIVE DESIGN (PDM)
+   ========================================================================== */
 
-  .pdm-zoom-close { top: 15px; right: 15px; width: 40px; height: 40px; }
+@media (max-width: 768px) {
+  /* 1. Ajustes del Contenedor Principal */
+  .pdm-overlay {
+    padding: 0;
+  }
+
+  .pdm-container {
+    max-width: 100%;
+    max-height: 100vh;
+    height: 100vh;
+    border-radius: 0; /* Look de App nativa */
+  }
+
+  /* 2. Header más compacto */
+  .pdm-header {
+    padding: 15px 20px;
+  }
+
+  .pdm-title {
+    font-size: 1.1rem;
+    max-width: 250px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* 3. Tabs con Scroll Horizontal */
+  .pdm-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+    display: flex;
+    scrollbar-width: none; /* Firefox */
+    padding: 0 15px;
+  }
+
+  .pdm-tabs::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
+
+  .pdm-tab-btn {
+    flex: 0 0 auto;
+    padding: 12px 15px;
+    font-size: 0.8rem;
+  }
+
+  /* 4. Hero Section (Imagen e Info) */
+  .pdm-body {
+    padding: 20px;
+  }
+
+  .pdm-general-hero {
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .pdm-image-section {
+    width: 100%;
+    align-items: center;
+  }
+
+  .pdm-image-container {
+    width: 100%;
+    max-width: 280px; /* Tamaño controlado en móviles */
+    height: 250px;
+  }
+
+  .pdm-main-info {
+    grid-template-columns: 1fr; /* Una columna */
+    width: 100%;
+    gap: 15px;
+  }
+
+  .pdm-info-item {
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 12px;
+  }
+
+  /* 5. Grid de Estadísticas */
+  .pdm-stats-grid {
+    grid-template-columns: 1fr 1fr; /* 2 columnas en móvil */
+    gap: 10px;
+  }
+
+  .pdm-stat-card.inventory {
+    grid-column: span 2; /* Ocupa todo el ancho */
+  }
+
+  .pdm-stat-card {
+    padding: 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .pdm-stat-content strong {
+    font-size: 0.95rem;
+  }
+
+  /* 6. Footer (Botones de acción) */
+  .pdm-footer {
+    flex-direction: column;
+    padding: 15px;
+    gap: 12px;
+    background: white;
+  }
+
+  .pdm-btn-action.delete {
+    width: 100%;
+    justify-content: center;
+    background: #fee2e2;
+    font-size: 0.85rem;
+  }
+
+  .pdm-footer-right {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 2fr; /* Botón Editar más grande */
+    gap: 10px;
+  }
+
+  .pdm-btn-secondary, .pdm-btn-primary {
+    width: 100%;
+    padding: 12px 10px;
+    font-size: 0.85rem;
+    justify-content: center;
+  }
+
+  /* Ocultar texto largo en botones si es necesario */
+  .pdm-btn-primary span, .pdm-btn-action.delete span {
+    font-size: 0.8rem;
+  }
+}
+
+/* Ajustes adicionales para móviles muy pequeños (iPhone SE, etc) */
+@media (max-width: 400px) {
+  .pdm-stats-grid {
+    grid-template-columns: 1fr; /* Todo a una columna */
+  }
+  
+  .pdm-stat-card.inventory {
+    grid-column: span 1;
+  }
+
+  .pdm-footer-right {
+    grid-template-columns: 1fr; /* Botones uno debajo del otro */
+  }
+}
+
+/* Ajuste para el Zoom de Imagen en móvil */
+@media (max-height: 600px) {
+  .pdm-zoom-image {
+    max-height: 80vh;
+  }
+  .pdm-zoom-close {
+    top: 10px;
+    right: 10px;
+  }
 }

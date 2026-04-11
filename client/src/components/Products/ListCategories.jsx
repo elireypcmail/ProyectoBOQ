@@ -69,6 +69,10 @@ const ListCategories = () => {
     currentPage * itemsPerPage
   );
 
+  console.log("currentCategories")
+  console.log(currentCategories)
+
+
   // -------------------- Acciones --------------------
   const openEditModal = (category) => {
     setSelectedCategory(category);
@@ -119,27 +123,25 @@ const ListCategories = () => {
   };
 
   return (
-    <div className="orders-container">
-
+    <div className="pl-main-container">
       {/* HEADER */}
-      <div className="orders-header">
-        <div>
+      <div className="pl-header-section">
+        <div className="pl-title-group">
           <h2>GESTIÓN DE CATEGORÍAS</h2>
           <p>{filteredCategories.length} CATEGORÍAS REGISTRADAS</p>
         </div>
-        <button className="btn-primary" onClick={() => { setEditName(""); setIsCreateModalOpen(true); }}>
+        <button className="pl-btn-action" onClick={() => { setEditName(""); setIsCreateModalOpen(true); }}>
           <Plus size={16} /> NUEVA CATEGORÍA
         </button>
       </div>
 
       {/* TOOLBAR */}
-      <div className="orders-toolbar">
-        <div className="search-box">
+      <div className="pl-toolbar">
+        <div className="pl-search-wrapper">
           <Search size={16} />
           <input
             type="text"
             placeholder="BUSCAR CATEGORÍA..."
-            style={{ textTransform: 'uppercase' }}
             value={searchTerm}
             onChange={(e) => { setSearchTerm(e.target.value.toUpperCase()); setCurrentPage(1); }}
           />
@@ -147,27 +149,25 @@ const ListCategories = () => {
       </div>
 
       {/* TABLE */}
-      <div className="orders-table-wrapper">
-        <table className="orders-table">
+      <div className="pl-table-frame">
+        <table className="pl-data-table">
           <thead>
             <tr>
-              <th className="hide-mobile">ID</th>
+              <th>ID</th>
               <th>NOMBRE</th>
-              <th className="hide-mobile">ESTATUS</th>
-              <th className="center">ACCIONES</th>
+              <th>ESTATUS</th>
+              <th>ACCIONES</th>
             </tr>
           </thead>
           <tbody>
             {currentCategories.length > 0 ? (
               currentCategories.map(category => (
                 <tr key={category.id}>
-                  <td className="id hide-mobile">#{category.id}</td>
-                  <td className="bold">{category.nombre.toUpperCase()}</td>
-                  <td className="hide-mobile">
-                    <span className="badge active">ACTIVO</span>
-                  </td>
-                  <td className="center">
-                    <button className="icon-btn" onClick={() => { setSelectedCategory(category); setIsDetailsModalOpen(true); }}>
+                  <td data-label="ID" className="pl-sku-cell">#{category.id}</td>
+                  <td data-label="NOMBRE" style={{ fontWeight: 700 }}>{category.nombre.toUpperCase()}</td>
+                  <td data-label="ESTATUS">ACTIVO</td>
+                  <td data-label="ACCIONES">
+                    <button className="pl-icon-only-btn" onClick={() => { setSelectedCategory(category); setIsDetailsModalOpen(true); }}>
                       <SlOptionsVertical size={16}/>
                     </button>
                   </td>
@@ -175,7 +175,9 @@ const ListCategories = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="4" className="no-results">NO SE ENCONTRARON RESULTADOS</td>
+                <td colSpan="4" style={{ padding: '2rem', color: 'var(--pl-muted)' }}>
+                  NO SE ENCONTRARON RESULTADOS
+                </td>
               </tr>
             )}
           </tbody>
@@ -184,52 +186,40 @@ const ListCategories = () => {
 
       {/* PAGINACIÓN */}
       {totalPages > 1 && (
-        <div className="orders-pagination">
-          <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>
+        <div className="pl-pagination-area">
+          <button className="pl-page-node" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>
             <ChevronLeft size={18} />
           </button>
-          <span>PÁGINA {currentPage} DE {totalPages}</span>
-          <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>
+          <span style={{ fontWeight: 600 }}>{currentPage} / {totalPages}</span>
+          <button className="pl-page-node" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>
             <ChevronRight size={18} />
           </button>
         </div>
       )}
 
-      {/* MODAL CREAR */}
-      {isCreateModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>CREAR CATEGORÍA</h3>
-            <input 
-              placeholder="NOMBRE"
-              className="modal-input" 
-              style={{ textTransform: 'uppercase' }}
-              value={editName} 
-              onChange={(e) => handleNameInput(e.target.value, setEditName)} 
-            />
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setIsCreateModalOpen(false)}>CANCELAR</button>
-              <button className="btn-primary" onClick={handleCreate}><Save size={16} /> CREAR</button>
+      {/* MODAL CREAR / EDITAR */}
+      {(isCreateModalOpen || isEditModalOpen) && (
+        <div className="pl-modal-overlay">
+          <div className="pl-modal-box">
+            <h3 className="pl-modal-title">
+              {isCreateModalOpen ? "CREAR CATEGORÍA" : "EDITAR CATEGORÍA"}
+            </h3>
+            <div className="pl-modal-body">
+              <label className="pl-modal-label">NOMBRE DE CATEGORÍA</label>
+              <input 
+                placeholder="EJ. BEBIDAS"
+                className="pl-modal-input" 
+                value={editName} 
+                onChange={(e) => handleNameInput(e.target.value, setEditName)} 
+              />
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL EDITAR */}
-      {isEditModalOpen && selectedCategory && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>EDITAR CATEGORÍA</h3>
-            <input 
-              placeholder="NOMBRE"
-              className="modal-input" 
-              style={{ textTransform: 'uppercase' }}
-              value={editName} 
-              onChange={(e) => handleNameInput(e.target.value, setEditName)} 
-            />
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setIsEditModalOpen(false)}>CANCELAR</button>
-              <button className="btn-primary" onClick={handleUpdate}><Save size={16} /> GUARDAR</button>
+            <div className="pl-modal-footer">
+              <button className="pl-btn-secondary-outline" onClick={() => { setIsCreateModalOpen(false); setIsEditModalOpen(false); }}>
+                CANCELAR
+              </button>
+              <button className="pl-btn-action" onClick={isCreateModalOpen ? handleCreate : handleUpdate}>
+                <Save size={16} /> {isCreateModalOpen ? "CREAR" : "GUARDAR"}
+              </button>
             </div>
           </div>
         </div>
@@ -237,16 +227,20 @@ const ListCategories = () => {
 
       {/* MODAL ELIMINAR */}
       {isDeleteModalOpen && selectedCategory && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header-danger">
+        <div className="pl-modal-overlay">
+          <div className="pl-modal-box">
+            <div className="pl-danger-header">
               <AlertTriangle size={28} />
               <h3>¿ELIMINAR CATEGORÍA?</h3>
             </div>
-            <p>CONFIRMA QUE DESEAS ELIMINAR: <br/><strong>{selectedCategory.nombre.toUpperCase()}</strong></p>
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>CANCELAR</button>
-              <button className="btn-danger" onClick={handleDelete}><Trash2 size={16} /> ELIMINAR</button>
+            <p className="pl-modal-text">
+              ¿Estás seguro de eliminar <strong>{selectedCategory.nombre.toUpperCase()}</strong>? Esta acción no se puede deshacer.
+            </p>
+            <div className="pl-modal-footer">
+              <button className="pl-btn-secondary-outline" onClick={() => setIsDeleteModalOpen(false)}>CANCELAR</button>
+              <button className="pl-btn-action" style={{ background: 'var(--pl-danger)' }} onClick={handleDelete}>
+                <Trash2 size={16} /> ELIMINAR
+              </button>
             </div>
           </div>
         </div>
@@ -254,23 +248,26 @@ const ListCategories = () => {
 
       {/* MODAL DETALLES */}
       {isDetailsModalOpen && selectedCategory && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>DETALLES DE CATEGORÍA</h3>
-            <div className="modal-info-body">
-              <div className="detail-card"><strong>ID:</strong> <span>#{selectedCategory.id}</span></div>
-              <div className="detail-card"><strong>NOMBRE:</strong> <span className="bold">{selectedCategory.nombre.toUpperCase()}</span></div>
-              <div className="detail-card"><strong>ESTADO:</strong> <span>ACTIVO</span></div>
+        <div className="pl-modal-overlay">
+          <div className="pl-modal-box">
+            <h3 className="pl-modal-title">DETALLES</h3>
+            <div className="pl-info-list">
+              <div className="pl-info-item"><strong>ID:</strong> <span>#{selectedCategory.id}</span></div>
+              <div className="pl-info-item"><strong>NOMBRE:</strong> <span>{selectedCategory.nombre.toUpperCase()}</span></div>
+              <div className="pl-info-item"><strong>ESTADO:</strong> <span>ACTIVO</span></div>
             </div>
-            <div className="modal-footer" style={{ flexDirection: "column", gap: "0.75rem" }}>
-              <button className="btn-primary" onClick={() => { setIsDetailsModalOpen(false); openEditModal(selectedCategory); }}><Pencil size={16} /> EDITAR</button>
-              <button className="btn-danger" onClick={() => { setIsDetailsModalOpen(false); openDeleteModal(selectedCategory); }}><Trash2 size={16} /> ELIMINAR</button>
-              <button className="btn-secondary" onClick={() => setIsDetailsModalOpen(false)}>CERRAR</button>
+            <div className="pl-modal-footer-stack">
+              <button className="pl-btn-secondary" onClick={() => { setIsDetailsModalOpen(false); openEditModal(selectedCategory); }}>
+                <Pencil size={16} /> EDITAR
+              </button>
+              <button className="pl-btn-danger-soft" onClick={() => { setIsDetailsModalOpen(false); openDeleteModal(selectedCategory); }}>
+                <Trash2 size={16} /> ELIMINAR
+              </button>
+              <button className="pl-btn-secondary-outline" onClick={() => setIsDetailsModalOpen(false)}>CERRAR</button>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 };

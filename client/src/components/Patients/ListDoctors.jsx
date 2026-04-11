@@ -108,30 +108,29 @@ const ListDoctors = () => {
   };
 
   return (
-    <div className="orders-container">
+<div className="pl-main-container">
       {/* HEADER */}
-      <div className="orders-header">
-        <div>
+      <div className="pl-header-section">
+        <div className="pl-title-group">
           <h2>Gestión de Personal Médico</h2>
           <p>Personal médico registrado: {filteredMedicos.length}</p>
         </div>
-        <button className="btn-primary" onClick={() => { 
+        <button className="pl-btn-action" onClick={() => { 
           setSelectedMedico(null); 
           setIsFormModalOpen(true); 
         }}>
-          <Plus size={16} /> Nuevo Médico
+          <Plus size={18} /> Nuevo Médico
         </button>
       </div>
 
       {/* TOOLBAR */}
-      <div className="orders-toolbar">
-        <div className="search-box">
-          <Search size={16} />
+      <div className="pl-toolbar">
+        <div className="pl-search-wrapper">
+          <Search size={18} color="var(--pl-muted)" />
           <input
             type="text"
             placeholder="BUSCAR PERSONAL MÉDICO..."
             value={searchTerm}
-            style={{ textTransform: 'uppercase' }}
             onChange={(e) => { 
               setSearchTerm(e.target.value.toUpperCase()); 
               setCurrentPage(1); 
@@ -141,28 +140,32 @@ const ListDoctors = () => {
       </div>
 
       {/* TABLE */}
-      <div className="orders-table-wrapper">
-        <table className="orders-table">
+      <div className="pl-table-frame">
+        <table className="pl-data-table">
           <thead>
             <tr>
               <th>Nombre</th>
-              <th className="hide-mobile">Teléfono</th>
-              <th className="hide-mobile">Tipo</th>
-              <th className="center">Acciones</th>
+              <th>Teléfono</th>
+              <th>Tipo</th>
+              <th style={{ width: '80px' }}>Acciones</th>
             </tr>
           </thead>
           <tbody>
             {currentMedicos.length > 0 ? currentMedicos.map(medico => (
               <tr key={medico.id}>
-                <td className="bold">{medico.nombre.toUpperCase()}</td>
-                <td className="hide-mobile">{medico.telefono ? `+${medico.telefono}` : "-"}</td>
-                <td className="hide-mobile">
+                <td data-label="Nombre" className="bold">
+                   {medico.nombre.toUpperCase()}
+                </td>
+                <td data-label="Teléfono">
+                  {medico.telefono ? `+${medico.telefono}` : "-"}
+                </td>
+                <td data-label="Tipo">
                   <span className="badge-type">
                     {medico.tipo?.toUpperCase()}
                   </span>
                 </td>
-                <td className="center">
-                  <button className="icon-btn" onClick={() => { 
+                <td data-label="Acciones">
+                  <button className="pl-icon-only-btn" onClick={() => { 
                     setSelectedMedico(medico); 
                     setIsDetailsModalOpen(true); 
                   }}>
@@ -181,10 +184,22 @@ const ListDoctors = () => {
 
       {/* PAGINACIÓN */}
       {totalPages > 1 && (
-        <div className="orders-pagination">
-          <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}><ChevronLeft size={18} /></button>
-          <span>Página {currentPage} de {totalPages}</span>
-          <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}><ChevronRight size={18} /></button>
+        <div className="pl-pagination-area">
+          <button 
+            className="pl-page-node"
+            disabled={currentPage === 1} 
+            onClick={() => setCurrentPage(p => p - 1)}
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <span className="pl-pagination-info">Página <b>{currentPage}</b> de {totalPages}</span>
+          <button 
+            className="pl-page-node"
+            disabled={currentPage === totalPages} 
+            onClick={() => setCurrentPage(p => p + 1)}
+          >
+            <ChevronRight size={20} />
+          </button>
         </div>
       )}
 

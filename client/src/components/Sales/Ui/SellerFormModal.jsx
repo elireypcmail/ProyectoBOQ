@@ -126,45 +126,45 @@ const SellerFormModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="sellerfm-overlay">
-      <div className="sellerfm-content">
-        <div className="sellerfm-header">
+    <div className="sellerMf-overlay">
+      <div className="sellerMf-content">
+        <div className="sellerMf-header">
           <h3>{seller ? "Editar Vendedor" : "Nuevo Vendedor"}</h3>
-          <button className="sellerfm-close-icon" onClick={onClose}>
+          <button className="sellerMf-close-icon" onClick={onClose}>
             <X size={20} />
           </button>
         </div>
 
-        <div className="sellerfm-body">
-          <div className="sellerfm-field">
-            <label className="sellerfm-label">Nombre Completo</label>
+        <div className="sellerMf-body">
+          <div className="sellerMf-field">
+            <label className="sellerMf-label">Nombre Completo</label>
             <input
-              className="sellerfm-input"
+              className="sellerMf-input"
               value={nombre}
               onChange={(e) => handleNameInput(e.target.value, setNombre)}
               placeholder="EJ: MARÍA LÓPEZ"
             />
           </div>
 
-          <div className="sellerfm-field">
-            <label className="sellerfm-label">Teléfono</label>
-            <div className="sellerfm-phone-wrapper">
+          <div className="sellerMf-field">
+            <label className="sellerMf-label">Teléfono</label>
+            <div className="sellerMf-phone-wrapper">
               <PhoneInput
                 country={"ve"}
                 value={telefono}
                 onChange={setTelefono}
-                containerClass="sellerfm-phone-container"
-                inputClass="sellerfm-phone-input"
-                buttonClass="sellerfm-phone-button"
+                containerClass="sellerMf-phone-container"
+                inputClass="sellerMf-phone-input"
+                buttonClass="sellerMf-phone-button"
                 placeholder="Ingresar teléfono"
               />
             </div>
           </div>
 
-          <div className="sellerfm-field">
-            <label className="sellerfm-label">Email</label>
+          <div className="sellerMf-field">
+            <label className="sellerMf-label">Email</label>
             <input
-              className="sellerfm-input"
+              className="sellerMf-input"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value.replace(/\s/g, ""))}
@@ -172,10 +172,10 @@ const SellerFormModal = ({
             />
           </div>
 
-          <div className="sellerfm-field sellerfm-col-span-2">
-            <label className="sellerfm-label">Oficina</label>
-            <div className="sellerfm-input-group">
-              <div className="sellerfm-select-container">
+          <div className="sellerMf-field sellerMf-col-span-2">
+            <label className="sellerMf-label">Oficina</label>
+            <div className="sellerMf-input-group">
+              <div className="sellerMf-select-container">
                 <Select
                   options={oficinaOptions}
                   value={currentOficinaValue}
@@ -189,12 +189,12 @@ const SellerFormModal = ({
                   }}
                   isClearable
                   placeholder="SELECCIONAR OFICINA"
-                  classNamePrefix="sellerfm-select"
+                  classNamePrefix="sellerMf-select"
                 />
               </div>
               <button
                 type="button"
-                className="sellerfm-btn-add-circle"
+                className="sellerMf-btn-add-circle"
                 onClick={() => setIsCreatingOficina(true)}
                 title="Nueva Oficina"
               >
@@ -203,10 +203,10 @@ const SellerFormModal = ({
             </div>
           </div>
 
-          <div className="sellerfm-field">
-            <label className="sellerfm-label">Zona</label>
+          <div className="sellerMf-field">
+            <label className="sellerMf-label">Zona</label>
             <select
-              className="sellerfm-input"
+              className="sellerMf-input"
               value={idZona}
               onChange={(e) => setIdZona(e.target.value)}
               disabled 
@@ -218,11 +218,11 @@ const SellerFormModal = ({
             </select>
           </div>
 
-          <div className="sellerfm-field">
-            <label className="sellerfm-label">Comisión (%)</label>
+          <div className="sellerMf-field">
+            <label className="sellerMf-label">Comisión (%)</label>
             <input
               type="text" 
-              className="sellerfm-input"
+              className="sellerMf-input"
               value={comision}
               onChange={(e) => handleComisionInput(e.target.value)}
               placeholder="EJ: 10,50"
@@ -230,30 +230,30 @@ const SellerFormModal = ({
           </div>
         </div>
 
-        <div className="sellerfm-footer">
-          <button className="sellerfm-btn-cancel" onClick={onClose} disabled={isSaving}>
+        <div className="sellerMf-footer">
+          <button className="sellerMf-btn-cancel" onClick={onClose} disabled={isSaving}>
             Cancelar
           </button>
-          <button className="sellerfm-btn-save" onClick={handleSubmit} disabled={isSaving}>
-            {isSaving ? <Loader2 className="sellerfm-spin" size={18} /> : <Save size={18} />}
+          <button className="sellerMf-btn-save" onClick={handleSubmit} disabled={isSaving}>
+            {isSaving ? <Loader2 className="sellerMf-spin" size={18} /> : <Save size={18} />}
             {isSaving ? "Guardando..." : seller ? "Actualizar Vendedor" : "Guardar Vendedor"}
           </button>
         </div>
 
         {/* --- MINI MODAL PARA NUEVA OFICINA --- */}
         {isCreatingOficina && (
-          <div className="sellerfm-mini-overlay">
-            <div className="sellerfm-mini-card">
-              <div className="sellerfm-mini-header">
-                <Building size={20} className="sellerfm-icon-primary" />
+          <div className="sellerMf-mini-overlay">
+            <div className="sellerMf-mini-card">
+              <div className="sellerMf-mini-header">
+                <Building size={20} className="sellerMf-icon-primary" />
                 <h4>Nueva Oficina</h4>
               </div>
               
-              <div className="sellerfm-mini-body">
-                <div className="sellerfm-field">
-                  <label className="sellerfm-label">Nombre de la Oficina</label>
+              <div className="sellerMf-mini-body">
+                <div className="sellerMf-field">
+                  <label className="sellerMf-label">Nombre de la Oficina</label>
                   <input 
-                    className="sellerfm-input" 
+                    className="sellerMf-input" 
                     placeholder="EJ: SEDE CENTRAL"
                     autoFocus
                     value={newOficina.nombre}
@@ -261,10 +261,10 @@ const SellerFormModal = ({
                   />
                 </div>
                 
-                <div className="sellerfm-field">
-                  <label className="sellerfm-label">Zona Asignada</label>
+                <div className="sellerMf-field">
+                  <label className="sellerMf-label">Zona Asignada</label>
                   <select
-                    className="sellerfm-input"
+                    className="sellerMf-input"
                     value={newOficina.id_zona}
                     onChange={(e) => setNewOficina({...newOficina, id_zona: e.target.value})}
                   >
@@ -276,19 +276,19 @@ const SellerFormModal = ({
                 </div>
               </div>
 
-              <div className="sellerfm-mini-footer">
+              <div className="sellerMf-mini-footer">
                 <button 
-                  className="sellerfm-btn-mini-close" 
+                  className="sellerMf-btn-mini-close" 
                   onClick={() => { setIsCreatingOficina(false); setNewOficina({nombre:"", id_zona:""}); }}
                 >
                   <X size={16} />
                 </button>
                 <button 
-                  className="sellerfm-btn-mini-save" 
+                  className="sellerMf-btn-mini-save" 
                   disabled={isCreatingLoading || !newOficina.nombre.trim() || !newOficina.id_zona}
                   onClick={handleSaveNewOficina}
                 >
-                  {isCreatingLoading ? <Loader2 className="sellerfm-spin" size={16} /> : <><Check size={16} /> Guardar</>}
+                  {isCreatingLoading ? <Loader2 className="sellerMf-spin" size={16} /> : <><Check size={16} /> Guardar</>}
                 </button>
               </div>
             </div>

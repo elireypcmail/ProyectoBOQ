@@ -134,101 +134,79 @@ const ListSellers = () => {
     getAllSellers();
   };
 
+  const handleOpenDetails = (seller) => {
+    setSelectedSeller(seller);
+    setIsDetailsModalOpen(true);
+  };
+
   return (
-    <div className="lsu-container">
-      <div className="lsu-header">
-        <div className="lsu-title-section">
+    <div className="seller-panel-container">
+      <div className="seller-top-header">
+        <div className="seller-title-area">
           <h2>Gestión de Vendedores</h2>
-          <p>{filteredSellers.length} vendedores registrados</p>
+          <p>{filteredSellers.length} registrados en el sistema</p>
         </div>
-        <button className="lsu-btn-primary" onClick={handleOpenCreate}>
-          <Plus size={16} /> Nuevo Vendedor
+        <button className="seller-btn-main" onClick={handleOpenCreate}>
+          <Plus size={18} /> Nuevo Vendedor
         </button>
       </div>
 
-      <div className="lsu-toolbar">
-        <div className="lsu-search-box">
-          <Search size={16} className="lsu-search-icon" />
+      <div className="seller-action-bar">
+        <div className="seller-search-box">
+          <Search size={18} style={{ color: 'var(--seller-muted)' }} />
           <input
             placeholder="BUSCAR VENDEDOR..."
             value={searchTerm}
-            style={{ textTransform: 'uppercase' }} // Estética visual
-            onChange={(e) => {
-              setSearchTerm(e.target.value.toUpperCase());
-              setCurrentPage(1);
-            }}
+            onChange={(e) => setSearchTerm(e.target.value.toUpperCase())}
           />
         </div>
       </div>
 
-      <div className="lsu-table-wrapper">
-        <table className="lsu-table">
+      <div className="seller-table-container">
+        <table className="seller-grid-table">
           <thead>
             <tr>
               <th>ID</th>
-              <th>Nombre</th>
-              <th className="lsu-hide-mobile">Oficina</th>
-              <th className="lsu-hide-mobile">Teléfono</th>
-              <th className="lsu-hide-mobile">Email</th>
-              <th className="lsu-text-center">Acciones</th>
+              <th>Nombre del Vendedor</th>
+              <th>Oficina</th>
+              <th>Contacto</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
-            {currentSellers.length ? currentSellers.map(s => (
+            {currentSellers.map((s) => (
               <tr key={s.id}>
-                <td className="lsu-col-id">#{s.id}</td>
-                <td className="lsu-col-name">{s.nombre.toUpperCase()}</td>
-                <td className="lsu-hide-mobile">
-                  <span className="lsu-badge">
-                    {s.oficina?.toUpperCase()}
-                  </span>
+                <td data-label="ID" className="seller-id-text">#{s.id}</td>
+                <td data-label="Nombre" style={{ fontWeight: 700 }}>{s.nombre.toUpperCase()}</td>
+                <td data-label="Oficina">
+                  <span className="seller-badge-office">{s.oficina?.toUpperCase()}</span>
                 </td>
-                <td className="lsu-hide-mobile">{s.telefono ? `+${s.telefono}` : "—"}</td>
-                <td className="lsu-hide-mobile">{s.email?.toUpperCase() || "—"}</td>
-                <td className="lsu-text-center">
-                  <button
-                    className="lsu-icon-btn"
-                    onClick={() => {
-                      setSelectedSeller(s);
-                      setIsDetailsModalOpen(true);
-                    }}
-                  >
+                <td data-label="Contacto">
+                  <div style={{ display: 'flex', flexDirection: 'column', fontSize: '0.8rem' }}>
+                    <span>{s.telefono || 'SIN TEL.'}</span>
+                    <span style={{ color: 'var(--seller-muted)' }}>{s.email?.toLowerCase()}</span>
+                  </div>
+                </td>
+                <td data-label="Acciones">
+                  <button className="seller-btn-icon" onClick={() => handleOpenDetails(s)}>
                     <SlOptionsVertical size={16} />
                   </button>
                 </td>
               </tr>
-            )) : (
-              <tr>
-                <td colSpan="6" className="lsu-no-results">
-                  No se encontraron vendedores
-                </td>
-              </tr>
-            )}
+            ))}
           </tbody>
         </table>
       </div>
 
-      {totalPages > 1 && (
-        <div className="lsu-pagination">
-          <button
-            className="lsu-page-btn"
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(p => p - 1)}
-          >
-            <ChevronLeft size={18} />
-          </button>
-          <span className="lsu-page-info">
-            Página {currentPage} de {totalPages}
-          </span>
-          <button
-            className="lsu-page-btn"
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage(p => p + 1)}
-          >
-            <ChevronRight size={18} />
-          </button>
-        </div>
-      )}
+      <div className="seller-pagination-nav">
+        <button className="seller-page-btn" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>
+          <ChevronLeft size={18} />
+        </button>
+        <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{currentPage} / {totalPages}</span>
+        <button className="seller-page-btn" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>
+          <ChevronRight size={18} />
+        </button>
+      </div>
 
       {/* MODALES */}
       <SellerFormModal

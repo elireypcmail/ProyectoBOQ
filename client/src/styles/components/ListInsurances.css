@@ -1,365 +1,389 @@
+/* src/styles/components/ListInsurances.css */
 :root {
-  /* Colors - Unificados con tu marca */
-  --ins-primary: #ec4e53;
-  --ins-primary-hover: #d43d42;
-  --ins-danger: #ec4e53;
-  --ins-danger-hover: #d43d42;
-  --ins-bg: #ffffffa9;
-  --ins-muted: #64748b;
-  --ins-text-main: #1e293b;
-  --ins-border: #e2e8f0;
-  --ins-soft: #f8fafc;
-
-  /* Status Colors */
-  --ins-success-bg: #dcfce7;
-  --ins-success-text: #16a34a;
-
-  /* Shadows & Effects */
-  --ins-shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
-  --ins-shadow-md: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05);
-  --ins-transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --is-primary: #e84053;
+  --is-primary-hover: #d13547;
+  --is-secondary: #075879;
+  --is-secondary-hover: #05455f;
+  --is-bg: rgba(255, 255, 255, 0.95);
+  --is-muted: #64748b;
+  --is-text-main: #1e293b;
+  --is-border: #e2e8f0;
+  --is-soft: #f8fafc;
+  --is-shadow-md: 0 12px 30px -10px rgba(7, 88, 121, 0.15);
+  --is-transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.insurances-view-container {
-  width: 90%;
-  background: var(--ins-bg);
+.is-main-container {
+  width: 88%;
+  background: var(--is-bg);
   padding: 1.75rem;
   border-radius: 14px;
-  box-shadow: var(--ins-shadow-md);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  color: var(--ins-text-main);
-  backdrop-filter: blur(8px);
-  /* margin: 2rem auto; */
+  box-shadow: var(--is-shadow-md);
+  color: var(--is-text-main);
+  font-family: 'Inter', sans-serif;
 }
 
-/* Header & Typography */
-.insurances-main-header {
+.is-header-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid var(--ins-border);
-  flex-wrap: wrap;
+  border-bottom: 2px solid var(--is-secondary);
+}
+
+.is-title-group h2 { 
+  font-size: 1.625rem; font-weight: 800; margin: 0; color: var(--is-secondary);
+}
+
+.is-title-group p { font-size: 0.875rem; color: var(--is-muted); font-weight: 600; }
+
+.is-toolbar {
+  display: flex;
+  justify-content: space-between;
   gap: 1rem;
-}
-
-.insurances-title {
-  font-size: 1.625rem;
-  font-weight: 800;
-  margin: 0;
-  color: var(--ins-text-main);
-}
-
-.insurances-subtitle {
-  margin-top: 0.25rem;
-  font-size: 0.875rem;
-  color: var(--ins-muted);
-}
-
-/* Toolbar & Search */
-.insurances-filter-toolbar {
   margin-bottom: 1.75rem;
 }
 
-.insurances-search-wrapper {
+.is-search-box {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.75rem 1.25rem;
-  border-radius: 12px;
-  border: 1px solid var(--ins-border);
-  background: white;
-  transition: var(--ins-transition);
+  padding: 0.6rem 1rem;
+  border-radius: 10px;
+  background: #fff;
+  flex: 1;
   max-width: 400px;
+  border: 1px solid var(--is-border);
+  transition: var(--is-transition);
 }
 
-.insurances-search-wrapper:focus-within {
-  border-color: var(--ins-primary);
-  box-shadow: 0 0 0 3px rgba(236, 78, 83, 0.1);
+.is-search-box:focus-within {
+  border-color: var(--is-secondary);
+  box-shadow: 0 0 0 3px rgba(7, 88, 121, 0.1);
 }
 
-.insurances-search-input {
-  border: none;
-  outline: none;
-  background: transparent;
-  width: 100%;
-  font-size: 1rem;
-  color: var(--ins-text-main);
-}
+.is-search-box input { border: none; outline: none; background: transparent; width: 100%; font-size: 0.9rem; }
 
-/* --- DISEÑO DE TABLA --- */
-.insurances-table-responsive {
-  overflow-x: auto;
-}
+.is-table-frame { overflow-x: auto; border-radius: 12px; border: 1px solid var(--is-soft); }
 
-.insurances-data-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0 0.75rem;
-}
+.is-data-table { width: 100%; border-collapse: collapse; }
 
-.insurances-table-row {
-  background: white;
-  transition: var(--ins-transition);
-}
-
-.insurances-table-row td {
-  padding: 1.25rem 1rem;
-  border-top: 1px solid var(--ins-border);
-  border-bottom: 1px solid var(--ins-border);
-  vertical-align: middle;
-}
-
-.insurances-table-row td:first-child {
-  border-left: 1px solid var(--ins-border);
-  border-radius: 12px 0 0 12px;
-  width: 80px;
+.is-data-table th {
+  background: var(--is-secondary);
+  padding: 1rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #fff;
+  letter-spacing: 0.05em;
   text-align: center;
 }
 
-.insurances-table-row td:last-child {
-  border-right: 1px solid var(--ins-border);
-  border-radius: 0 12px 12px 0;
-  text-align: right;
+.is-data-table td { 
+  padding: 1rem; 
+  border-top: 1px solid var(--is-soft); 
+  text-align: center; 
 }
 
-.insurances-table-row:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 15px -5px rgba(0,0,0,0.08);
-}
+.is-data-table tr:hover td { background-color: rgba(7, 88, 121, 0.03); }
 
-.insurances-td-id {
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 600;
-  color: var(--ins-primary);
-  font-size: 0.85rem;
-}
+.is-id-text { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--is-primary); }
 
-.ins-main-info {
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-}
-
-.ins-name {
+.is-badge-support {
+  background: var(--is-soft);
+  color: var(--is-secondary);
+  padding: 6px 12px;
+  border-radius: 8px;
   font-weight: 700;
-  font-size: 1.1rem;
-  color: var(--ins-text-main);
-}
-
-.ins-subtext {
-  font-size: 0.85rem;
-  color: var(--ins-muted);
-  display: flex;
-  align-items: center;
-}
-
-/* Botones y Acciones */
-.insurances-btn-primary {
-  background: linear-gradient(135deg, var(--ins-primary), var(--ins-primary-hover));
-  color: #fff;
-  padding: 0.75rem 1.5rem;
-  border-radius: 10px;
-  border: none;
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(236, 78, 83, 0.2);
-  cursor: pointer;
+  font-size: 0.75rem;
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  transition: var(--ins-transition);
+  gap: 6px;
+  border: 1px solid var(--is-border);
 }
 
-.insurances-btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 15px rgba(236, 78, 83, 0.3);
+/* BOTONES */
+.is-btn-primary { 
+  background: var(--is-primary); 
+  color: white; 
+  border: none; 
+  padding: 0.7rem 1.5rem; 
+  border-radius: 8px; 
+  font-weight: 700; 
+  cursor: pointer; 
+  display: flex; 
+  align-items: center; 
+  gap: 0.5rem; 
+  transition: var(--is-transition); 
 }
 
-.insurances-btn-secondary {
-  background: var(--ins-soft);
-  color: var(--ins-muted);
-  padding: 0.75rem 1.5rem;
-  border-radius: 10px;
-  border: 1px solid var(--ins-border);
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--ins-transition);
-}
+.is-btn-primary:hover { background: var(--is-primary-hover); transform: translateY(-1px); }
 
-.insurances-btn-secondary:hover {
-  background: var(--ins-border);
-  color: var(--ins-text-main);
-}
-
-.insurances-btn-danger {
-  background: var(--ins-danger);
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 10px;
-  border: none;
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--ins-transition);
-}
-
-.insurances-btn-danger:hover {
-  background: var(--ins-danger-hover);
-  box-shadow: 0 4px 12px rgba(236, 78, 83, 0.2);
-}
-
-.insurances-action-pill {
-  background: var(--ins-soft);
-  border: 1px solid var(--ins-border);
-  padding: 0.6rem 1.2rem;
+.is-btn-pill {
+  background: #fff;
+  border: 1px solid var(--is-border);
+  padding: 0.5rem 1rem;
   border-radius: 50px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--ins-text-main);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--is-secondary);
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
-  transition: var(--ins-transition);
+  transition: var(--is-transition);
 }
 
-.insurances-action-pill:hover {
-  background: var(--ins-primary);
-  color: white;
-  border-color: var(--ins-primary);
+.is-btn-pill:hover { 
+  background: var(--is-secondary); 
+  color: #fff; 
+  border-color: var(--is-secondary); 
 }
 
-/* --- MODALES --- */
-.insurances-modal-overlay {
+.is-btn-pill.danger:hover {
+  background: var(--is-primary);
+  color: #fff;
+  border-color: var(--is-primary);
+}
+
+/* PAGINACIÓN */
+.is-pagination { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-top: 1.5rem; }
+
+.is-page-node {
+  width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
+  border-radius: 10px; border: 1px solid var(--is-border); background: #fff; color: var(--is-secondary); cursor: pointer;
+}
+.is-page-node:hover:not(:disabled) { border-color: var(--is-secondary); background: var(--is-soft); }
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .is-main-container { width: 95%; padding: 1.25rem; }
+  .is-data-table thead { display: none; }
+  .is-data-table tr { display: block; margin-bottom: 1rem; border: 1px solid var(--is-border); border-radius: 12px; }
+  .is-data-table td { 
+    display: flex; justify-content: space-between; align-items: center; 
+    text-align: right !important; padding: 0.8rem 1rem; border-top: 1px solid var(--is-soft);
+  }
+  .is-data-table td::before {
+    content: attr(data-label); font-weight: 800; font-size: 0.7rem; color: var(--is-muted); text-transform: uppercase;
+  }
+  .is-hide-mobile { display: none !important; }
+}
+
+/* --- MODALES DE SEGUROS --- */
+.is-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.5);
-  backdrop-filter: blur(8px);
+  background: rgba(5, 69, 95, 0.4); /* El azul secundario con transparencia */
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
+  z-index: 2000;
+  padding: 1.5rem;
 }
 
-.insurances-modal-card {
-  background: #fff;
+.is-modal-box {
+  background: white;
+  padding: 2.5rem;
   border-radius: 20px;
   width: 100%;
-  max-width: 600px;
-  max-height: 90vh;
-  overflow-y: auto;
-  padding: 2.5rem;
-  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
-  animation: insModalIn 0.3s ease-out;
+  max-width: 420px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: is-pop-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.insurances-modal-title {
-  font-size: 1.5rem;
+.is-modal-box.delete-confirm {
+  text-align: center;
+}
+
+.is-modal-icon-header {
+  color: var(--is-primary);
+  background: #fef2f2;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+}
+
+.is-modal-title {
+  color: var(--is-secondary);
+  font-size: 1.4rem;
   font-weight: 800;
-  margin: 0;
-  color: var(--ins-text-main);
+  margin-bottom: 1rem;
+  letter-spacing: -0.5px;
 }
 
-.insurances-modal-grid {
+.is-modal-text {
+  color: var(--is-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 2rem;
+}
+
+.is-modal-text strong {
+  color: var(--is-text-main);
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 1.1rem;
+}
+
+/* BOTONES DEL MODAL */
+.is-modal-footer-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.is-btn-danger {
+  background: var(--is-primary);
+  color: white;
+  border: none;
+  padding: 0.85rem;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: var(--is-transition);
+}
+
+.is-btn-danger:hover {
+  background: var(--is-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(232, 64, 83, 0.25);
+}
+
+.is-btn-secondary-outline {
+  background: transparent;
+  border: 1px solid var(--is-border);
+  color: var(--is-muted);
+  padding: 0.85rem;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--is-transition);
+}
+
+.is-btn-secondary-outline:hover {
+  background: var(--is-soft);
+  color: var(--is-text-main);
+  border-color: var(--is-secondary);
+}
+
+@keyframes is-pop-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* --- FORMULARIOS --- */
+.is-modal-box.form-card {
+  max-width: 550px;
+  padding: 2rem;
+}
+
+.is-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.is-modal-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.is-modal-icon-small {
+  background: var(--is-soft);
+  color: var(--is-secondary);
+  padding: 8px;
+  border-radius: 10px;
+  display: flex;
+}
+
+.is-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--is-muted);
+  cursor: pointer;
+  transition: var(--is-transition);
+}
+
+.is-close-btn:hover { color: var(--is-primary); }
+
+.is-modal-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.25rem;
-  margin-top: 1.5rem;
 }
 
-.insurances-modal-grid label {
+.is-col-span-2 { grid-column: span 2; }
+
+.is-modal-label {
   display: block;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--ins-muted);
-  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--is-muted);
+  margin-bottom: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
-.ins-col-span-2 {
-  grid-column: span 2;
-}
-
-.insurances-modal-input {
+.is-modal-input {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 0.8rem 1rem;
   border-radius: 10px;
-  border: 1px solid var(--ins-border);
+  border: 1px solid var(--is-border);
+  background: var(--is-soft);
+  font-family: inherit;
   font-size: 0.95rem;
-  transition: var(--ins-transition);
-  background-color: white;
+  transition: var(--is-transition);
 }
 
-.insurances-modal-input:focus {
-  border-color: var(--ins-primary);
+.is-modal-input:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(236, 78, 83, 0.1);
+  background: #fff;
+  border-color: var(--is-secondary);
+  box-shadow: 0 0 0 4px rgba(7, 88, 121, 0.08);
 }
 
-/* Ajustes para PhoneInput */
-.react-tel-input .form-control {
-  border: 1px solid var(--ins-border) !important;
+/* CUSTOM PHONE INPUT */
+.is-phone-container { width: 100% !important; }
+
+.is-phone-input {
+  width: 100% !important;
+  height: 44px !important;
+  border-radius: 10px !important;
+  border: 1px solid var(--is-border) !important;
+  background: var(--is-soft) !important;
   font-family: inherit !important;
-  font-size: 0.95rem !important;
 }
 
-.react-tel-input .form-control:focus {
-  border-color: var(--ins-primary) !important;
-  box-shadow: 0 0 0 3px rgba(236, 78, 83, 0.1) !important;
+.is-phone-button {
+  background: transparent !important;
+  border: none !important;
+  border-right: 1px solid var(--is-border) !important;
+  border-radius: 10px 0 0 10px !important;
 }
 
-/* Paginación */
-.insurances-pagination-bar {
+.is-modal-footer {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+  justify-content: flex-end;
+  gap: 1rem;
   margin-top: 2.5rem;
-  padding: 0.75rem;
-  background: white;
-  width: fit-content;
-  margin-left: auto;
-  margin-right: auto;
-  border-radius: 50px;
-  box-shadow: var(--ins-shadow-sm);
-  border: 1px solid var(--ins-border);
 }
 
-.insurances-page-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: none;
-  background: transparent;
-  color: var(--ins-muted);
-  cursor: pointer;
-  transition: var(--ins-transition);
-}
+.is-modal-footer button { flex: 1; }
 
-.insurances-page-btn:hover:not(:disabled) {
-  background: var(--ins-soft);
-  color: var(--ins-primary);
-}
-
-.insurances-page-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-/* Animaciones y Responsive */
-@keyframes insModalIn {
-  from { opacity: 0; transform: translateY(15px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@media (max-width: 768px) {
-  .insurances-view-container { width: 95%; padding: 1rem; }
-  .insurances-table-row td:first-child, .insurances-hide-mobile { display: none; }
-  .insurances-action-pill span { display: none; }
-  .insurances-modal-grid { grid-template-columns: 1fr; }
-  .ins-col-span-2 { grid-column: span 1; }
-  .insurances-modal-card { padding: 1.5rem; }
+@media (max-width: 600px) {
+  .is-modal-grid { grid-template-columns: 1fr; }
+  .is-col-span-2, .is-col-mobile-full { grid-column: span 1; }
+  .is-modal-footer { flex-direction: column-reverse; }
 }

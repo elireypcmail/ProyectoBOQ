@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Pencil, Trash2, X, Image as ImageIcon, Maximize2 } from "lucide-react";
 
-// Importación del CSS único
+// Importación del CSS
 import "../../../styles/ui/ModalDetailedSupplier.css";
 
 const SupplierDetailModal = ({ 
@@ -27,8 +27,8 @@ const SupplierDetailModal = ({
   };
 
   return (
-    <div className="sdm-overlay">
-      <div className="sdm-content">
+    <div className="sdm-overlay" onClick={handleClose}>
+      <div className="sdm-content" onClick={(e) => e.stopPropagation()}>
         {/* HEADER */}
         <div className="sdm-header">
           <div className="sdm-title-group">
@@ -88,7 +88,7 @@ const SupplierDetailModal = ({
 
             <div className="sdm-detail-card">
               <strong>Nombre</strong>
-              <span>{supplier.nombre}</span>
+              <span>{supplier.nombre?.toUpperCase()}</span>
             </div>
 
             <div className="sdm-detail-card">
@@ -103,7 +103,7 @@ const SupplierDetailModal = ({
 
             <div className="sdm-detail-card sdm-full-width">
               <strong>Email</strong>
-              <span>{supplier.email || "—"}</span>
+              <span className="sdm-truncate-text">{supplier.email || "—"}</span>
             </div>
             
             <div className="sdm-detail-card sdm-full-width sdm-bank-section">

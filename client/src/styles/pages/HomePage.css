@@ -160,13 +160,12 @@
 /* 🔥 Logo flotante superior derecha */
 .floating-logo {
   position: fixed;
-  top: 20px;
-  right: 30px;
-  height: 55px;
-  width: auto;
+  top: 2%;
+  right: 1%;
+  width: 10%;
   object-fit: contain;
   z-index: 4;
-  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.4));
+  filter: drop-shadow(0 0 12px rgb(145, 152, 255));
   transition: transform 0.3s ease, opacity 0.3s ease;
 }
 

@@ -137,24 +137,25 @@ const ListProducts = () => {
   }
 
   return (
-    <div className="prod-container">
-      <div className="prod-header">
-        <div>
+    <div className="pl-main-container">
+      {/* Encabezado */}
+      <div className="pl-header-section">
+        <div className="pl-title-group">
           <h2>Gestión de Productos</h2>
           <p>{filteredProducts.length} productos registrados</p>
         </div>
-        <div style={{ display: "flex", gap: "10px" }}>
+        <div className="pl-actions-group"> {/* Clase nueva para control flex */}
           <button
-            className="btn-secondary"
+            className="pl-btn-secondary"
             onClick={() => setIsCatalogModalOpen(true)}
           >
             <FileText size={16} /> Crear Catálogo
           </button>
           <button
-            className="btn-primary"
+            className="pl-btn-action"
             onClick={() => {
-              setSelectedProduct(null)
-              setIsFormOpen(true)
+              setSelectedProduct(null);
+              setIsFormOpen(true);
             }}
           >
             <Plus size={16} /> Nuevo Producto
@@ -162,8 +163,9 @@ const ListProducts = () => {
         </div>
       </div>
 
-      <div className="prod-toolbar">
-        <div className="search-box">
+      {/* Barra de herramientas */}
+      <div className="pl-toolbar">
+        <div className="pl-search-wrapper">
           <Search size={16} />
           <input
             placeholder="Buscar producto..."
@@ -173,25 +175,36 @@ const ListProducts = () => {
         </div>
       </div>
 
-      <div className="prod-table-wrapper">
-        <table className="prod-table">
+      {/* Tabla de Productos con etiquetas responsive */}
+      <div className="pl-table-frame">
+        <table className="pl-data-table">
           <thead>
             <tr>
               <th>SKU</th>
-              <th>Descripción</th>
+              <th style={{ textAlign: "left", paddingLeft: "1.5rem" }}>Descripción</th>
               <th>Existencia</th>
-              <th className="center">Acciones</th>
+              <th style={{ textAlign: "center" }}>Acciones</th>
             </tr>
           </thead>
           <tbody>
             {paginatedProducts.map((p) => (
               <tr key={p.id}>
-                <td className="id">{p.sku}</td>
-                <td className="desc-column">{p.descripcion}</td>
-                <td>{p.existencia_general}</td>
-                <td className="center">
+                <td className="pl-sku-cell" data-label="SKU">
+                  {p.sku}
+                </td>
+                <td 
+                  className="pl-desc-cell" 
+                  data-label="Descripción"
+                  style={{ textAlign: "left", paddingLeft: "1.5rem", whiteSpace: "normal" }}
+                >
+                  {p.descripcion}
+                </td>
+                <td data-label="Existencia">
+                  {p.existencia_general}
+                </td>
+                <td className="pl-actions-cell" data-label="Acciones" style={{ textAlign: "center" }}>
                   <button
-                    className="icon-btn"
+                    className="pl-icon-only-btn"
                     onClick={() => handleOpenDetail(p.id)}
                     disabled={isLoadingProduct}
                   >
@@ -208,23 +221,22 @@ const ListProducts = () => {
         </table>
       </div>
 
+      {/* Paginación */}
       {totalPages > 1 && (
-        <div className="pagination-controls">
-          <button 
-            className="pagination-btn"
-            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+        <div className="pl-pagination-area">
+          <button
+            className="pl-page-node"
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
           >
             <ChevronLeft size={18} />
           </button>
-          
-          <span className="pagination-info">
+          <span className="pl-muted">
             Página {currentPage} de {totalPages}
           </span>
-
-          <button 
-            className="pagination-btn"
-            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+          <button
+            className="pl-page-node"
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
           >
             <ChevronRight size={18} />

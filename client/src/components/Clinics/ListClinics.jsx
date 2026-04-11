@@ -156,38 +156,28 @@ const ListClinics = () => {
   };
 
   return (
-    <div className="cln-main-container">
-      
-      <div className="cln-top-bar">
-        <div className="cln-info-header">
-          <div className="cln-main-icon">
-            <AlertTriangle size={24} />
-          </div>
-          <div className="cln-title-group">
-            <h1>GESTIÓN DE CLÍNICAS</h1>
-            <span className="cln-stats">{filteredClinics.length} REGISTROS TOTALES</span>
-          </div>
+    <div className="cl-main-container">
+      {/* CABECERA */}
+      <div className="cl-header-section">
+        <div className="cl-title-group">
+          <h2>Gestión de Clínicas</h2>
+          <p>{filteredClinics.length} INSTITUCIONES REGISTRADAS</p>
         </div>
-        
         <button 
-          className="cln-add-button" 
-          onClick={() => { 
-            setSelectedClinic(null); 
-            setIsFormModalOpen(true); 
-          }}
+          className="cl-btn-add" 
+          onClick={() => { setSelectedClinic(null); setIsFormModalOpen(true); }}
         >
           <Plus size={20} /> NUEVA CLÍNICA
         </button>
       </div>
 
-      <div className="cln-filter-bar">
-        <div className="cln-search-wrapper">
-          <Search size={18} className="cln-search-icon" />
+      {/* TOOLBAR */}
+      <div className="cl-toolbar">
+        <div className="cl-search-wrapper">
+          <Search size={18} style={{ color: 'var(--cl-muted)' }} />
           <input 
-            className="cln-search-input"
             placeholder="BUSCAR POR NOMBRE O RIF..." 
             value={searchTerm} 
-            style={{ textTransform: 'uppercase' }}
             onChange={(e) => { 
               setSearchTerm(e.target.value.toUpperCase()); 
               setCurrentPage(1); 
@@ -196,43 +186,43 @@ const ListClinics = () => {
         </div>
       </div>
 
-      <div className="cln-table-container">
-        <table className="cln-data-table">
+      {/* TABLA */}
+      <div className="cl-table-frame">
+        <table className="cl-data-table">
           <thead>
             <tr>
-              <th className="cln-th-id">ID</th>
-              <th className="cln-th-main">INSTITUCIÓN / DIRECCIÓN</th>
-              <th className="cln-th-razon">RIF</th>
-              <th className="cln-th-actions">ACCIONES</th>
+              <th>ID</th>
+              <th>Institución / Dirección</th>
+              <th>RIF</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             {currentClinics.length > 0 ? (
               currentClinics.map((c) => (
-                <tr key={c.id} className="cln-tr-row">
-                  <td className="cln-td-id">#{c.id}</td>
+                <tr key={c.id}>
+                  <td data-label="ID" className="cl-id-cell">#{c.id}</td>
 
-                  <td className="cln-td-main">
-                    <div className="cln-clinic-cell">
-                      <span className="cln-name-text bold">
+                  <td data-label="Institución" style={{ textAlign: 'left' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontWeight: 800, color: 'var(--cl-text-main)' }}>
                         {c.nombre?.toUpperCase()}
                       </span>
-                      <span className="cln-address-text">
-                        <MapPin size={12} className="cln-pin-icon" /> 
-                        {truncateText(c.direccion, 50)}
+                      <span style={{ fontSize: '0.75rem', color: 'var(--cl-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <MapPin size={12} /> {c.direccion || 'SIN DIRECCIÓN'}
                       </span>
                     </div>
                   </td>
 
-                  <td className="cln-td-razon">
-                    <span className="cln-rif-badge">{c.rif?.toUpperCase() || "N/A"}</span>
+                  <td data-label="RIF">
+                    <span className="cl-rif-badge">{c.rif?.toUpperCase() || "N/A"}</span>
                   </td>
 
-                  <td className="cln-td-actions">
+                  <td data-label="Acciones">
                     <button 
-                      className="cln-options-btn" 
-                      disabled={isLoadingDetails !== null}
+                      className="cl-icon-btn" 
                       onClick={() => handleOpenDetails(c.id)}
+                      disabled={isLoadingDetails !== null}
                     >
                       {isLoadingDetails === c.id ? (
                         <Loader2 size={16} className="cln-loader-spin" />
@@ -245,7 +235,7 @@ const ListClinics = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="4" className="cln-td-empty">
+                <td colSpan="4" style={{ padding: '3rem', color: 'var(--cl-muted)', fontWeight: 600 }}>
                   NO SE ENCONTRARON CLÍNICAS REGISTRADAS
                 </td>
               </tr>
@@ -254,26 +244,27 @@ const ListClinics = () => {
         </table>
       </div>
 
+      {/* PAGINACIÓN */}
       {totalPages > 1 && (
-        <div className="cln-footer-pagination">
+        <div className="cl-pagination">
           <button 
-            className="cln-nav-btn"
+            className="cl-page-node"
             disabled={currentPage === 1}
             onClick={() => setCurrentPage(prev => prev - 1)}
           >
-            <ChevronLeft size={18} /> ANTERIOR
+            <ChevronLeft size={18} />
           </button>
 
-          <div className="cln-page-counter">
-            PÁGINA <strong>{currentPage}</strong> DE {totalPages}
-          </div>
+          <span style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--cl-secondary)' }}>
+            {currentPage} / {totalPages}
+          </span>
 
           <button 
-            className="cln-nav-btn"
+            className="cl-page-node"
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage(prev => prev + 1)}
           >
-            SIGUIENTE <ChevronRight size={18} />
+            <ChevronRight size={18} />
           </button>
         </div>
       )}

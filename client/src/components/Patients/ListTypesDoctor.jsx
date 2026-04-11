@@ -91,27 +91,25 @@ const ListTypesDoctor = () => {
   };
 
   return (
-    <div className="orders-container">
-
+<div className="pl-main-container">
       {/* HEADER */}
-      <div className="orders-header">
-        <div>
+      <div className="pl-header-section">
+        <div className="pl-title-group">
           <h2>GESTIÓN DE TIPOS DE PERSONAL</h2>
           <p>TOTAL REGISTROS: {filteredTipos.length}</p>
         </div>
-        <button className="btn-primary" onClick={() => setIsCreateModalOpen(true)}>
-          <Plus size={16} /> NUEVO TIPO
+        <button className="pl-btn-action" onClick={() => setIsCreateModalOpen(true)}>
+          <Plus size={18} /> NUEVO TIPO
         </button>
       </div>
 
       {/* TOOLBAR */}
-      <div className="orders-toolbar">
-        <div className="search-box">
-          <Search size={16} />
+      <div className="pl-toolbar">
+        <div className="pl-search-wrapper">
+          <Search size={18} color="var(--pl-muted)" />
           <input
             type="text"
             placeholder="BUSCAR TIPO DE MÉDICO..."
-            style={{ textTransform: 'uppercase' }}
             value={searchTerm}
             onChange={e => { setSearchTerm(e.target.value.toUpperCase()); setCurrentPage(1); }}
           />
@@ -119,20 +117,22 @@ const ListTypesDoctor = () => {
       </div>
 
       {/* TABLE */}
-      <div className="orders-table-wrapper">
-        <table className="orders-table">
+      <div className="pl-table-frame">
+        <table className="pl-data-table">
           <thead>
             <tr>
-              <th>NOMBRE</th>
-              <th className="center">ACCIONES</th>
+              <th style={{ textAlign: 'left', paddingLeft: '2rem' }}>NOMBRE DEL TIPO</th>
+              <th style={{ width: '100px' }}>ACCIONES</th>
             </tr>
           </thead>
           <tbody>
             {currentTipos.length > 0 ? currentTipos.map(tipo => (
               <tr key={tipo.id}>
-                <td className="bold">{tipo.nombre.toUpperCase()}</td>
-                <td className="center">
-                  <button className="icon-btn" onClick={() => { setSelectedTipo(tipo); setIsDetailsModalOpen(true); }}>
+                <td data-label="NOMBRE" className="bold" style={{ textAlign: 'left', paddingLeft: '2rem' }}>
+                  {tipo.nombre.toUpperCase()}
+                </td>
+                <td data-label="ACCIONES">
+                  <button className="pl-icon-only-btn" onClick={() => { setSelectedTipo(tipo); setIsDetailsModalOpen(true); }}>
                     <SlOptionsVertical size={16} />
                   </button>
                 </td>
@@ -148,28 +148,44 @@ const ListTypesDoctor = () => {
 
       {/* PAGINACIÓN */}
       {totalPages > 1 && (
-        <div className="orders-pagination">
-          <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}><ChevronLeft size={18} /></button>
-          <span>PÁGINA {currentPage} DE {totalPages}</span>
-          <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}><ChevronRight size={18} /></button>
+        <div className="pl-pagination-area">
+          <button 
+            className="pl-page-node"
+            disabled={currentPage === 1} 
+            onClick={() => setCurrentPage(p => p - 1)}
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <span className="pl-pagination-info">PÁGINA <b>{currentPage}</b> DE {totalPages}</span>
+          <button 
+            className="pl-page-node"
+            disabled={currentPage === totalPages} 
+            onClick={() => setCurrentPage(p => p + 1)}
+          >
+            <ChevronRight size={20} />
+          </button>
         </div>
       )}
 
-      {/* MODAL CREAR */}
+{/* MODAL CREAR */}
       {isCreateModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>CREAR TIPO DE MÉDICO</h3>
+        <div className="pl-modal-overlay">
+          <div className="pl-modal-box">
+            <h3 className="pl-modal-title">CREAR TIPO DE MÉDICO</h3>
+            <label className="pl-modal-label">NOMBRE DEL TIPO</label>
             <input
-              className="modal-input"
-              placeholder="NOMBRE DEL TIPO"
-              style={{ textTransform: 'uppercase' }}
+              className="pl-modal-input"
+              placeholder="EJ: CARDIÓLOGO"
               value={newTipoName}
               onChange={(e) => handleNameInput(e.target.value, setNewTipoName)}
             />
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setIsCreateModalOpen(false)}>CANCELAR</button>
-              <button className="btn-primary" onClick={handleCreate}>CREAR</button>
+            <div className="pl-modal-footer">
+              <button className="pl-btn-secondary-outline" onClick={() => setIsCreateModalOpen(false)}>
+                CANCELAR
+              </button>
+              <button className="pl-btn-action" onClick={handleCreate}>
+                CREAR TIPO
+              </button>
             </div>
           </div>
         </div>
@@ -177,17 +193,29 @@ const ListTypesDoctor = () => {
 
       {/* MODAL DETALLES */}
       {isDetailsModalOpen && selectedTipo && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>DETALLES DE TIPO</h3>
-            <div className="modal-info-body">
-              <div className="detail-card"><strong>ID:</strong> <span>#{selectedTipo.id}</span></div>
-              <div className="detail-card"><strong>NOMBRE:</strong> <span className="bold">{selectedTipo.nombre.toUpperCase()}</span></div>
+        <div className="pl-modal-overlay">
+          <div className="pl-modal-box">
+            <h3 className="pl-modal-title">DETALLES DE TIPO</h3>
+            <div className="pl-info-list">
+              <div className="pl-info-item">
+                <span className="pl-modal-label">ID INTERNO:</span>
+                <span className="pl-sku-cell">#{selectedTipo.id}</span>
+              </div>
+              <div className="pl-info-item">
+                <span className="pl-modal-label">NOMBRE:</span>
+                <span className="bold">{selectedTipo.nombre.toUpperCase()}</span>
+              </div>
             </div>
-            <div className="modal-footer" style={{ flexDirection: "column", gap: "0.75rem" }}>
-              <button className="btn-primary" onClick={() => { setIsDetailsModalOpen(false); openEditModal(selectedTipo); }}><Pencil size={16} /> EDITAR</button>
-              <button className="btn-danger" onClick={() => { setIsDetailsModalOpen(false); openDeleteModal(selectedTipo); }}><Trash2 size={16} /> ELIMINAR</button>
-              <button className="btn-secondary" onClick={() => setIsDetailsModalOpen(false)}>CERRAR</button>
+            <div className="pl-modal-footer-stack">
+              <button className="pl-btn-secondary" onClick={() => { setIsDetailsModalOpen(false); openEditModal(selectedTipo); }}>
+                <Pencil size={16} /> EDITAR REGISTRO
+              </button>
+              <button className="pl-btn-danger-soft" onClick={() => { setIsDetailsModalOpen(false); openDeleteModal(selectedTipo); }}>
+                <Trash2 size={16} /> ELIMINAR TIPO
+              </button>
+              <button className="pl-btn-secondary-outline" onClick={() => setIsDetailsModalOpen(false)}>
+                CERRAR
+              </button>
             </div>
           </div>
         </div>
@@ -195,18 +223,22 @@ const ListTypesDoctor = () => {
 
       {/* MODAL EDITAR */}
       {isEditModalOpen && selectedTipo && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>EDITAR TIPO DE MÉDICO</h3>
+        <div className="pl-modal-overlay">
+          <div className="pl-modal-box">
+            <h3 className="pl-modal-title">EDITAR TIPO DE MÉDICO</h3>
+            <label className="pl-modal-label">NUEVO NOMBRE</label>
             <input
-              className="modal-input"
-              style={{ textTransform: 'uppercase' }}
+              className="pl-modal-input"
               value={editName}
               onChange={(e) => handleNameInput(e.target.value, setEditName)}
             />
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => { setIsEditModalOpen(false); setSelectedTipo(null); setEditName(""); }}>CANCELAR</button>
-              <button className="btn-primary" onClick={handleUpdate}><Save size={16} /> GUARDAR</button>
+            <div className="pl-modal-footer">
+              <button className="pl-btn-secondary-outline" onClick={() => { setIsEditModalOpen(false); setSelectedTipo(null); setEditName(""); }}>
+                CANCELAR
+              </button>
+              <button className="pl-btn-secondary" onClick={handleUpdate}>
+                <Save size={16} /> GUARDAR CAMBIOS
+              </button>
             </div>
           </div>
         </div>
@@ -214,16 +246,23 @@ const ListTypesDoctor = () => {
 
       {/* MODAL ELIMINAR */}
       {isDeleteModalOpen && selectedTipo && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header-danger">
-              <AlertTriangle size={28} />
-              <h3>¿ELIMINAR TIPO?</h3>
+        <div className="pl-modal-overlay">
+          <div className="pl-modal-box" style={{ borderTop: '4px solid var(--pl-danger)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', color: 'var(--pl-danger)' }}>
+              <AlertTriangle size={32} />
+              <h3 style={{ margin: 0, fontWeight: 800 }}>¿CONFIRMAR ELIMINACIÓN?</h3>
             </div>
-            <p>CONFIRMA QUE DESEAS ELIMINAR: <br/><strong>{selectedTipo.nombre.toUpperCase()}</strong></p>
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>CANCELAR</button>
-              <button className="btn-danger" onClick={handleDelete}><Trash2 size={16} /> ELIMINAR</button>
+            <p style={{ fontSize: '0.9rem', color: 'var(--pl-muted)', lineHeight: '1.5' }}>
+              ESTÁS A PUNTO DE ELIMINAR EL TIPO: <br/>
+              <strong style={{ color: 'var(--pl-text-main)', fontSize: '1.1rem' }}>{selectedTipo.nombre.toUpperCase()}</strong>
+            </p>
+            <div className="pl-modal-footer">
+              <button className="pl-btn-secondary-outline" onClick={() => setIsDeleteModalOpen(false)}>
+                CANCELAR
+              </button>
+              <button className="pl-btn-danger-soft" onClick={handleDelete} style={{ background: 'var(--pl-danger)', color: 'white' }}>
+                SÍ, ELIMINAR
+              </button>
             </div>
           </div>
         </div>

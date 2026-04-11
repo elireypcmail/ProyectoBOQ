@@ -435,185 +435,185 @@ export class SalesModel {
   // }
 
   static async createSale(data) {
-  let connection;
+    let connection;
 
-  try {
-    connection = await pool.connect();
-    await connection.query("BEGIN");
+    try {
+      connection = await pool.connect();
+      await connection.query("BEGIN");
 
-    const {
-      idUser,
-      id_paciente,
-      id_clinica,
-      id_vendedor,
-      id_oficina,
-      id_seguro,
-      id_presupuesto, // ID principal si aplica
-      id_deposito,
-      personal_asignado = [],
-      detalle = [],
-      subtotal,
-      descuento,
-      impuesto,
-      total,
-      abonado,
-      notas_abono,
-      estado_pago,
-      // Extraemos los arreglos de documentos vinculados
-      reportes_usados = [],
-      presupuestos_usados = []
-    } = data;
+      const {
+        idUser,
+        id_paciente,
+        id_clinica,
+        id_vendedor,
+        id_oficina,
+        id_seguro,
+        id_presupuesto, // ID principal si aplica
+        id_deposito,
+        personal_asignado = [],
+        detalle = [],
+        subtotal,
+        descuento,
+        impuesto,
+        total,
+        abonado,
+        notas_abono,
+        estado_pago,
+        // Extraemos los arreglos de documentos vinculados
+        reportes_usados = [],
+        presupuestos_usados = []
+      } = data;
 
-    /* CALCULOS */
-    const subtotal1 = parseMonto(subtotal);
-    const m_descuento = parseMonto(descuento);
-    const subtotal2 = subtotal1 - m_descuento;
-    const descPorcentaje = subtotal1 > 0 ? (m_descuento / subtotal1) * 100 : 0;
+      /* CALCULOS */
+      const subtotal1 = parseMonto(subtotal);
+      const m_descuento = parseMonto(descuento);
+      const subtotal2 = subtotal1 - m_descuento;
+      const descPorcentaje = subtotal1 > 0 ? (m_descuento / subtotal1) * 100 : 0;
 
-    /* 0️⃣ OBTENER NOMBRE DEL PACIENTE */
-    const patientQuery = await connection.query(
-      `SELECT nombre FROM pacientes WHERE id = $1 LIMIT 1`,
-      [id_paciente]
-    );
-    const nombrePaciente = patientQuery.rows.length ? patientQuery.rows[0].nombre : "Paciente";
-
-    /* 1️⃣ GENERAR NUMERO DE FACTURA */
-    const lastFactura = await connection.query(`
-      SELECT nro_factura FROM ventas ORDER BY id DESC LIMIT 1
-    `);
-
-    let correlativo = 1;
-    if (lastFactura.rows.length) {
-      const last = lastFactura.rows[0].nro_factura;
-      const number = parseInt(last.replace("V", ""), 10);
-      correlativo = number + 1;
-    }
-    const nroFactura = `V${String(correlativo).padStart(6, "0")}`;
-
-    /* 2️⃣ CREAR VENTA */
-    const ventaRes = await connection.query(
-      `INSERT INTO ventas (
-        id_paciente, id_clinica, id_vendedor, id_oficina, id_seguro,
-        id_presupuesto, id_deposito, nro_factura, subtotal1, descuentoPor,
-        descuento, subtotal2, impuesto, total, abonado, notas_abono,
-        estado_pago, estado_venta
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,'PENDIENTE')
-      RETURNING id`,
-      [
-        id_paciente, id_clinica || null, id_vendedor, id_oficina || null, id_seguro || null,
-        id_presupuesto || null, id_deposito || null, nroFactura, subtotal1, descPorcentaje,
-        m_descuento, subtotal2, parseMonto(impuesto), parseMonto(total), parseMonto(abonado),
-        notas_abono || null, estado_pago || "Pendiente"
-      ]
-    );
-
-    const idVenta = ventaRes.rows[0].id;
-
-    /* 3️⃣ ACTUALIZAR ESTATUS DE DOCUMENTOS VINCULADOS (NUEVO) */
-    
-    // Marcar Presupuestos como usados (estatus_uso = 2)
-    if (presupuestos_usados.length > 0) {
-      for (const p of presupuestos_usados) {
-        await connection.query(
-          `UPDATE presupuestos SET estatus_uso = 2 WHERE id = $1`,
-          [p.id]
-        );
-      }
-    }
-
-    // Marcar Reportes como usados (estatus_uso = 2)
-    if (reportes_usados.length > 0) {
-      for (const r of reportes_usados) {
-        await connection.query(
-          `UPDATE reportes SET estatus_uso = 2 WHERE id = $1`,
-          [r.id]
-        );
-      }
-    }
-
-    /* 4️⃣ PERSONAL MEDICO */
-    for (const medico of personal_asignado) {
-      let personalRes = await connection.query(
-        `SELECT id FROM personal WHERE id_medico = $1 LIMIT 1`,
-        [medico.id]
+      /* 0️⃣ OBTENER NOMBRE DEL PACIENTE */
+      const patientQuery = await connection.query(
+        `SELECT nombre FROM pacientes WHERE id = $1 LIMIT 1`,
+        [id_paciente]
       );
+      const nombrePaciente = patientQuery.rows.length ? patientQuery.rows[0].nombre : "Paciente";
 
-      let idPersonal = personalRes.rows.length 
-        ? personalRes.rows[0].id 
-        : (await connection.query(`INSERT INTO personal (id_medico) VALUES ($1) RETURNING id`, [medico.id])).rows[0].id;
+      /* 1️⃣ GENERAR NUMERO DE FACTURA */
+      const lastFactura = await connection.query(`
+        SELECT nro_factura FROM ventas ORDER BY id DESC LIMIT 1
+      `);
 
-      await connection.query(
-        `INSERT INTO venta_personal (id_venta, id_personal) VALUES ($1,$2)`,
-        [idVenta, idPersonal]
-      );
-    }
+      let correlativo = 1;
+      if (lastFactura.rows.length) {
+        const last = lastFactura.rows[0].nro_factura;
+        const number = parseInt(last.replace("V", ""), 10);
+        correlativo = number + 1;
+      }
+      const nroFactura = `V${String(correlativo).padStart(6, "0")}`;
 
-    /* 5️⃣ DETALLE */
-    for (const item of detalle) {
-      console.log(item)
-
-      const detRes = await connection.query(
-        `INSERT INTO ventas_detalle (
-          id_venta, id_inventario, descripcion, cantidad, precio_venta,
-          descuento1, descuento_unitario, precio_unitario_final
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
+      /* 2️⃣ CREAR VENTA */
+      const ventaRes = await connection.query(
+        `INSERT INTO ventas (
+          id_paciente, id_clinica, id_vendedor, id_oficina, id_seguro,
+          id_presupuesto, id_deposito, nro_factura, subtotal1, descuentoPor,
+          descuento, subtotal2, impuesto, total, abonado, notas_abono,
+          estado_pago, estado_venta
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,'PENDIENTE')
+        RETURNING id`,
         [
-          idVenta, item.id_inventario, item.descripcion || "Producto",
-          parseMonto(item.cantidad), parseMonto(item.precio_venta),
-          parseMonto(item.descuento1), parseMonto(item.descuento_unitario),
-          parseMonto(item.precio_descuento)
+          id_paciente, id_clinica || null, id_vendedor, id_oficina || null, id_seguro || null,
+          id_presupuesto || null, id_deposito || null, nroFactura, subtotal1, descPorcentaje,
+          m_descuento, subtotal2, parseMonto(impuesto), parseMonto(total), parseMonto(abonado),
+          notas_abono || null, estado_pago || "Pendiente"
         ]
       );
 
-      const idDetalle = detRes.rows[0].id;
+      const idVenta = ventaRes.rows[0].id;
 
-      /* 6️⃣ LOTES */
-      if (item.lotes && Array.isArray(item.lotes)) {
-        for (const lote of item.lotes) {
+      /* 3️⃣ ACTUALIZAR ESTATUS DE DOCUMENTOS VINCULADOS (NUEVO) */
+      
+      // Marcar Presupuestos como usados (estatus_uso = 2)
+      if (presupuestos_usados.length > 0) {
+        for (const p of presupuestos_usados) {
           await connection.query(
-            `INSERT INTO venta_detalle_lote (id_detalle, id_lote, cantidad, fecha_caducidad)
-             VALUES ($1,$2,$3,$4)`,
-            [idDetalle, lote.id_lote, parseMonto(lote.cantidad), lote.fecha_vencimiento]
+            `UPDATE presupuestos SET estatus_uso = 2 WHERE id = $1`,
+            [p.id]
           );
         }
       }
+
+      // Marcar Reportes como usados (estatus_uso = 2)
+      if (reportes_usados.length > 0) {
+        for (const r of reportes_usados) {
+          await connection.query(
+            `UPDATE reportes SET estatus_uso = 2 WHERE id = $1`,
+            [r.id]
+          );
+        }
+      }
+
+      /* 4️⃣ PERSONAL MEDICO */
+      for (const medico of personal_asignado) {
+        let personalRes = await connection.query(
+          `SELECT id FROM personal WHERE id_medico = $1 LIMIT 1`,
+          [medico.id]
+        );
+
+        let idPersonal = personalRes.rows.length 
+          ? personalRes.rows[0].id 
+          : (await connection.query(`INSERT INTO personal (id_medico) VALUES ($1) RETURNING id`, [medico.id])).rows[0].id;
+
+        await connection.query(
+          `INSERT INTO venta_personal (id_venta, id_personal) VALUES ($1,$2)`,
+          [idVenta, idPersonal]
+        );
+      }
+
+      /* 5️⃣ DETALLE */
+      for (const item of detalle) {
+        console.log(item)
+
+        const detRes = await connection.query(
+          `INSERT INTO ventas_detalle (
+            id_venta, id_inventario, descripcion, cantidad, precio_venta,
+            descuento1, descuento_unitario, precio_unitario_final
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
+          [
+            idVenta, item.id_inventario, item.descripcion || "Producto",
+            parseMonto(item.cantidad), parseMonto(item.precio_venta),
+            parseMonto(item.descuento1), parseMonto(item.descuento_unitario),
+            parseMonto(item.precio_descuento)
+          ]
+        );
+
+        const idDetalle = detRes.rows[0].id;
+
+        /* 6️⃣ LOTES */
+        if (item.lotes && Array.isArray(item.lotes)) {
+          for (const lote of item.lotes) {
+            await connection.query(
+              `INSERT INTO venta_detalle_lote (id_detalle, id_lote, cantidad, fecha_caducidad)
+              VALUES ($1,$2,$3,$4)`,
+              [idDetalle, lote.id_lote, parseMonto(lote.cantidad), lote.fecha_vencimiento]
+            );
+          }
+        }
+      }
+
+      /* 7️⃣ NOTIFICACIONES */
+      const personalQuery = await connection.query(
+        `SELECT m.email FROM venta_personal vp
+        INNER JOIN personal p ON vp.id_personal = p.id
+        INNER JOIN medicos m ON p.id_medico = m.id
+        WHERE vp.id_venta = $1 AND m.notificaciones = TRUE AND m.email IS NOT NULL AND m.email != ''`,
+        [idVenta]
+      );
+
+      await connection.query("COMMIT");
+
+      // Enviar correos
+      personalQuery.rows.forEach(medico => {
+        sendSurgeryNotification(medico.email, nombrePaciente);
+      });
+
+      return {
+        status: true,
+        code: 201,
+        msg: "Venta creada y documentos vinculados actualizados",
+        data: { id_venta: idVenta, nro_factura: nroFactura }
+      };
+
+    } catch (error) {
+      if (connection) await connection.query("ROLLBACK");
+      return {
+        status: false,
+        code: 500,
+        msg: "Error al crear venta",
+        error: error.message
+      };
+    } finally {
+      if (connection) connection.release();
     }
-
-    /* 7️⃣ NOTIFICACIONES */
-    const personalQuery = await connection.query(
-      `SELECT m.email FROM venta_personal vp
-       INNER JOIN personal p ON vp.id_personal = p.id
-       INNER JOIN medicos m ON p.id_medico = m.id
-       WHERE vp.id_venta = $1 AND m.notificaciones = TRUE AND m.email IS NOT NULL AND m.email != ''`,
-      [idVenta]
-    );
-
-    await connection.query("COMMIT");
-
-    // Enviar correos
-    personalQuery.rows.forEach(medico => {
-      sendSurgeryNotification(medico.email, nombrePaciente);
-    });
-
-    return {
-      status: true,
-      code: 201,
-      msg: "Venta creada y documentos vinculados actualizados",
-      data: { id_venta: idVenta, nro_factura: nroFactura }
-    };
-
-  } catch (error) {
-    if (connection) await connection.query("ROLLBACK");
-    return {
-      status: false,
-      code: 500,
-      msg: "Error al crear venta",
-      error: error.message
-    };
-  } finally {
-    if (connection) connection.release();
   }
-}
 
   static async editSale(id, data) {
     let connection;

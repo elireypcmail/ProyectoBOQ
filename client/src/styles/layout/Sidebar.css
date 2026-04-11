@@ -1,9 +1,9 @@
 :root {
-  /* Paleta de colores - Estilo Slate & Red */
-  --bg-sidebar: #646d78;         /* Gris azulado (Slate 600) */
-  --bg-sidebar-dark: #646d78;    /* Slate 700 para hover/submenús */
-  --primary-red: #ec3137;        /* Rojo vibrante */
-  --primary-red-hover: #ec3137;
+  /* Paleta de colores - Estilo Azul-Verde & Rojo */
+  --bg-sidebar: #075879;         /* Azul-Verde Principal */
+  --bg-sidebar-dark: #05455f;    /* Tono más oscuro para submenús */
+  --primary-red: #e84053;
+  --primary-red-hover: #e84053;
   
   --text-white: #ffffff;
   --text-muted: #cbd5e1;
@@ -54,7 +54,7 @@
 
 /* Botón de Colapso (Desktop) */
 .collapse-btn {
-  background: #ef4444;
+  background: #e84053;
   color: white;
   border: none;
   border-radius: 8px;
@@ -67,9 +67,9 @@
 }
 
 .collapse-btn:hover {
-  background: #dc2626;
+  background: #d13547;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+  box-shadow: 0 6px 20px rgba(232, 64, 83, 0.4);
 }
 
 /* Botón X Móvil (Cuadrado Rojo) */
@@ -80,11 +80,11 @@
   border-radius: 10px;
   width: 38px;
   height: 38px;
-  display: none; /* Se activa en media query */
+  display: none; 
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 10px rgba(232, 64, 83, 0.3);
 }
 
 /* --- Navegación Principal --- */
@@ -152,13 +152,13 @@
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.3s ease-in-out, margin 0.3s ease;
-  background: #4f565f;
+  background: var(--bg-sidebar-dark);
   color: #fff;
   border-radius: 0 0 12px 12px;
 }
 
 .submenu-container.expanded {
-  max-height: 500px; /* Suficiente para los items */
+  max-height: 500px;
   margin-bottom: 8px;
 }
 
@@ -169,7 +169,7 @@
 
 .submenu-link {
   width: 100%;
-  padding: 0.7rem 1rem 0.7rem 3rem; /* Indentación para subitems */
+  padding: 0.7rem 1rem 0.7rem 3rem;
   background: transparent;
   border: none;
   text-align: left;
@@ -212,13 +212,13 @@
   font-size: 1rem;
   cursor: pointer;
   transition: all var(--transition);
-  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 15px rgba(232, 64, 83, 0.3);
 }
 
 .logout-btn:hover {
   background: var(--primary-red-hover);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+  box-shadow: 0 6px 20px rgba(232, 64, 83, 0.4);
 }
 
 /* --- ESTADO COLAPSADO (Desktop) --- */
@@ -240,7 +240,6 @@
     padding: 0.85rem;
   }
 
-  /* Ocultar submenús si está colapsado para evitar bugs visuales */
   .sidebar.collapsed .submenu-container {
     display: none;
   }
@@ -259,14 +258,13 @@
   }
 
   .close-btn-mobile {
-    display: flex; /* Mostrar X roja en móvil */
+    display: flex; 
   }
 
   .collapse-btn {
     display: none;
   }
 
-  /* Header Superior Móvil */
   .mobile-header {
     display: flex;
     position: fixed;
@@ -292,7 +290,6 @@
     display: flex;
   }
 
-  /* Overlay de fondo */
   .sidebar-overlay {
     position: fixed;
     inset: 0;

@@ -1,0 +1,134 @@
+/* src/styles/components/Vendedores.css */
+:root {
+  --seller-primary: #e84053;
+  --seller-primary-hover: #d13547;
+  --seller-secondary: #075879;
+  --seller-secondary-hover: #05455f;
+  --seller-bg: rgba(255, 255, 255, 0.95);
+  --seller-muted: #64748b;
+  --seller-text-main: #1e293b;
+  --seller-border: #e2e8f0;
+  --seller-soft: #f8fafc;
+  --seller-shadow-md: 0 12px 30px -10px rgba(7, 88, 121, 0.15);
+  --seller-transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.seller-panel-container {
+  width: 88%;
+  background: var(--seller-bg);
+  padding: 1.75rem;
+  border-radius: 14px;
+  box-shadow: var(--seller-shadow-md);
+  color: var(--seller-text-main);
+  font-family: 'Inter', sans-serif;
+}
+
+.seller-top-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--seller-secondary);
+}
+
+.seller-title-area h2 { 
+  font-size: 1.625rem; font-weight: 800; margin: 0; color: var(--seller-secondary);
+}
+
+.seller-title-area p { font-size: 0.875rem; color: var(--seller-muted); }
+
+.seller-action-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.seller-search-box {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  border-radius: 10px;
+  background: #fff;
+  flex: 1;
+  max-width: 400px;
+  border: 1px solid var(--seller-border);
+  transition: var(--seller-transition);
+}
+
+.seller-search-box:focus-within {
+  border-color: var(--seller-secondary);
+  box-shadow: 0 0 0 3px rgba(7, 88, 121, 0.1);
+}
+
+.seller-search-box input { border: none; outline: none; background: transparent; width: 100%; font-size: 0.9rem; }
+
+.seller-table-container { overflow-x: auto; border-radius: 12px; border: 1px solid var(--seller-soft); }
+
+.seller-grid-table { width: 100%; border-collapse: collapse; }
+
+.seller-grid-table th {
+  background: var(--seller-secondary);
+  padding: 1rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #fff;
+  letter-spacing: 0.05em;
+  text-align: center;
+}
+
+.seller-grid-table td { 
+  padding: 1rem; 
+  border-top: 1px solid var(--seller-soft); 
+  text-align: center; 
+  font-size: 0.9rem;
+}
+
+.seller-grid-table tr:hover td { background-color: rgba(7, 88, 121, 0.03); }
+
+.seller-id-text { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--seller-primary); }
+
+.seller-badge-office {
+  background: var(--seller-soft);
+  color: var(--seller-secondary);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+/* BOTONES ÚNICOS */
+.seller-btn-main { background: var(--seller-primary); color: white; border: none; padding: 0.65rem 1.3rem; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: var(--seller-transition); }
+.seller-btn-main:hover { background: var(--seller-primary-hover); transform: transellerateY(-1px); }
+
+.seller-btn-icon {
+  background: transparent; border: none; cursor: pointer; padding: 0.5rem; border-radius: 50%; color: var(--seller-secondary); transition: var(--seller-transition);
+}
+.seller-btn-icon:hover { background: rgba(7, 88, 121, 0.1); }
+
+/* PAGINACIÓN */
+.seller-pagination-nav { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-top: 1.5rem; }
+
+.seller-page-btn {
+  width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
+  border-radius: 10px; border: 1px solid var(--seller-border); background: #fff; color: var(--seller-secondary); cursor: pointer; transition: var(--seller-transition);
+}
+.seller-page-btn:hover:not(:disabled) { border-color: var(--seller-secondary); background: var(--seller-soft); }
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .seller-panel-container { width: 95%; padding: 1.25rem; }
+  .seller-grid-table thead { display: none; }
+  .seller-grid-table tr { display: block; margin-bottom: 1rem; border: 1px solid var(--seller-border); border-radius: 12px; padding: 0.5rem; }
+  .seller-grid-table td { 
+    display: flex; justify-content: space-between; align-items: center; 
+    text-align: right !important; padding: 0.75rem 1rem; border-top: 1px solid var(--seller-soft); 
+  }
+  .seller-grid-table td::before {
+    content: attr(data-label); font-weight: 800; font-size: 0.7rem; color: var(--seller-muted); text-transform: uppercase;
+  }
+  .seller-action-bar { flex-direction: column; }
+  .seller-search-box { max-width: 100%; }
+}

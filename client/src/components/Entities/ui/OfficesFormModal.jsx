@@ -133,35 +133,39 @@ const OfficesFormModal = ({ isOpen, onClose, office = null }) => {
 
   return (
     <>
-      <div className="modal-overlay">
-        <div className="modal-content">
+      <div className="pl-modal-overlay">
+        <div className="pl-modal-box">
           {/* HEADER */}
-          <div className="modal-header">
-            <h3 style={{ textTransform: 'uppercase' }}>
-              {office ? "EDITAR OFICINA" : "NUEVA OFICINA"}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <h3 className="pl-modal-title" style={{ margin: 0, textTransform: 'uppercase' }}>
+              {office ? "Editar Oficina" : "Nueva Oficina"}
             </h3>
-            <button className="sdm-close-btn" onClick={onClose}>
+            <button 
+              className="pl-icon-only-btn" 
+              onClick={onClose}
+              style={{ color: 'var(--pl-muted)' }}
+            >
               <X size={20} />
             </button>
           </div>
 
           {/* BODY */}
-          <div className="modal-body" style={{ marginTop: '1rem' }}>
-            {/* NAME */}
+          <div className="pl-info-list" style={{ background: 'transparent', padding: 0 }}>
+            {/* NOMBRE */}
             <div style={{ marginBottom: '1.25rem' }}>
-              <label className="modal-label">NOMBRE DE LA OFICINA</label>
+              <label className="pl-modal-label">NOMBRE DE LA OFICINA</label>
               <input
-                className="modal-input"
+                className="pl-modal-input"
                 placeholder="EJ: SEDE CENTRAL"
                 value={name}
                 onChange={(e) => setName(e.target.value.toUpperCase())}
-                style={{ textTransform: 'uppercase' }}
+                style={{ textTransform: 'uppercase', marginBottom: 0 }}
               />
             </div>
 
-            {/* ZONE */}
+            {/* ZONA */}
             <div style={{ marginBottom: '1.25rem' }}>
-              <label className="modal-label">ZONA ASIGNADA</label>
+              <label className="pl-modal-label">ZONA ASIGNADA</label>
               <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                 <div style={{ flex: 1 }}>
                   <Select
@@ -174,10 +178,10 @@ const OfficesFormModal = ({ isOpen, onClose, office = null }) => {
                   />
                 </div>
                 <button
-                  className="btn-add-zone-primary"
+                  className="pl-btn-secondary"
                   type="button"
                   onClick={() => setIsCreateZoneOpen(true)}
-                  style={{ height: "45px", minWidth: "50px" }}
+                  style={{ height: "38px", padding: "0 10px" }}
                   title="NUEVA ZONA"
                 >
                   <Plus size={18} />
@@ -185,9 +189,9 @@ const OfficesFormModal = ({ isOpen, onClose, office = null }) => {
               </div>
             </div>
 
-            {/* DEPOSIT */}
-            <div style={{ marginBottom: '1rem' }}>
-              <label className="modal-label">DEPÓSITO VINCULADO</label>
+            {/* DEPÓSITO */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label className="pl-modal-label">DEPÓSITO VINCULADO</label>
               <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                 <div style={{ flex: 1 }}>
                   <Select
@@ -200,10 +204,10 @@ const OfficesFormModal = ({ isOpen, onClose, office = null }) => {
                   />
                 </div>
                 <button
-                  className="btn-add-zone-primary"
+                  className="pl-btn-secondary"
                   type="button"
                   onClick={() => setIsCreateDepositOpen(true)}
-                  style={{ height: "45px", minWidth: "50px" }}
+                  style={{ height: "38px", padding: "0 10px" }}
                   title="NUEVO DEPÓSITO"
                 >
                   <Plus size={18} />
@@ -213,9 +217,9 @@ const OfficesFormModal = ({ isOpen, onClose, office = null }) => {
           </div>
 
           {/* FOOTER */}
-          <div className="modal-footer">
+          <div className="pl-modal-footer">
             <button 
-              className="btn-secondary" 
+              className="pl-btn-secondary-outline" 
               onClick={onClose} 
               disabled={isSaving}
               style={{ textTransform: 'uppercase' }}
@@ -223,7 +227,7 @@ const OfficesFormModal = ({ isOpen, onClose, office = null }) => {
               CANCELAR
             </button>
             <button 
-              className="btn-primary" 
+              className="pl-btn-action" 
               onClick={handleSave} 
               disabled={isSaving}
               style={{ textTransform: 'uppercase' }}

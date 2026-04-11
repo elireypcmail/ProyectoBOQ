@@ -1,6 +1,20 @@
-/* SELLER FORM MODAL (SellerFM) */
+/* SELLER FORM MODAL (SellerMf) */
 
-.sellerfm-overlay {
+:root {
+  --seller-primary: #e84053;
+  --seller-primary-hover: #d13547;
+  --seller-secondary: #075879;
+  --seller-secondary-hover: #05455f;
+  --seller-bg: rgba(255, 255, 255, 0.95);
+  --seller-muted: #64748b;
+  --seller-text-main: #1e293b;
+  --seller-border: #e2e8f0;
+  --seller-soft: #f8fafc;
+  --seller-shadow-md: 0 12px 30px -10px rgba(7, 88, 121, 0.15);
+  --seller-transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sellerMf-overlay {
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.45);
@@ -11,8 +25,8 @@
   z-index: 1100;
 }
 
-.sellerfm-content {
-  background: var(--bg);
+.sellerMf-content {
+  background: var(--seller-bg);
   border-radius: 16px;
   width: 95%;
   max-width: 600px;
@@ -20,11 +34,11 @@
   display: flex;
   flex-direction: column;
   box-shadow: var(--shadow-md);
-  animation: sellerfmIn 0.3s ease-out;
+  animation: sellerMfIn 0.3s ease-out;
   position: relative;
 }
 
-.sellerfm-header {
+.sellerMf-header {
   padding: 1.5rem 2rem;
   border-bottom: 1px solid var(--border);
   display: flex;
@@ -32,13 +46,13 @@
   align-items: center;
 }
 
-.sellerfm-header h3 {
+.sellerMf-header h3 {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 700;
 }
 
-.sellerfm-close-icon {
+.sellerMf-close-icon {
   background: transparent;
   border: none;
   cursor: pointer;
@@ -46,9 +60,9 @@
   transition: var(--transition);
 }
 
-.sellerfm-close-icon:hover { color: var(--primary); }
+.sellerMf-close-icon:hover { color: var(--primary); }
 
-.sellerfm-body {
+.sellerMf-body {
   padding: 1.5rem 2rem;
   overflow-y: auto;
   display: flex;
@@ -56,21 +70,21 @@
   gap: 1.25rem;
 }
 
-.sellerfm-field {
+.sellerMf-field {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.sellerfm-col-span-2 { grid-column: span 2; }
+.sellerMf-col-span-2 { grid-column: span 2; }
 
-.sellerfm-label {
+.sellerMf-label {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--text-main);
 }
 
-.sellerfm-input {
+.sellerMf-input {
   width: 100%;
   padding: 0.75rem 1rem;
   border-radius: 8px;
@@ -80,7 +94,7 @@
   transition: var(--transition);
 }
 
-.sellerfm-input:focus {
+.sellerMf-input:focus {
   outline: none;
   border-color: var(--primary);
   background: white;
@@ -88,15 +102,15 @@
 }
 
 /* Input Group with Add Button */
-.sellerfm-input-group {
+.sellerMf-input-group {
   display: flex;
   gap: 10px;
   align-items: center;
 }
 
-.sellerfm-select-container { flex: 1; }
+.sellerMf-select-container { flex: 1; }
 
-.sellerfm-btn-add-circle {
+.sellerMf-btn-add-circle {
   background: #e0e7ff;
   border: none;
   border-radius: 8px;
@@ -109,10 +123,10 @@
   transition: var(--transition);
 }
 
-.sellerfm-btn-add-circle:hover { background: #ced4ff; }
+.sellerMf-btn-add-circle:hover { background: #ced4ff; }
 
 /* Phone Input Customization */
-.sellerfm-phone-wrapper .sellerfm-phone-input {
+.sellerMf-phone-wrapper .sellerMf-phone-input {
   width: 100% !important;
   height: 42px !important;
   border-radius: 8px !important;
@@ -121,7 +135,7 @@
 }
 
 /* Footer */
-.sellerfm-footer {
+.sellerMf-footer {
   padding: 1.5rem 2rem;
   border-top: 1px solid var(--border);
   display: flex;
@@ -129,7 +143,7 @@
   gap: 1rem;
 }
 
-.sellerfm-btn-cancel {
+.sellerMf-btn-cancel {
   padding: 0.65rem 1.5rem;
   border-radius: 8px;
   border: 1px solid var(--border);
@@ -138,7 +152,7 @@
   font-weight: 500;
 }
 
-.sellerfm-btn-save {
+.sellerMf-btn-save {
   background: linear-gradient(135deg, var(--primary), #d43f44);
   color: white;
   padding: 0.65rem 1.5rem;
@@ -153,7 +167,7 @@
 }
 
 /* --- MINI MODAL (OFICINA) --- */
-.sellerfm-mini-overlay {
+.sellerMf-mini-overlay {
   position: absolute;
   inset: 0;
   background: rgba(255, 255, 255, 0.7);
@@ -165,7 +179,7 @@
   border-radius: 16px;
 }
 
-.sellerfm-mini-card {
+.sellerMf-mini-card {
   background: white;
   width: 320px;
   padding: 1.5rem;
@@ -174,31 +188,31 @@
   border: 1px solid var(--border);
 }
 
-.sellerfm-mini-header {
+.sellerMf-mini-header {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-bottom: 1.25rem;
 }
 
-.sellerfm-mini-header h4 { margin: 0; font-size: 1rem; }
+.sellerMf-mini-header h4 { margin: 0; font-size: 1rem; }
 
-.sellerfm-icon-primary { color: var(--primary); }
+.sellerMf-icon-primary { color: var(--primary); }
 
-.sellerfm-mini-body {
+.sellerMf-mini-body {
   display: flex;
   flex-direction: column;
   gap: 1rem;
   margin-bottom: 1.5rem;
 }
 
-.sellerfm-mini-footer {
+.sellerMf-mini-footer {
   display: flex;
   justify-content: space-between;
   gap: 10px;
 }
 
-.sellerfm-btn-mini-close {
+.sellerMf-btn-mini-close {
   background: var(--soft);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -206,7 +220,7 @@
   cursor: pointer;
 }
 
-.sellerfm-btn-mini-save {
+.sellerMf-btn-mini-save {
   flex: 1;
   background: var(--primary);
   color: white;
@@ -220,12 +234,12 @@
   cursor: pointer;
 }
 
-.sellerfm-btn-mini-save:disabled { opacity: 0.5; cursor: not-allowed; }
+.sellerMf-btn-mini-save:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.sellerfm-spin { animation: sellerfmSpin 1s linear infinite; }
+.sellerMf-spin { animation: sellerMfSpin 1s linear infinite; }
 
-@keyframes sellerfmSpin { to { transform: rotate(360deg); } }
-@keyframes sellerfmIn {
+@keyframes sellerMfSpin { to { transform: rotate(360deg); } }
+@keyframes sellerMfIn {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
 }

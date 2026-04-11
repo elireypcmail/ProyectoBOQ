@@ -95,57 +95,70 @@ const ListSuppliers = () => {
   };
 
   return (
-    <div className="lsu-container">
+    <div className="sp-main-container">
       {/* HEADER */}
-      <div className="lsu-header">
-        <div className="lsu-title-section">
-          <h2>Gestión de Proveedores</h2>
-          <p>{filteredSuppliers.length} proveedores registrados</p>
+      <div className="sp-header-section">
+        <div className="sp-title-group">
+          <h2>GESTIÓN DE PROVEEDORES</h2>
+          <p>{filteredSuppliers.length} PROVEEDORES REGISTRADOS</p>
         </div>
-        <button className="lsu-btn-primary" onClick={handleOpenCreate}>
-          <Plus size={16} /> Nuevo Proveedor
+        <button className="sp-btn-action" onClick={handleOpenCreate}>
+          <Plus size={16} /> NUEVO PROVEEDOR
         </button>
       </div>
 
       {/* TOOLBAR */}
-      <div className="lsu-toolbar">
-        <div className="lsu-search-box">
-          <Search size={16} className="lsu-search-icon" />
+      <div className="sp-toolbar">
+        <div className="sp-search-wrapper">
+          <Search size={16} />
           <input
-            placeholder="Buscar proveedor..."
+            type="text"
+            placeholder="BUSCAR PROVEEDOR POR NOMBRE O EMAIL..."
             value={searchTerm}
             onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
           />
         </div>
       </div>
 
-      {/* TABLA */}
-      <div className="lsu-table-wrapper">
-        <table className="lsu-table">
+      {/* TABLE */}
+      <div className="sp-table-frame">
+        <table className="sp-data-table">
           <thead>
             <tr>
               <th>ID</th>
-              <th>Nombre</th>
-              <th className="lsu-hide-mobile">Teléfono</th>
-              <th className="lsu-hide-mobile">Email</th>
-              <th className="lsu-text-center">Acciones</th>
+              <th>NOMBRE</th>
+              <th className="sp-hide-mobile">TELÉFONO</th>
+              <th className="sp-hide-mobile">EMAIL</th>
+              <th>ACCIONES</th>
             </tr>
           </thead>
           <tbody>
-            {currentSuppliers.length ? currentSuppliers.map(s => (
-              <tr key={s.id}>
-                <td className="lsu-col-id">#{s.id}</td>
-                <td className="lsu-col-name">{s.nombre}</td>
-                <td className="lsu-hide-mobile">{s.telefono ? `+${s.telefono}` : "—"}</td>
-                <td className="lsu-hide-mobile">{s.email || "—"}</td>
-                <td className="lsu-text-center">
-                  <button className="lsu-icon-btn" onClick={() => { setSelectedSupplier(s); setIsDetailsModalOpen(true); }}>
-                    <SlOptionsVertical size={16} />
-                  </button>
+            {currentSuppliers.length > 0 ? (
+              currentSuppliers.map(s => (
+                <tr key={s.id}>
+                  <td data-label="ID" className="sp-sku-cell">#{s.id}</td>
+                  <td data-label="NOMBRE" className="sp-col-bold" title={s.nombre}>
+                    {s.nombre.toUpperCase()}
+                  </td>
+                  <td data-label="TELÉFONO" className="sp-hide-mobile">
+                    {s.telefono ? `+${s.telefono}` : "—"}
+                  </td>
+                  <td data-label="EMAIL" className="sp-hide-mobile sp-truncate" title={s.email}>
+                    {s.email || "—"}
+                  </td>
+                  <td data-label="ACCIONES">
+                    <button className="sp-icon-only-btn" onClick={() => { setSelectedSupplier(s); setIsDetailsModalOpen(true); }}>
+                      <SlOptionsVertical size={16} />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5" className="sp-no-results">
+                  NO SE ENCONTRARON PROVEEDORES
                 </td>
               </tr>
-            )) : (
-              <tr><td colSpan="5" className="lsu-no-results">No se encontraron proveedores</td></tr>
             )}
           </tbody>
         </table>
@@ -153,20 +166,12 @@ const ListSuppliers = () => {
 
       {/* PAGINACIÓN */}
       {totalPages > 1 && (
-        <div className="lsu-pagination">
-          <button 
-            className="lsu-page-btn"
-            disabled={currentPage === 1} 
-            onClick={() => setCurrentPage(p => p - 1)}
-          >
+        <div className="sp-pagination-area">
+          <button className="sp-page-node" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>
             <ChevronLeft size={18} />
           </button>
-          <span className="lsu-page-info">Página {currentPage} de {totalPages}</span>
-          <button 
-            className="lsu-page-btn"
-            disabled={currentPage === totalPages} 
-            onClick={() => setCurrentPage(p => p + 1)}
-          >
+          <span style={{ fontWeight: 600 }}>{currentPage} / {totalPages}</span>
+          <button className="sp-page-node" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>
             <ChevronRight size={18} />
           </button>
         </div>

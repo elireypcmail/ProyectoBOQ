@@ -117,27 +117,25 @@ const ListBrands = () => {
   };
 
   return (
-    <div className="orders-container">
-
+    <div className="pl-main-container">
       {/* HEADER */}
-      <div className="orders-header">
-        <div>
+      <div className="pl-header-section">
+        <div className="pl-title-group">
           <h2>GESTIÓN DE MARCAS</h2>
           <p>{filteredBrands.length} MARCAS REGISTRADAS</p>
         </div>
-        <button className="btn-primary" onClick={() => { setEditName(""); setIsCreateModalOpen(true); }}>
+        <button className="pl-btn-action" onClick={() => { setEditName(""); setIsCreateModalOpen(true); }}>
           <Plus size={16} /> NUEVA MARCA
         </button>
       </div>
 
       {/* TOOLBAR */}
-      <div className="orders-toolbar">
-        <div className="search-box">
+      <div className="pl-toolbar">
+        <div className="pl-search-wrapper">
           <Search size={16} />
           <input
             type="text"
             placeholder="BUSCAR MARCA..."
-            style={{ textTransform: 'uppercase' }}
             value={searchTerm}
             onChange={(e) => { setSearchTerm(e.target.value.toUpperCase()); setCurrentPage(1); }}
           />
@@ -145,27 +143,34 @@ const ListBrands = () => {
       </div>
 
       {/* TABLE */}
-      <div className="orders-table-wrapper">
-        <table className="orders-table">
+      <div className="pl-table-frame">
+        <table className="pl-data-table">
           <thead>
             <tr>
-              <th className="hide-mobile">ID</th>
+              <th>ID</th>
               <th>NOMBRE</th>
-              <th className="hide-mobile">ESTATUS</th>
-              <th className="center">ACCIONES</th>
+              <th>ESTATUS</th>
+              <th>ACCIONES</th>
             </tr>
           </thead>
           <tbody>
             {currentBrands.length > 0 ? (
               currentBrands.map(brand => (
                 <tr key={brand.id}>
-                  <td className="id hide-mobile">#{brand.id}</td>
-                  <td className="bold">{brand.nombre.toUpperCase()}</td>
-                  <td className="hide-mobile">
-                    <span className="badge active">ACTIVO</span>
+                  <td data-label="ID" className="pl-sku-cell">#{brand.id}</td>
+                  
+                  {/* Agregamos el atributo title para accesibilidad */}
+                  <td 
+                    data-label="NOMBRE" 
+                    style={{ fontWeight: 700 }} 
+                    title={(brand.nombre || "").toUpperCase()}
+                  >
+                    {(brand.nombre || "").toUpperCase()}
                   </td>
-                  <td className="center">
-                    <button className="icon-btn" onClick={() => { setSelectedBrand(brand); setIsDetailsModalOpen(true); }}>
+                  
+                  <td data-label="ESTATUS">ACTIVO</td>
+                  <td data-label="ACCIONES">
+                    <button className="pl-icon-only-btn" onClick={() => { setSelectedBrand(brand); setIsDetailsModalOpen(true); }}>
                       <SlOptionsVertical size={16}/>
                     </button>
                   </td>
@@ -173,7 +178,9 @@ const ListBrands = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="4" className="no-results">NO SE ENCONTRARON RESULTADOS</td>
+                <td colSpan="4" style={{ padding: '2rem', color: 'var(--pl-muted)' }}>
+                  NO SE ENCONTRARON RESULTADOS
+                </td>
               </tr>
             )}
           </tbody>
@@ -182,52 +189,41 @@ const ListBrands = () => {
 
       {/* PAGINACIÓN */}
       {totalPages > 1 && (
-        <div className="orders-pagination">
-          <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>
+        <div className="pl-pagination-area">
+          <button className="pl-page-node" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>
             <ChevronLeft size={18} />
           </button>
-          <span>PÁGINA {currentPage} DE {totalPages}</span>
-          <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>
+          <span style={{ fontWeight: 600 }}>{currentPage} / {totalPages}</span>
+          <button className="pl-page-node" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>
             <ChevronRight size={18} />
           </button>
         </div>
       )}
 
-      {/* MODAL CREAR */}
-      {isCreateModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>CREAR MARCA</h3>
-            <input
-              placeholder="NOMBRE"
-              className="modal-input" 
-              style={{ textTransform: 'uppercase' }}
-              value={editName} 
-              onChange={(e) => handleNameInput(e.target.value, setEditName)} 
-            />
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setIsCreateModalOpen(false)}>CANCELAR</button>
-              <button className="btn-primary" onClick={handleCreate}><Save size={16} /> CREAR</button>
+      {/* MODAL CREAR / EDITAR */}
+      {(isCreateModalOpen || isEditModalOpen) && (
+        <div className="pl-modal-overlay">
+          <div className="pl-modal-box">
+            <h3 className="pl-modal-title">
+              {isCreateModalOpen ? "CREAR NUEVA MARCA" : "EDITAR MARCA"}
+            </h3>
+            <div className="pl-modal-body">
+              <label className="pl-modal-label">NOMBRE DE LA MARCA</label>
+              <input 
+                placeholder="EJ. NIKE, ADIDAS..."
+                className="pl-modal-input" 
+                style={{ textTransform: 'uppercase' }}
+                value={editName} 
+                onChange={(e) => handleNameInput(e.target.value, setEditName)} 
+              />
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL EDITAR */}
-      {isEditModalOpen && selectedBrand && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>EDITAR MARCA</h3>
-            <input
-              placeholder="NOMBRE"
-              className="modal-input" 
-              style={{ textTransform: 'uppercase' }}
-              value={editName} 
-              onChange={(e) => handleNameInput(e.target.value, setEditName)} 
-            />
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setIsEditModalOpen(false)}>CANCELAR</button>
-              <button className="btn-primary" onClick={handleUpdate}><Save size={16} /> GUARDAR</button>
+            <div className="pl-modal-footer">
+              <button className="pl-btn-secondary-outline" onClick={() => { setIsCreateModalOpen(false); setIsEditModalOpen(false); }}>
+                CANCELAR
+              </button>
+              <button className="pl-btn-action" onClick={isCreateModalOpen ? handleCreate : handleUpdate}>
+                <Save size={16} /> {isCreateModalOpen ? "CREAR MARCA" : "GUARDAR CAMBIOS"}
+              </button>
             </div>
           </div>
         </div>
@@ -235,16 +231,23 @@ const ListBrands = () => {
 
       {/* MODAL ELIMINAR */}
       {isDeleteModalOpen && selectedBrand && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header-danger">
+        <div className="pl-modal-overlay">
+          <div className="pl-modal-box">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--pl-primary)', marginBottom: '1rem' }}>
               <AlertTriangle size={28} />
-              <h3>¿ELIMINAR MARCA?</h3>
+              <h3 style={{ margin: 0, fontWeight: 800 }}>¿ELIMINAR REGISTRO?</h3>
             </div>
-            <p>CONFIRMA QUE DESEAS ELIMINAR: <br/><strong>{selectedBrand.nombre.toUpperCase()}</strong></p>
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>CANCELAR</button>
-              <button className="btn-danger" onClick={handleDelete}><Trash2 size={16} /> ELIMINAR</button>
+            <p style={{ fontSize: '0.9rem', color: 'var(--pl-muted)', lineHeight: '1.5' }}>
+              ¿Estás seguro de que deseas eliminar la marca <strong>{(selectedBrand?.nombre || "").toUpperCase()}</strong>? 
+              Esta acción es irreversible y podría afectar a los productos asociados.
+            </p>
+            <div className="pl-modal-footer">
+              <button className="pl-btn-secondary-outline" onClick={() => setIsDeleteModalOpen(false)}>
+                CANCELAR
+              </button>
+              <button className="pl-btn-action" onClick={handleDelete}>
+                <Trash2 size={16} /> CONFIRMAR ELIMINAR
+              </button>
             </div>
           </div>
         </div>
@@ -252,23 +255,37 @@ const ListBrands = () => {
 
       {/* MODAL DETALLES */}
       {isDetailsModalOpen && selectedBrand && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>DETALLES DE MARCA</h3>
-            <div className="modal-info-body">
-              <div className="detail-card"><strong>ID:</strong> <span>#{selectedBrand.id}</span></div>
-              <div className="detail-card"><strong>NOMBRE:</strong> <span className="bold">{selectedBrand.nombre.toUpperCase()}</span></div>
-              <div className="detail-card"><strong>ESTADO:</strong> <span>ACTIVO</span></div>
+        <div className="pl-modal-overlay">
+          <div className="pl-modal-box">
+            <h3 className="pl-modal-title">DETALLES DE MARCA</h3>
+            <div className="pl-info-list">
+              <div className="pl-info-item">
+                <strong style={{ fontSize: '0.75rem', color: 'var(--pl-muted)' }}>ID INTERNO</strong> 
+                <span className="pl-sku-cell">#{selectedBrand.id}</span>
+              </div>
+              <div className="pl-info-item">
+                <strong style={{ fontSize: '0.75rem', color: 'var(--pl-muted)' }}>NOMBRE</strong> 
+                <span style={{ fontWeight: 700 }}>{(selectedBrand?.nombre || "").toUpperCase()}</span>
+              </div>
+              <div className="pl-info-item">
+                <strong style={{ fontSize: '0.75rem', color: 'var(--pl-muted)' }}>ESTADO</strong> 
+                <span style={{ color: '#10b981', fontWeight: 700 }}>ACTIVO</span>
+              </div>
             </div>
-            <div className="modal-footer" style={{ flexDirection: "column", gap: "0.75rem" }}>
-              <button className="btn-primary" onClick={() => { setIsDetailsModalOpen(false); openEditModal(selectedBrand); }}><Pencil size={16} /> EDITAR</button>
-              <button className="btn-danger" onClick={() => { setIsDetailsModalOpen(false); openDeleteModal(selectedBrand); }}><Trash2 size={16} /> ELIMINAR</button>
-              <button className="btn-secondary" onClick={() => setIsDetailsModalOpen(false)}>CERRAR</button>
+            <div className="pl-modal-footer-stack">
+              <button className="pl-btn-secondary" onClick={() => { setIsDetailsModalOpen(false); openEditModal(selectedBrand); }}>
+                <Pencil size={16} /> EDITAR INFORMACIÓN
+              </button>
+              <button className="pl-btn-danger-soft" onClick={() => { setIsDetailsModalOpen(false); openDeleteModal(selectedBrand); }}>
+                <Trash2 size={16} /> ELIMINAR REGISTRO
+              </button>
+              <button className="pl-btn-secondary-outline" onClick={() => setIsDetailsModalOpen(false)}>
+                CERRAR
+              </button>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 };

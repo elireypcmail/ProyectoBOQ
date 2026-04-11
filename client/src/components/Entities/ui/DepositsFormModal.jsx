@@ -38,45 +38,54 @@ const DepositsFormModal = ({ isOpen, onClose, deposit = null }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <div className="modal-header">
-          <h3 style={{ textTransform: "uppercase" }}>
+    <div className="pl-modal-overlay">
+      <div className="pl-modal-box">
+        {/* CABECERA */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <h3 className="pl-modal-title" style={{ margin: 0, textTransform: "uppercase" }}>
             {deposit ? "Editar Depósito" : "Nuevo Depósito"}
           </h3>
-          <button className="sdm-close-btn" onClick={onClose}>
+          <button 
+            className="pl-icon-only-btn" 
+            onClick={onClose}
+            style={{ color: 'var(--pl-muted)' }}
+          >
             <X size={20} />
           </button>
         </div>
 
-        <div className="modal-body" style={{ marginTop: "1rem" }}>
-          <div style={{ marginBottom: "1.25rem" }}>
-            <label className="modal-label">NOMBRE DEL DEPÓSITO</label>
-            <input
-              className="modal-input"
-              placeholder="EJ: DEPÓSITO PRINCIPAL"
-              value={name}
-              onChange={(e) => setName(e.target.value.toUpperCase())}
-              style={{ textTransform: "uppercase" }}
-              autoFocus
-            />
-          </div>
+        {/* CUERPO */}
+        <div style={{ marginBottom: "1.5rem" }}>
+          <label className="pl-modal-label">NOMBRE DEL DEPÓSITO</label>
+          <input
+            className="pl-modal-input"
+            placeholder="EJ: DEPÓSITO PRINCIPAL"
+            value={name}
+            onChange={(e) => setName(e.target.value.toUpperCase())}
+            style={{ textTransform: "uppercase", marginBottom: 0 }}
+            autoFocus
+          />
         </div>
 
-        <div className="modal-footer">
+        {/* PIE DE MODAL */}
+        <div className="pl-modal-footer">
           <button 
-            className="btn-secondary" 
+            className="pl-btn-secondary-outline" 
             onClick={onClose} 
             disabled={isSaving}
           >
             CANCELAR
           </button>
           <button 
-            className="btn-primary" 
+            className="pl-btn-action" 
             onClick={handleSave} 
             disabled={isSaving || !name.trim()}
           >
-            {isSaving ? <Loader2 className="sfm-spin" size={16} /> : <Save size={16} />}
+            {isSaving ? (
+              <Loader2 className="sfm-spin" size={16} />
+            ) : (
+              <Save size={16} />
+            )}
             {deposit ? "ACTUALIZAR" : "GUARDAR"}
           </button>
         </div>

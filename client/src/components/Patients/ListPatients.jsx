@@ -1,8 +1,13 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useHealth } from "../../context/HealtContext";
-import { 
-  Search, Plus, Trash2, AlertTriangle, Loader2, 
-  ChevronLeft, ChevronRight 
+import {
+  Search,
+  Plus,
+  Trash2,
+  AlertTriangle,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
 
@@ -26,7 +31,7 @@ const ListPatients = () => {
     editedPaciente,
     deletePacienteById,
     saveFilesPaciente,
-    createNewSeguro, 
+    createNewSeguro,
   } = useHealth();
 
   // Estados de UI
@@ -39,7 +44,7 @@ const ListPatients = () => {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isStoriesModalOpen, setIsStoriesModalOpen] = useState(false);
-  
+
   const [selectedPaciente, setSelectedPaciente] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingDetails, setIsLoadingDetails] = useState(null);
@@ -53,11 +58,12 @@ const ListPatients = () => {
   // Filtrado y Ordenación Alfabética
   const filteredPacientes = useMemo(() => {
     const list = pacientes || [];
-    
+
     // 1. Filtrar por nombre o documento
-    const filtered = list.filter((p) =>
-      p.nombre.toUpperCase().includes(searchTerm.toUpperCase()) ||
-      p.documento?.includes(searchTerm)
+    const filtered = list.filter(
+      (p) =>
+        p.nombre.toUpperCase().includes(searchTerm.toUpperCase()) ||
+        p.documento?.includes(searchTerm),
     );
 
     // 2. Ordenar alfabéticamente por nombre
@@ -73,7 +79,7 @@ const ListPatients = () => {
   const totalPages = Math.ceil(filteredPacientes.length / itemsPerPage);
   const currentPacientes = filteredPacientes.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    currentPage * itemsPerPage,
   );
 
   // --- HANDLERS ---
@@ -81,7 +87,7 @@ const ListPatients = () => {
     setIsLoadingDetails(id);
     try {
       const res = await getPacienteById(id);
-      const pacienteData = res?.data || res; 
+      const pacienteData = res?.data || res;
       setSelectedPaciente(pacienteData);
       setIsDetailsModalOpen(true);
     } catch (error) {
@@ -104,10 +110,10 @@ const ListPatients = () => {
       }
 
       if (archivos?.length > 0 && pacienteId) {
-        const filesJson = archivos.map((f, idx) => ({ 
-          id: null, 
-          name: f.name.toUpperCase(), 
-          order: idx + 1 
+        const filesJson = archivos.map((f, idx) => ({
+          id: null,
+          name: f.name.toUpperCase(),
+          order: idx + 1,
         }));
         await saveFilesPaciente(pacienteId, archivos, filesJson);
       }
@@ -144,71 +150,80 @@ const ListPatients = () => {
   };
 
   return (
-    <div className="lpa-container">
+    <div className="pac-container">
       {/* HEADER */}
-      <div className="lpa-header">
-        <div className="lpa-title-section">
+      <div className="pac-header">
+        <div className="pac-title-wrap">
           <h2>Pacientes</h2>
-          <p>{filteredPacientes.length} registros encontrados</p>
+          <p>{filteredPacientes.length} registros en el sistema</p>
         </div>
-        <button 
-          className="lpa-btn-primary" 
-          onClick={() => { setSelectedPaciente(null); setIsFormModalOpen(true); }}
+        <button
+          className="pac-btn-add"
+          onClick={() => {
+            setSelectedPaciente(null);
+            setIsFormModalOpen(true);
+          }}
         >
           <Plus size={18} /> Nuevo Paciente
         </button>
       </div>
 
       {/* TOOLBAR */}
-      <div className="lpa-toolbar">
-        <div className="lpa-search-box">
-          <Search size={18} className="lpa-search-icon" />
-          <input 
-            placeholder="BUSCAR POR NOMBRE O DOCUMENTO..." 
-            value={searchTerm} 
-            style={{ textTransform: 'uppercase' }}
-            onChange={(e) => { 
-              setSearchTerm(e.target.value.toUpperCase()); 
-              setCurrentPage(1); 
-            }} 
+      <div className="pac-toolbar">
+        <div className="pac-search-field">
+          <Search size={18} className="pac-icon-muted" />
+          <input
+            placeholder="BUSCAR POR NOMBRE O DOCUMENTO..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value.toUpperCase());
+              setCurrentPage(1);
+            }}
           />
         </div>
       </div>
 
       {/* TABLA */}
-      <div className="lpa-table-wrapper">
-        <table className="lpa-table">
+      <div className="pac-table-holder">
+        <table className="pac-table">
           <thead>
             <tr>
               <th>ID</th>
-              <th className="lpa-text-left">Paciente</th>
-              <th className="lpa-hide-mobile">Seguro / Cobertura</th>
+              <th className="pac-text-left">Paciente</th>
+              <th className="pac-hide-mobile">Seguro / Cobertura</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             {currentPacientes.map((p) => (
               <tr key={p.id}>
-                <td className="lpa-col-id">#{p.id}</td>
-                <td className="lpa-text-left">
-                  <div className="lpa-patient-info">
-                    <span className="lpa-name">{p.nombre.toUpperCase()}</span>
-                    <span className="lpa-subtext">{p.documento}</span>
+                <td data-label="ID" className="pac-id-cell">
+                  #{p.id}
+                </td>
+                <td data-label="Paciente" className="pac-text-left">
+                  <div className="pac-user-info">
+                    <span className="pac-main-name">
+                      {p.nombre.toUpperCase()}
+                    </span>
+                    <span className="pac-sub-document">{p.documento}</span>
                   </div>
                 </td>
-                <td className="lpa-hide-mobile">
-                  <span className="lpa-badge">
-                    {(seguros.find((s) => s.id === p.id_seguro)?.nombre || "Particular").toUpperCase()}
+                <td data-label="Seguro" className="pac-hide-mobile">
+                  <span className="pac-tag">
+                    {(
+                      seguros.find((s) => s.id === p.id_seguro)?.nombre ||
+                      "Particular"
+                    ).toUpperCase()}
                   </span>
                 </td>
-                <td>
-                  <button 
-                    className="lpa-icon-btn" 
+                <td data-label="Acciones">
+                  <button
+                    className="pac-btn-options"
                     disabled={isLoadingDetails !== null}
                     onClick={() => handleOpenDetails(p.id)}
                   >
                     {isLoadingDetails === p.id ? (
-                      <Loader2 size={16} className="lpa-spin" />
+                      <Loader2 size={16} className="pac-loading-spin" />
                     ) : (
                       <SlOptionsVertical size={16} />
                     )}
@@ -222,19 +237,21 @@ const ListPatients = () => {
 
       {/* PAGINACIÓN */}
       {totalPages > 1 && (
-        <div className="lpa-pagination">
-          <button 
-            className="lpa-page-btn"
+        <div className="pac-pagination">
+          <button
+            className="pac-page-arrow"
             disabled={currentPage === 1}
-            onClick={() => setCurrentPage(prev => prev - 1)}
+            onClick={() => setCurrentPage((prev) => prev - 1)}
           >
             <ChevronLeft size={18} />
           </button>
-          <span className="lpa-page-info">Página {currentPage} de {totalPages}</span>
-          <button 
-            className="lpa-page-btn"
+          <div className="pac-page-counter">
+            Página <strong>{currentPage}</strong> de {totalPages}
+          </div>
+          <button
+            className="pac-page-arrow"
             disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage(prev => prev + 1)}
+            onClick={() => setCurrentPage((prev) => prev + 1)}
           >
             <ChevronRight size={18} />
           </button>
@@ -257,25 +274,37 @@ const ListPatients = () => {
         onClose={() => setIsDetailsModalOpen(false)}
         paciente={selectedPaciente}
         seguros={seguros}
-        onEdit={(p) => { setIsDetailsModalOpen(false); setSelectedPaciente(p); setIsFormModalOpen(true); }}
+        onEdit={(p) => {
+          setIsDetailsModalOpen(false);
+          setSelectedPaciente(p);
+          setIsFormModalOpen(true);
+        }}
         onDelete={() => setIsDeleteModalOpen(true)}
         onViewStories={() => setIsStoriesModalOpen(true)}
       />
 
       {/* Modal de Eliminación */}
       {isDeleteModalOpen && (
-        <div className="lpa-modal-overlay">
-          <div className="lpa-modal-content sm">
-            <div className="lpa-modal-header-danger">
+        <div className="pac-modal-overlay">
+          <div className="pac-modal-content sm">
+            <div className="pac-modal-header-danger">
               <AlertTriangle size={32} />
-              <h3>¿Eliminar registro?</h3>
+              <h3>Eliminar registro</h3>
             </div>
-            <p className="lpa-modal-text">
-              Esta acción eliminará permanentemente a <strong>{selectedPaciente?.nombre.toUpperCase()}</strong>.
-            </p>
-            <div className="lpa-modal-footer">
-              <button className="lpa-btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
-              <button className="lpa-btn-danger" onClick={handleDeleteConfirm}>
+            <div className="pac-modal-body">
+              <p>
+                Esta acción eliminará permanentemente a{" "}
+                <strong>{selectedPaciente?.nombre.toUpperCase()}</strong>.
+              </p>
+            </div>
+            <div className="pac-modal-footer">
+              <button
+                className="pac-btn-secondary"
+                onClick={() => setIsDeleteModalOpen(false)}
+              >
+                Cancelar
+              </button>
+              <button className="pac-btn-danger" onClick={handleDeleteConfirm}>
                 <Trash2 size={16} /> Confirmar
               </button>
             </div>
@@ -285,11 +314,18 @@ const ListPatients = () => {
 
       {/* Historias Clínicas */}
       {isStoriesModalOpen && (
-        <div className="lpa-modal-overlay">
-          <div className="lpa-modal-content wide"> 
-            <ListStories pacienteId={selectedPaciente?.id} />
-            <div className="lpa-modal-footer">
-              <button className="lpa-btn-secondary" onClick={() => setIsStoriesModalOpen(false)}>Cerrar</button>
+        <div className="pac-modal-overlay">
+          <div className="pac-modal-content lg">
+            <div className="pac-modal-body">
+              <ListStories pacienteId={selectedPaciente?.id} />
+            </div>
+            <div className="pac-modal-footer">
+              <button
+                className="pac-btn-secondary"
+                onClick={() => setIsStoriesModalOpen(false)}
+              >
+                Cerrar
+              </button>
             </div>
           </div>
         </div>

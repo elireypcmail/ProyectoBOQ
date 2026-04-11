@@ -123,29 +123,25 @@ const ListInsurances = () => {
   };
 
   return (
-    <div className="insurances-view-container">
+    <div className="is-main-container">
       {/* HEADER */}
-      <div className="insurances-main-header">
-        <div>
-          <h2 className="insurances-title">GESTIÓN DE SEGUROS</h2>
-          <p className="insurances-subtitle">
-            {filteredSeguros.length} EMPRESAS REGISTRADAS
-          </p>
+      <div className="is-header-section">
+        <div className="is-title-group">
+          <h2>Gestión de Seguros</h2>
+          <p>{filteredSeguros.length} EMPRESAS REGISTRADAS</p>
         </div>
-        <button className="insurances-btn-primary" onClick={openCreateModal}>
-          <Plus size={18} /> <span>NUEVO SEGURO</span>
+        <button className="is-btn-primary" onClick={openCreateModal}>
+          <Plus size={18} /> NUEVO SEGURO
         </button>
       </div>
 
       {/* TOOLBAR */}
-      <div className="insurances-filter-toolbar">
-        <div className="insurances-search-wrapper">
-          <Search size={18} />
+      <div className="is-toolbar">
+        <div className="is-search-box">
+          <Search size={18} style={{ color: 'var(--is-muted)' }} />
           <input
             type="text"
-            className="insurances-search-input"
-            placeholder="BUSCAR POR NOMBRE..."
-            style={{ textTransform: 'uppercase' }}
+            placeholder="BUSCAR SEGURO..."
             value={searchTerm}
             onChange={e => { setSearchTerm(e.target.value.toUpperCase()); setCurrentPage(1); }}
           />
@@ -153,39 +149,43 @@ const ListInsurances = () => {
       </div>
 
       {/* TABLA */}
-      <div className="insurances-table-responsive">
-        <table className="insurances-data-table">
+      <div className="is-table-frame">
+        <table className="is-data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th style={{ textAlign: 'left' }}>Aseguradora</th>
+              <th className="is-hide-mobile">Soporte</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
           <tbody>
             {currentSeguros.length > 0 ? currentSeguros.map(s => (
-              <tr key={s.id} className="insurances-table-row">
-                <td className="insurances-td-id">#{s.id}</td>
-                <td>
-                  <div className="ins-main-info">
-                    <span className="ins-name bold">{s.nombre.toUpperCase()}</span>
-                    <span className="ins-subtext">
-                      <User size={12} style={{marginRight: '4px'}}/>
-                      {s.contacto?.toUpperCase() || "SIN CONTACTO"}
+              <tr key={s.id}>
+                <td data-label="ID" className="is-id-text">#{s.id}</td>
+                
+                <td data-label="Aseguradora" style={{ textAlign: 'left' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontWeight: 800, fontSize: '1rem' }}>{s.nombre.toUpperCase()}</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--is-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <User size={12} /> {s.contacto?.toUpperCase() || "SIN CONTACTO"}
                     </span>
                   </div>
                 </td>
-                <td className="insurances-hide-mobile">
-                  <div className="ins-main-info">
-                    <span className="ins-subtext" style={{fontWeight: 700}}>SOPORTE</span>
-                    <span className="ins-name" style={{fontSize: '0.9rem'}}>
-                      <Phone size={12} style={{marginRight: '4px'}}/>
-                      {s.telefono ? `+${s.telefono}` : "---"}
-                    </span>
-                  </div>
+
+                <td data-label="Soporte" className="is-hide-mobile">
+                  <span className="is-badge-support">
+                    <Phone size={12} /> {s.telefono ? `+${s.telefono}` : "---"}
+                  </span>
                 </td>
-                <td>
-                  <div style={{display: 'flex', gap: '0.5rem', justifyContent: 'flex-end'}}>
-                    <button className="insurances-action-pill" onClick={() => openEditModal(s)}>
-                      <Settings2 size={16} />
-                      <span className="insurances-hide-mobile">GESTIONAR</span>
+
+                <td data-label="Acciones">
+                  <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                    <button className="is-btn-pill" onClick={() => openEditModal(s)}>
+                      <Settings2 size={16} /> <span className="is-hide-mobile">GESTIONAR</span>
                     </button>
                     <button 
-                      className="insurances-action-pill" 
-                      style={{color: 'var(--ins-danger)'}}
+                      className="is-btn-pill danger" 
                       onClick={() => { setSelectedSeguro(s); setIsDeleteModalOpen(true); }}
                     >
                       <Trash2 size={16} />
@@ -195,7 +195,7 @@ const ListInsurances = () => {
               </tr>
             )) : (
               <tr>
-                <td colSpan="4" style={{textAlign: 'center', padding: '3rem'}}>
+                <td colSpan="4" style={{ padding: '3rem', color: 'var(--is-muted)', fontWeight: 600 }}>
                   NO SE ENCONTRARON RESULTADOS
                 </td>
               </tr>
@@ -206,17 +206,21 @@ const ListInsurances = () => {
 
       {/* PAGINACIÓN */}
       {totalPages > 1 && (
-        <div className="insurances-pagination-bar">
+        <div className="is-pagination">
           <button 
-            className="insurances-page-btn" 
+            className="is-page-node" 
             disabled={currentPage === 1}
             onClick={() => setCurrentPage(p => p - 1)}
           >
             <ChevronLeft size={20} />
           </button>
-          <span>PÁGINA {currentPage} DE {totalPages}</span>
+          
+          <span style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--is-secondary)' }}>
+            {currentPage} / {totalPages}
+          </span>
+
           <button 
-            className="insurances-page-btn" 
+            className="is-page-node" 
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage(p => p + 1)}
           >
@@ -224,7 +228,6 @@ const ListInsurances = () => {
           </button>
         </div>
       )}
-
       {/* MODAL DE FORMULARIO */}
       <InsuranceFormModal 
         isOpen={isModalOpen}
@@ -238,16 +241,24 @@ const ListInsurances = () => {
 
       {/* MODAL ELIMINAR */}
       {isDeleteModalOpen && selectedSeguro && (
-        <div className="insurances-modal-overlay">
-          <div className="insurances-modal-card" style={{maxWidth:'400px', textAlign:'center'}}>
-            <AlertTriangle size={48} style={{margin:'0 auto 1rem', color: 'orange'}} />
-            <h3 className="insurances-modal-title">¿ELIMINAR SEGURO?</h3>
-            <p>CONFIRMA QUE DESEAS ELIMINAR: <br/><strong>{selectedSeguro.nombre.toUpperCase()}</strong></p>
-            <div style={{display:'flex', flexDirection:'column', gap:'0.75rem', marginTop:'1.5rem'}}>
-              <button className="insurances-btn-danger" onClick={handleDelete}>
-                SÍ, ELIMINAR
+        <div className="is-modal-overlay">
+          <div className="is-modal-box delete-confirm">
+            <div className="is-modal-icon-header">
+              <AlertTriangle size={48} />
+            </div>
+            
+            <h3 className="is-modal-title">¿ELIMINAR SEGURO?</h3>
+            
+            <p className="is-modal-text">
+              Esta acción no se puede deshacer. Confirma que deseas eliminar a: <br/>
+              <strong>{selectedSeguro.nombre.toUpperCase()}</strong>
+            </p>
+
+            <div className="is-modal-footer-stack">
+              <button className="is-btn-danger" onClick={handleDelete}>
+                <Trash2 size={18} /> SÍ, ELIMINAR REGISTRO
               </button>
-              <button className="insurances-btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>
+              <button className="is-btn-secondary-outline" onClick={() => setIsDeleteModalOpen(false)}>
                 CANCELAR
               </button>
             </div>

@@ -7,18 +7,14 @@ import {
   Pencil,
   Trash2,
   AlertTriangle,
-  Plus
+  Plus,
 } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
 import DepositsFormModal from "./ui/DepositsFormModal";
 import "../../styles/components/ListZone.css";
 
 const ListDeposits = () => {
-  const { 
-    entities, 
-    getAllEntities, 
-    deleteEntityById 
-  } = useEntity();
+  const { entities, getAllEntities, deleteEntityById } = useEntity();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -41,8 +37,8 @@ const ListDeposits = () => {
     const list = deposits || [];
 
     // 1. Filtrar
-    const filtered = list.filter(d =>
-      d.nombre.toUpperCase().includes(searchTerm.toUpperCase())
+    const filtered = list.filter((d) =>
+      d.nombre.toUpperCase().includes(searchTerm.toUpperCase()),
     );
 
     // 2. Ordenar A-Z
@@ -58,7 +54,7 @@ const ListDeposits = () => {
   const totalPages = Math.ceil(filteredDeposits.length / itemsPerPage);
   const currentDeposits = filteredDeposits.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    currentPage * itemsPerPage,
   );
 
   // Acciones
@@ -85,86 +81,131 @@ const ListDeposits = () => {
   };
 
   return (
-    <div className="orders-container">
-      {/* HEADER */}
-      <div className="orders-header">
-        <div>
+    <div className="pl-main-container">
+      {/* Encabezado */}
+      <div className="pl-header-section">
+        <div className="pl-title-group">
           <h2>Gestión de Depósitos</h2>
           <p>{filteredDeposits.length} depósitos registrados</p>
         </div>
-        <button className="btn-primary" onClick={openCreateModal}>
-          <Plus size={16} /> Nuevo Depósito
-        </button>
+        <div className="pl-actions-group">
+          <button className="pl-btn-action" onClick={openCreateModal}>
+            <Plus size={16} /> Nuevo Depósito
+          </button>
+        </div>
       </div>
 
-      {/* TOOLBAR */}
-      <div className="orders-toolbar">
-        <div className="search-box">
+      {/* Barra de herramientas */}
+      <div className="pl-toolbar">
+        <div className="pl-search-wrapper">
           <Search size={16} />
           <input
             type="text"
             placeholder="BUSCAR DEPÓSITO..."
             value={searchTerm}
-            style={{ textTransform: 'uppercase' }}
-            onChange={(e) => { 
-              setSearchTerm(e.target.value.toUpperCase()); 
-              setCurrentPage(1); 
+            onChange={(e) => {
+              setSearchTerm(e.target.value.toUpperCase());
+              setCurrentPage(1);
             }}
           />
         </div>
       </div>
 
-      {/* TABLE */}
-      <div className="orders-table-wrapper">
-        <table className="orders-table">
+      {/* Tabla de Depósitos con etiquetas responsive */}
+      <div className="pl-table-frame">
+        <table className="pl-data-table">
           <thead>
             <tr>
-              <th className="hide-mobile">ID</th>
-              <th>Nombre</th>
-              <th className="hide-mobile">Estatus</th>
-              <th className="center">Acciones</th>
+              <th style={{ textAlign: "center" }}>ID</th>
+              <th style={{ textAlign: "left", paddingLeft: "1.5rem" }}>
+                Nombre
+              </th>
+              <th>Estatus</th>
+              <th style={{ textAlign: "center" }}>Acciones</th>
             </tr>
           </thead>
           <tbody>
             {currentDeposits.length > 0 ? (
-              currentDeposits.map(deposit => (
+              currentDeposits.map((deposit) => (
                 <tr key={deposit.id}>
-                  <td className="id hide-mobile">#{deposit.id}</td>
-                  <td className="bold">{deposit.nombre.toUpperCase()}</td>
-                  <td className="hide-mobile">
+                  <td
+                    className="pl-sku-cell"
+                    data-label="ID"
+                    style={{ textAlign: "center" }}
+                  >
+                    #{deposit.id}
+                  </td>
+                  <td
+                    className="pl-desc-cell"
+                    data-label="Nombre"
+                    style={{
+                      textAlign: "left",
+                      paddingLeft: "1.5rem",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {deposit.nombre.toUpperCase()}
+                  </td>
+                  <td data-label="Estatus">
                     <span className="badge active">ACTIVO</span>
                   </td>
-                  <td className="center">
-                    <button className="icon-btn edit" onClick={() => { setSelectedDeposit(deposit); setIsDetailsModalOpen(true); }}>
-                      <SlOptionsVertical size={16}/>
+                  <td
+                    className="pl-actions-cell"
+                    data-label="Acciones"
+                    style={{ textAlign: "center" }}
+                  >
+                    <button
+                      className="pl-icon-only-btn"
+                      onClick={() => {
+                        setSelectedDeposit(deposit);
+                        setIsDetailsModalOpen(true);
+                      }}
+                    >
+                      <SlOptionsVertical size={16} />
                     </button>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="4" className="no-results">No se encontraron depósitos</td>
+                <td
+                  colSpan="4"
+                  className="no-results"
+                  style={{ padding: "2rem", textAlign: "center" }}
+                >
+                  No se encontraron depósitos
+                </td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
 
-      {/* PAGINACIÓN */}
+      {/* Paginación */}
       {totalPages > 1 && (
-        <div className="orders-pagination">
-          <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>
+        <div className="pl-pagination-area">
+          <button
+            className="pl-page-node"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+          >
             <ChevronLeft size={18} />
           </button>
-          <span>Página {currentPage} de {totalPages}</span>
-          <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>
+          <span className="pl-muted">
+            Página {currentPage} de {totalPages}
+          </span>
+          <button
+            className="pl-page-node"
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+          >
             <ChevronRight size={18} />
           </button>
         </div>
       )}
 
       {/* --- MODAL DE FORMULARIO (NUEVO/EDITAR) --- */}
-      <DepositsFormModal 
+      <DepositsFormModal
         isOpen={isFormModalOpen}
         onClose={() => setIsFormModalOpen(false)}
         deposit={selectedDeposit}
@@ -172,40 +213,93 @@ const ListDeposits = () => {
 
       {/* MODAL ELIMINAR */}
       {isDeleteModalOpen && selectedDeposit && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header-danger">
-              <AlertTriangle size={28} />
-              <h3>¿Eliminar depósito?</h3>
+        <div className="pl-modal-overlay">
+          <div className="pl-modal-box">
+            <div
+              className="pl-modal-title"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.75rem",
+                color: "var(--pl-danger)",
+              }}
+            >
+              <AlertTriangle size={24} />
+              <span>¿Eliminar depósito?</span>
             </div>
-            <p>Confirma que deseas eliminar <strong>{selectedDeposit.nombre.toUpperCase()}</strong></p>
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
-              <button className="btn-danger" onClick={handleDelete}><Trash2 size={16} /> Eliminar</button>
+            <p style={{ margin: "1rem 0", color: "var(--pl-text-main)" }}>
+              Confirma que deseas eliminar{" "}
+              <strong>{selectedDeposit.nombre.toUpperCase()}</strong>
+            </p>
+            <div className="pl-modal-footer">
+              <button
+                className="pl-btn-secondary-outline"
+                onClick={() => setIsDeleteModalOpen(false)}
+              >
+                Cancelar
+              </button>
+              <button className="pl-btn-danger-soft" onClick={handleDelete}>
+                <Trash2 size={16} /> Eliminar
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL DETALLES MÓVIL/OPCIONES */}
+      {/* MODAL DETALLES */}
       {isDetailsModalOpen && selectedDeposit && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>DETALLES DE DEPÓSITO</h3>
-            <div className="modal-info-body">
-              <div className="detail-card"><strong>ID:</strong> <span>#{selectedDeposit.id}</span></div>
-              <div className="detail-card"><strong>Nombre:</strong> <span className="bold">{selectedDeposit.nombre.toUpperCase()}</span></div>
-              <div className="detail-card"><strong>Estatus:</strong> <span>ACTIVO</span></div>
+        <div className="pl-modal-overlay">
+          <div className="pl-modal-box">
+            <h3 className="pl-modal-title">DETALLES DEL DEPÓSITO</h3>
+
+            <div className="pl-info-list">
+              <div className="pl-info-item">
+                <span className="pl-modal-label" style={{ margin: 0 }}>
+                  ID
+                </span>
+                <span style={{ fontWeight: 600 }}>#{selectedDeposit.id}</span>
+              </div>
+              <div className="pl-info-item">
+                <span className="pl-modal-label" style={{ margin: 0 }}>
+                  Nombre
+                </span>
+                <span style={{ fontWeight: 600 }}>
+                  {selectedDeposit.nombre.toUpperCase()}
+                </span>
+              </div>
+              <div className="pl-info-item">
+                <span className="pl-modal-label" style={{ margin: 0 }}>
+                  Estatus
+                </span>
+                <span className="badge active">ACTIVO</span>
+              </div>
             </div>
 
-            <div className="modal-footer" style={{ flexDirection: "column", gap: "0.75rem" }}>
-              <button className="btn-primary" onClick={() => { setIsDetailsModalOpen(false); openEditModal(selectedDeposit); }}>
+            <div className="pl-modal-footer-stack">
+              <button
+                className="pl-btn-secondary"
+                onClick={() => {
+                  setIsDetailsModalOpen(false);
+                  openEditModal(selectedDeposit);
+                }}
+              >
                 <Pencil size={16} /> Editar
               </button>
-              <button className="btn-danger" onClick={() => { setIsDetailsModalOpen(false); setIsDeleteModalOpen(true); }}>
+              <button
+                className="pl-btn-danger-soft"
+                onClick={() => {
+                  setIsDetailsModalOpen(false);
+                  setIsDeleteModalOpen(true);
+                }}
+              >
                 <Trash2 size={16} /> Eliminar
               </button>
-              <button className="btn-secondary" onClick={() => setIsDetailsModalOpen(false)}>Cerrar</button>
+              <button
+                className="pl-btn-secondary-outline"
+                onClick={() => setIsDetailsModalOpen(false)}
+              >
+                Cerrar
+              </button>
             </div>
           </div>
         </div>

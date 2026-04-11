@@ -32,7 +32,7 @@ const SupplierFormModal = ({ isOpen, onClose, onSave, supplier, isSaving }) => {
       } else {
         setSelectedFiles([]);
       }
-    } else {
+    } else if (isOpen) {
       resetLocalForm();
     }
   }, [supplier, isOpen]);
@@ -46,9 +46,7 @@ const SupplierFormModal = ({ isOpen, onClose, onSave, supplier, isSaving }) => {
     setSelectedFiles([]);
   };
 
-  // --- FIX: Added the missing function ---
   const handleDocumentInput = (value) => {
-    // You can add validation logic here (e.g., only numbers and letters)
     setDocumentoField(value.toUpperCase());
   };
 
@@ -93,11 +91,13 @@ const SupplierFormModal = ({ isOpen, onClose, onSave, supplier, isSaving }) => {
   };
 
   return (
-    <div className="sfm-overlay">
-      <div className="sfm-content">
+    <div className="sfm-overlay" onClick={onClose}>
+      <div className="sfm-content" onClick={(e) => e.stopPropagation()}>
         <div className="sfm-header">
           <h3>{supplier ? "Editar Proveedor" : "Nuevo Proveedor"}</h3>
-          <button className="sfm-close-icon" onClick={onClose}><X size={20}/></button>
+          <button className="sfm-close-icon" onClick={onClose}>
+            <X size={20}/>
+          </button>
         </div>
 
         <div className="sfm-body">
@@ -105,15 +105,17 @@ const SupplierFormModal = ({ isOpen, onClose, onSave, supplier, isSaving }) => {
             <label className="sfm-label">Nombre / Razón Social</label>
             <input
               className="sfm-input"
+              placeholder="Ej: CORPORACIÓN ACME C.A."
               value={nombre}
               onChange={(e) => setNombre(e.target.value.toUpperCase())}
             />
           </div>
 
           <div className="sfm-field">
-            <label className="sfm-label">Documento</label>
+            <label className="sfm-label">Documento (RIF / CI)</label>
             <input
               className="sfm-input"
+              placeholder="J-12345678-0"
               value={documentoField}
               onChange={(e) => handleDocumentInput(e.target.value)}
             />
@@ -126,7 +128,6 @@ const SupplierFormModal = ({ isOpen, onClose, onSave, supplier, isSaving }) => {
                 country={"ve"}
                 value={telefono}
                 onChange={setTelefono}
-                // Añadimos estas clases para vincular con el CSS
                 containerClass="sfm-phone-container"
                 inputClass="sfm-phone-input"
                 buttonClass="sfm-phone-button"
@@ -137,19 +138,30 @@ const SupplierFormModal = ({ isOpen, onClose, onSave, supplier, isSaving }) => {
 
           <div className="sfm-field">
             <label className="sfm-label">Email</label>
-            <input className="sfm-input" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <input 
+              className="sfm-input" 
+              type="email"
+              placeholder="correo@ejemplo.com"
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
+            />
           </div>
 
           <div className="sfm-field">
             <label className="sfm-label">Datos Bancarios</label>
-            <textarea className="sfm-textarea" value={datosBancarios} onChange={(e) => setDatosBancarios(e.target.value)} />
+            <textarea 
+              className="sfm-textarea" 
+              placeholder="Banco, Nro de Cuenta, Pago móvil..."
+              value={datosBancarios} 
+              onChange={(e) => setDatosBancarios(e.target.value)} 
+            />
           </div>
 
           <div className="sfm-file-section">
             <label className="sfm-label">Documentos y Fotos (Máx. 5)</label>
             <div className="sfm-dropzone" onClick={() => document.getElementById("sfm-file-input").click()}>
-              <UploadCloud size={28} />
-              <p>{supplier ? "Agregar más archivos" : "Clic para subir archivos"}</p>
+              <UploadCloud size={24} />
+              <p>Subir archivos</p>
               <input 
                 id="sfm-file-input"
                 type="file" 
@@ -169,13 +181,8 @@ const SupplierFormModal = ({ isOpen, onClose, onSave, supplier, isSaving }) => {
                     ) : (
                       <div className="sfm-pdf-placeholder">PDF</div>
                     )}
-                    
-                    <span className="sfm-file-badge">
-                      {file.isExisting ? "Guardado" : "Nuevo"}
-                    </span>
-
                     <button className="sfm-remove-file" onClick={() => removeFile(index)}>
-                      <XCircle size={18} />
+                      <XCircle size={16} />
                     </button>
                   </div>
                 ))}
@@ -185,10 +192,12 @@ const SupplierFormModal = ({ isOpen, onClose, onSave, supplier, isSaving }) => {
         </div>
 
         <div className="sfm-footer">
-          <button className="sfm-btn-cancel" onClick={onClose} disabled={isSaving}>Cancelar</button>
+          <button className="sfm-btn-cancel" onClick={onClose} disabled={isSaving}>
+            Cancelar
+          </button>
           <button className="sfm-btn-save" onClick={handleSubmit} disabled={isSaving}>
             {isSaving ? <Loader2 className="sfm-spin" size={18} /> : <Save size={18} />}
-            {isSaving ? "Guardando..." : supplier ? "Actualizar Proveedor" : "Guardar Proveedor"}
+            {isSaving ? "Guardando..." : supplier ? "Actualizar" : "Guardar"}
           </button>
         </div>
       </div>

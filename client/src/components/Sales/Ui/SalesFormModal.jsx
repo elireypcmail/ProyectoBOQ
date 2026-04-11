@@ -6,7 +6,8 @@ import {
   CheckCircle,
   Loader2,
   FileText,
-  ClipboardList
+  ClipboardList,
+  AlertTriangle // Added for the warning modal
 } from "lucide-react";
 
 import { useProducts } from "../../../context/ProductsContext";
@@ -68,6 +69,10 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
   const [totals, setTotals] = useState(initialTotalsState);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  
+  // New states for the stock warning modal
+  const [showStockWarningModal, setShowStockWarningModal] = useState(false);
+  const [outOfStockItems, setOutOfStockItems] = useState([]);
 
   const [usedReports, setUsedReports] = useState([]);
   const [usedBudgets, setUsedBudgets] = useState([]);
@@ -124,6 +129,7 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
         descripcion: item.producto || item.descripcion,
         sku: item.sku || "",
         cantidad: item.cantidad,
+        existencia: item.existencia || item.stock || 0, // Capture stock from editData
         precio_venta: item.precio_venta,
         lotes_compra: item.lotes || [],
         maneja_lotes: item.maneja_lotes || item.usa_lotes || false,
@@ -206,20 +212,30 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
     }));
   }, [items, totals.monto_descuento_fijo, totals.impuestos_monto, totals.monto_abonado]);
 
-  const handleFinalSubmit = async () => {
+  // Validation function before processing the sale
+  const handleCheckStockAndSubmit = () => {
     if (isDuplicateInvoice()) {
       alert("Esta factura ya existe.");
       setStep(1);
       return;
     }
 
+    // Filter items where the requested quantity exceeds the available stock
+    const missingStockItems = items.filter(
+      (item) => safeParse(item.cantidad) > safeParse(item.existencia)
+    );
+
+    if (missingStockItems.length > 0) {
+      setOutOfStockItems(missingStockItems);
+      setShowStockWarningModal(true);
+    } else {
+      processSale();
+    }
+  };
+
+  // Renamed from handleFinalSubmit to processSale
+  const processSale = async () => {
     setIsSubmitting(true);
-
-    // console.log("processedItems")
-    // console.log(processedItems)
-
-    console.log("formData")
-    console.log(formData)
 
     try {
       const infoUser = JSON.parse(localStorage.getItem("UserId"));
@@ -275,6 +291,7 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
     setTotals(initialTotalsState);
     setUsedReports([]);
     setUsedBudgets([]);
+    setShowStockWarningModal(false);
   };
 
   const handleClose = () => {
@@ -287,14 +304,12 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
     if (items.some((i) => String(i.id || i.id_producto) === String(product.id)))
       return alert("El producto ya fue agregado");
 
-    console.log("product")
-    console.log(product)
-
     setItems([
       ...items,
       {
         ...product,
         cantidad: 1,
+        existencia: product.existencia || product.stock || 0, // Capture stock from selected product
         precio_venta: product.precio_venta || 0,
         lotes_compra: [],
         isValid: false
@@ -369,6 +384,7 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
           descripcion: det.descripcion || det.producto,
           sku: det.sku || "",
           cantidad: det.cantidad || 1,
+          existencia: det.existencia || det.stock || 0, // Capture stock from report details
           precio_venta: det.precio_venta || 0,
           lotes_compra: [],
           maneja_lotes: det.usa_lotes || det.maneja_lotes || false,
@@ -380,7 +396,7 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
     }
   };
 
-  // ✅ LOGICA DE PRESUPUESTOS (Ahora igual que reportes)
+  // ✅ LOGICA DE PRESUPUESTOS 
   const handleToggleBudget = (budget, isRemoving = false) => {
     if (isRemoving) {
       const updatedBudgets = usedBudgets.filter((b) => String(b.id) !== String(budget.id));
@@ -430,6 +446,7 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
           descripcion: det.descripcion || det.producto,
           sku: det.sku || "",
           cantidad: det.cantidad || 1,
+          existencia: det.existencia || det.stock || 0, // Capture stock from budget details
           precio_venta: det.precio_venta || 0,
           lotes_compra: [],
           maneja_lotes: det.usa_lotes || det.maneja_lotes || false,
@@ -548,7 +565,7 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
             ) : (
               <button
                 className="sform-btn-finish"
-                onClick={handleFinalSubmit}
+                onClick={handleCheckStockAndSubmit}
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
@@ -567,6 +584,59 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
           </div>
         </footer>
       </div>
+
+      {/* WARNING MODAL: Insufficient Stock */}
+      {showStockWarningModal && (
+        <div className="sform-overlay" style={{ zIndex: 1000 }}>
+          <div className="sform-main-card" style={{ maxWidth: "450px", height: "auto", margin: "auto", padding: "24px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px", color: "#d97706" }}>
+              <AlertTriangle size={28} />
+              <h2 style={{ margin: 0, fontSize: "1.25rem", fontWeight: "600", color: "#1f2937" }}>
+                Advertencia de Existencia
+              </h2>
+            </div>
+            
+            <p style={{ color: "#4b5563", marginBottom: "16px" }}>
+              Los siguientes productos no tienen la existencia requerida para procesar esta venta:
+            </p>
+            
+            <ul style={{ maxHeight: "200px", overflowY: "auto", marginBottom: "24px", padding: "0 16px", background: "#f3f4f6", borderRadius: "8px", border: "1px solid #e5e7eb", listStyle: "none" }}>
+              {outOfStockItems.map((item, idx) => (
+                <li key={item.id || idx} style={{ padding: "12px 0", borderBottom: idx !== outOfStockItems.length - 1 ? "1px solid #e5e7eb" : "none" }}>
+                  <div style={{ fontWeight: "500", color: "#111827", marginBottom: "4px" }}>{item.descripcion}</div>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.875rem", color: "#4b5563" }}>
+                    <span>Requerido: <strong>{item.cantidad}</strong></span>
+                    <span>Disponible: <strong>{item.existencia}</strong></span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            
+            <p style={{ color: "#4b5563", marginBottom: "24px", fontWeight: "500" }}>
+              ¿Desea registrar la venta de todas formas?
+            </p>
+            
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+              <button 
+                className="sform-btn-cancel" 
+                onClick={() => setShowStockWarningModal(false)}
+              >
+                Cancelar
+              </button>
+              <button 
+                className="sform-btn-finish" 
+                style={{ backgroundColor: "#d97706", borderColor: "#d97706" }}
+                onClick={() => {
+                  setShowStockWarningModal(false);
+                  processSale();
+                }}
+              >
+                Continuar y Vender
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isSearchModalOpen && (
         <SearchProductModal

@@ -91,13 +91,14 @@ const ListPurchases = () => {
   };
 
   return (
-    <div className="orders-container">
-      <div className="orders-header">
-        <div>
+<div className="pl-main-container">
+      {/* HEADER */}
+      <div className="pl-header-section">
+        <div className="pl-title-group">
           <h2>Gestión de Compras</h2>
           <p>
             {loading ? (
-              <span className="flex items-center gap-2">
+              <span className="pl-loading-text">
                 <Loader2 size={14} className="animate-spin" /> Cargando registros...
               </span>
             ) : (
@@ -106,51 +107,59 @@ const ListPurchases = () => {
           </p>
         </div>
         <button 
-          className="btn-primary flex items-center gap-2" 
+          className="pl-btn-action" 
           onClick={() => { 
             setSelectedPurchase(null); 
             setIsFormOpen(true); 
           }}
         >
-          <Plus size={16} /> Nueva Compra
+          <Plus size={18} /> Nueva Compra
         </button>
       </div>
 
-      <div className="orders-toolbar">
-        <div className="search-box flex items-center gap-2">
-          <Search size={16} />
+      {/* TOOLBAR */}
+      <div className="pl-toolbar">
+        <div className="pl-search-wrapper">
+          <Search size={18} color="var(--pl-muted)" />
           <input
-            placeholder="Buscar por factura o proveedor..."
+            placeholder="BUSCAR POR FACTURA O PROVEEDOR..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => setSearchTerm(e.target.value.toUpperCase())}
           />
         </div>
       </div>
 
-      <div className="orders-table-wrapper">
-        <table className="orders-table">
+      {/* TABLE */}
+      <div className="pl-table-frame">
+        <table className="pl-data-table">
           <thead>
             <tr>
-              <th className="center">Fecha</th>
+              <th>Fecha</th>
               <th>Factura</th>
               <th>Proveedor</th>
-              <th className="right">Total</th>
-              <th className="center">Acciones</th>
+              <th style={{ textAlign: 'right' }}>Total</th>
+              <th style={{ width: '80px' }}>Acciones</th>
             </tr>
           </thead>
           <tbody>
             {currentItems.length > 0 ? (
               currentItems.map((p) => (
                 <tr key={p.id}>
-                  <td className="center">{formatDate(p.fecha_emision || p.created_at)}</td>
-                  <td className="bold">{p.nro_factura}</td>
-                  <td>{p.proveedor}</td>
-                  <td className="right bold">
+                  <td data-label="Fecha" className="pl-date-cell">
+                    {formatDate(p.fecha_emision || p.created_at)}
+                  </td>
+                  <td data-label="Factura" className="pl-sku-cell">
+                    {p.nro_factura}
+                  </td>
+                  <td data-label="Proveedor" style={{ fontWeight: 600 }}>
+                    {p.proveedor}
+                  </td>
+                  <td data-label="Total" className="pl-amount-cell">
                     {formatCurrency(p.total)}
                   </td>
-                  <td className="center">
+                  <td data-label="Acciones">
                     <button 
-                      className="icon-btn" 
+                      className="pl-icon-only-btn" 
                       disabled={fetchingId === p.id}
                       onClick={() => handleOpenDetail(p.id)}
                     >
@@ -165,8 +174,8 @@ const ListPurchases = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="5" className="center py-10">
-                  {loading ? "Cargando..." : "No se encontraron registros de compras."}
+                <td colSpan="5" className="no-results">
+                  {loading ? "Sincronizando datos..." : "No se encontraron registros de compras."}
                 </td>
               </tr>
             )}
@@ -174,29 +183,27 @@ const ListPurchases = () => {
         </table>
       </div>
 
-      {/* Pagination Controls */}
+      {/* PAGINACIÓN */}
       {totalPages > 1 && (
-        <div className="pagination-controls flex items-center justify-between" style={{ marginTop: '1rem', padding: '0.5rem 0' }}>
+        <div className="pl-pagination-area">
           <button 
-            className="btn-secondary flex items-center gap-1"
+            className="pl-page-node"
             disabled={currentPage === 1}
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-            style={{ opacity: currentPage === 1 ? 0.5 : 1, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
           >
-            <ChevronLeft size={16} /> Anterior
+            <ChevronLeft size={20} />
           </button>
           
-          <span className="text-sm">
-            Página <strong>{currentPage}</strong> de <strong>{totalPages}</strong>
+          <span className="pl-pagination-info">
+            Página <b>{currentPage}</b> de <b>{totalPages}</b>
           </span>
 
           <button 
-            className="btn-secondary flex items-center gap-1"
+            className="pl-page-node"
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-            style={{ opacity: currentPage === totalPages ? 0.5 : 1, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
           >
-            Siguiente <ChevronRight size={16} />
+            <ChevronRight size={20} />
           </button>
         </div>
       )}
