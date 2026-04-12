@@ -18,7 +18,7 @@ import ModalCreateCatalog from "../Ui/ModalCreateCatalog"
 
 import "../../styles/components/ListProd.css"
 
-const ListProducts = () => {
+const ListProducts = ({ onClose }) => {
   const {
     products,
     categories,
@@ -144,13 +144,15 @@ const ListProducts = () => {
           <h2>Gestión de Productos</h2>
           <p>{filteredProducts.length} productos registrados</p>
         </div>
-        <div className="pl-actions-group"> {/* Clase nueva para control flex */}
+        
+        <div className="pl-actions-group"> 
           <button
             className="pl-btn-secondary"
             onClick={() => setIsCatalogModalOpen(true)}
           >
             <FileText size={16} /> Crear Catálogo
           </button>
+          
           <button
             className="pl-btn-action"
             onClick={() => {
@@ -160,6 +162,17 @@ const ListProducts = () => {
           >
             <Plus size={16} /> Nuevo Producto
           </button>
+
+          {/* Botón de cierre integrado */}
+          {onClose && (
+            <button 
+              className="pl-btn-close" 
+              onClick={onClose}
+              title="Cerrar ventana"
+            >
+              <X size={20} strokeWidth={2.5} />
+            </button>
+          )}
         </div>
       </div>
 

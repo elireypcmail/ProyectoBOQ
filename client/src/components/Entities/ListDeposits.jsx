@@ -8,12 +8,13 @@ import {
   Trash2,
   AlertTriangle,
   Plus,
+  X
 } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
 import DepositsFormModal from "./ui/DepositsFormModal";
 import "../../styles/components/ListZone.css";
 
-const ListDeposits = () => {
+const ListDeposits = ({ onClose }) => {
   const { entities, getAllEntities, deleteEntityById } = useEntity();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -91,6 +92,9 @@ const ListDeposits = () => {
         <div className="pl-actions-group">
           <button className="pl-btn-action" onClick={openCreateModal}>
             <Plus size={16} /> Nuevo Depósito
+          </button>
+          <button className="pl-btn-close" onClick={onClose}>
+            <X size={16} />
           </button>
         </div>
       </div>

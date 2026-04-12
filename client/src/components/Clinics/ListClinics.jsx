@@ -3,7 +3,7 @@ import { useClinics } from "../../context/ClinicsContext";
 import { useEntity } from "../../context/EntityContext";
 import { 
   Search, Plus, AlertTriangle, Loader2, 
-  ChevronLeft, ChevronRight, MapPin
+  ChevronLeft, ChevronRight, MapPin, X
 } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
 
@@ -15,7 +15,7 @@ import StatusModal from "./Ui/StatusModal";
 
 import "../../styles/components/ListClinics.css";
 
-const ListClinics = () => {
+const ListClinics = ({onClose}) => {
   const {
     clinics,
     getAllClinics,
@@ -157,18 +157,31 @@ const ListClinics = () => {
 
   return (
     <div className="cl-main-container">
-      {/* CABECERA */}
+{/* CABECERA */}
       <div className="cl-header-section">
         <div className="cl-title-group">
           <h2>Gestión de Clínicas</h2>
           <p>{filteredClinics.length} INSTITUCIONES REGISTRADAS</p>
         </div>
-        <button 
-          className="cl-btn-add" 
-          onClick={() => { setSelectedClinic(null); setIsFormModalOpen(true); }}
-        >
-          <Plus size={20} /> NUEVA CLÍNICA
-        </button>
+
+        <div className="cl-actions-group">
+          <button 
+            className="cl-btn-add" 
+            onClick={() => { setSelectedClinic(null); setIsFormModalOpen(true); }}
+          >
+            <Plus size={20} /> NUEVA CLÍNICA
+          </button>
+
+          {onClose && (
+            <button 
+              className="cl-btn-close" 
+              onClick={onClose}
+              title="Cerrar ventana"
+            >
+              <X size={20} strokeWidth={2.5} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* TOOLBAR */}

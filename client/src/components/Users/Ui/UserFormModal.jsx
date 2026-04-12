@@ -87,22 +87,22 @@ const UserFormModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="sellerfm-overlay">
-      <div className="sellerfm-content">
-        <div className="sellerfm-header">
+    <div className="sellerMf-overlay">
+      <div className="sellerMf-content">
+        <div className="sellerMf-header">
           <h3>{user ? "Editar Usuario" : "Nuevo Usuario"}</h3>
-          <button className="sellerfm-close-icon" onClick={onClose}>
+          <button className="sellerMf-close-icon" onClick={onClose}>
             <X size={20} />
           </button>
         </div>
 
-        <div className="sellerfm-body">
+        <div className="sellerMf-body">
           {/* Nombre */}
-          <div className="sellerfm-field">
-            <label className="sellerfm-label">Nombre Completo</label>
-            <div className="sellerfm-input-group">
+          <div className="sellerMf-field">
+            <label className="sellerMf-label">Nombre Completo</label>
+            <div className="sellerMf-input-group">
                <input
-                className="sellerfm-input"
+                className="sellerMf-input"
                 value={nombre}
                 onChange={(e) => handleNameInput(e.target.value)}
                 placeholder="EJ: JUAN PÉREZ"
@@ -111,10 +111,10 @@ const UserFormModal = ({
           </div>
 
           {/* Email */}
-          <div className="sellerfm-field">
-            <label className="sellerfm-label">Correo Electrónico</label>
+          <div className="sellerMf-field">
+            <label className="sellerMf-label">Correo Electrónico</label>
             <input
-              className="sellerfm-input"
+              className="sellerMf-input"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value.replace(/\s/g, ""))}
@@ -123,25 +123,25 @@ const UserFormModal = ({
           </div>
 
           {/* Teléfono */}
-          <div className="sellerfm-field">
-            <label className="sellerfm-label">Teléfono</label>
+          <div className="sellerMf-field">
+            <label className="sellerMf-label">Teléfono</label>
             <PhoneInput
               country={"ve"}
               value={telefono}
               onChange={setTelefono}
-              containerClass="sellerfm-phone-container"
-              inputClass="sellerfm-phone-input"
+              containerClass="sellerMf-phone-container"
+              inputClass="sellerMf-phone-input"
               placeholder="Ingresar teléfono"
             />
           </div>
 
           {/* Contraseña */}
-          <div className="sellerfm-field">
-            <label className="sellerfm-label">
+          <div className="sellerMf-field">
+            <label className="sellerMf-label">
               {user ? "Nueva Contraseña (opcional)" : "Contraseña"}
             </label>
             <input
-              className="sellerfm-input"
+              className="sellerMf-input"
               type="password"
               value={contrasena}
               onChange={(e) => setContrasena(e.target.value)}
@@ -150,50 +150,50 @@ const UserFormModal = ({
           </div>
 
           {/* Rol */}
-          <div className="sellerfm-field">
-            <label className="sellerfm-label">Rol de Usuario</label>
+          <div className="sellerMf-field">
+            <label className="sellerMf-label">Rol de Usuario</label>
             <Select
               options={rolOptions}
               value={rolOptions.find(opt => opt.value === rol)}
               onChange={(opt) => setRol(opt?.value || "")}
               placeholder="SELECCIONAR ROL"
-              classNamePrefix="sellerfm-select"
+              classNamePrefix="sellerMf-select"
             />
           </div>
 
           {/* Oficina */}
-          <div className="sellerfm-field">
-            <label className="sellerfm-label">Oficina Asignada</label>
+          <div className="sellerMf-field">
+            <label className="sellerMf-label">Oficina Asignada</label>
             <Select
               options={oficinaOptions}
               value={oficinaOptions.find(opt => opt.value === idOficina)}
               onChange={(opt) => setIdOficina(opt?.value || "")}
               isClearable
               placeholder="SELECCIONAR OFICINA"
-              classNamePrefix="sellerfm-select"
+              classNamePrefix="sellerMf-select"
             />
           </div>
 
           {/* Depósito */}
-          <div className="sellerfm-field">
-            <label className="sellerfm-label">Depósito Asignado</label>
+          <div className="sellerMf-field">
+            <label className="sellerMf-label">Depósito Asignado</label>
             <Select
               options={depositoOptions}
               value={depositoOptions.find(opt => opt.value === idDeposito)}
               onChange={(opt) => setIdDeposito(opt?.value || "")}
               isClearable
               placeholder="SELECCIONAR DEPÓSITO"
-              classNamePrefix="sellerfm-select"
+              classNamePrefix="sellerMf-select"
             />
           </div>
         </div>
 
-        <div className="sellerfm-footer">
-          <button className="sellerfm-btn-cancel" onClick={onClose} disabled={isSaving}>
+        <div className="sellerMf-footer">
+          <button className="sellerMf-btn-cancel" onClick={onClose} disabled={isSaving}>
             Cancelar
           </button>
-          <button className="sellerfm-btn-save" onClick={handleSubmit} disabled={isSaving}>
-            {isSaving ? <Loader2 className="sellerfm-spin" size={18} /> : <Save size={18} />}
+          <button className="sellerMf-btn-save" onClick={handleSubmit} disabled={isSaving}>
+            {isSaving ? <Loader2 className="sellerMf-spin" size={18} /> : <Save size={18} />}
             {isSaving ? "Guardando..." : user ? "Actualizar Usuario" : "Guardar Usuario"}
           </button>
         </div>

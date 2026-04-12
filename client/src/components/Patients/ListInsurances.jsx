@@ -9,12 +9,13 @@ import {
   Plus,
   Phone,
   User,
-  Settings2
+  Settings2,
+  X
 } from "lucide-react";
 import InsuranceFormModal from "./ui/InsuranceFormModal";
 import "../../styles/components/ListInsurances.css";
 
-const ListInsurances = () => {
+const ListInsurances = ({onClose}) => {
   const { 
     seguros, 
     getAllSeguros, 
@@ -130,9 +131,22 @@ const ListInsurances = () => {
           <h2>Gestión de Seguros</h2>
           <p>{filteredSeguros.length} EMPRESAS REGISTRADAS</p>
         </div>
-        <button className="is-btn-primary" onClick={openCreateModal}>
-          <Plus size={18} /> NUEVO SEGURO
-        </button>
+
+        <div className="is-actions-group">
+          <button className="is-btn-primary" onClick={openCreateModal}>
+            <Plus size={18} /> NUEVO SEGURO
+          </button>
+
+          {onClose && (
+            <button 
+              className="is-btn-close" 
+              onClick={onClose}
+              title="Cerrar ventana"
+            >
+              <X size={20} strokeWidth={2.5} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* TOOLBAR */}

@@ -8,6 +8,7 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
+  X
 } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
 
@@ -19,7 +20,7 @@ import ListStories from "./ListStories";
 // Estilos
 import "../../styles/components/ListPatients.css";
 
-const ListPatients = () => {
+const ListPatients = ({ onClose }) => {
   const {
     pacientes,
     seguros,
@@ -157,15 +158,28 @@ const ListPatients = () => {
           <h2>Pacientes</h2>
           <p>{filteredPacientes.length} registros en el sistema</p>
         </div>
-        <button
-          className="pac-btn-add"
-          onClick={() => {
-            setSelectedPaciente(null);
-            setIsFormModalOpen(true);
-          }}
-        >
-          <Plus size={18} /> Nuevo Paciente
-        </button>
+        
+        <div className="pac-header-actions">
+          <button
+            className="pac-btn-add"
+            onClick={() => {
+              setSelectedPaciente(null);
+              setIsFormModalOpen(true);
+            }}
+          >
+            <Plus size={18} /> Nuevo Paciente
+          </button>
+
+          {onClose && (
+            <button 
+              className="pac-btn-close" 
+              onClick={onClose}
+              title="Close component"
+            >
+              <X size={20} strokeWidth={2.5} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* TOOLBAR */}

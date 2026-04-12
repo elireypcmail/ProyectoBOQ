@@ -11,7 +11,7 @@ import "../styles/pages/LoginPage.css"
 // Images (Importamos AMBOS fondos con nombres distintos)
 import fondoHorizontal from "../assets/images/fondoHorizontal.jpeg"
 import fondoApp from "../assets/images/fondoApp.jpeg"
-import logo from "../assets/images/logo.png"
+import logo from "../assets/images/logoBlanco.png"
 
 const LoginPage = () => {
   const {

@@ -1,12 +1,12 @@
 import React, { useState, useMemo, useEffect } from "react"
-import { Search, Plus, Loader2, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search, Plus, Loader2, ChevronLeft, ChevronRight, X } from "lucide-react"
 import { SlOptionsVertical } from "react-icons/sl"
 import { useIncExp } from "../../context/IncExpContext"
 import SaleFormModal from "./Ui/SalesFormModal"
 import SaleDetailModal from "./Ui/SalesDetailModal"
 import "../../styles/components/ListSales.css"
 
-const ListSales = () => {
+const ListSales = ({ onClose }) => {
   const { sales, getAllSales, getSaleById, loading } = useIncExp()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedSale, setSelectedSale] = useState(null)
@@ -95,40 +95,59 @@ const ListSales = () => {
 
   return (
     <div className="v-main-container">
+      {/* HEADER */}
       <div className="v-header-section">
-        <div className="v-header-info">
+        <div className="v-title-group">
           <h2 className="v-title">Gestión de Ventas</h2>
-          <p className="v-subtitle">
+          <p>
             {loading ? (
-              <span className="v-loader-text"><Loader2 size={14} className="v-spin" /> Cargando...</span>
+              <span className="v-page-info">
+                <Loader2 size={14} className="v-spin" /> Cargando...
+              </span>
             ) : (
               `${filteredSales.length} registros encontrados`
             )}
           </p>
         </div>
 
-        <button className="v-btn-add" onClick={() => { setSelectedSale(null); setIsFormOpen(true) }}>
-          <Plus size={16} /> Nueva Venta
-        </button>
+        <div className="v-actions-group">
+          <button 
+            className="v-btn-add" 
+            onClick={() => { setSelectedSale(null); setIsFormOpen(true); }}
+          >
+            <Plus size={16} /> Nueva Venta
+          </button>
+
+          {onClose && (
+            <button 
+              className="v-btn-close" 
+              onClick={onClose}
+              title="Cerrar ventana"
+            >
+              <X size={20} strokeWidth={2.5} />
+            </button>
+          )}
+        </div>
       </div>
 
+      {/* TOOLBAR */}
       <div className="v-toolbar">
-        <div className="v-search-box">
-          <Search size={16} />
+        <div className="v-search-wrapper">
+          <Search size={16} color="var(--v-muted)" />
           <input
-            placeholder="Buscar por factura o cliente..."
+            placeholder="BUSCAR POR FACTURA O CLIENTE..."
             value={searchTerm}
-            style={{ textTransform: 'uppercase' }}
             onChange={(e) => setSearchTerm(e.target.value.toUpperCase())}
           />
         </div>
       </div>
 
-      <div className="v-table-container">
+      {/* TABLE FRAME */}
+      <div className="v-table-frame">
         <table className="v-data-table">
           <thead>
             <tr>
-              <th className="v-text-center">Fecha</th>
+              <th>Fecha</th>
               <th>Factura</th>
               <th>Cliente</th>
               <th className="v-text-right">Total</th>
@@ -138,18 +157,30 @@ const ListSales = () => {
           <tbody>
             {currentItems.length > 0 ? (
               currentItems.map((s) => (
-                <tr key={s.id} className={`v-table-row ${getRowStatusClass(s)}`}>
-                  <td className="v-text-center">{formatDate(s.fecha_creacion || s.created_at)}</td>
-                  <td className="v-text-center v-bold">{s.nro_factura}</td>
-                  <td>{s.paciente}</td>
-                  <td className="v-text-right v-bold">{formatCurrency(s.total)}</td>
-                  <td className="v-text-center">
+                <tr key={s.id} className={getRowStatusClass(s)}>
+                  <td data-label="Fecha" className="v-text-center">
+                    {formatDate(s.fecha_creacion || s.created_at)}
+                  </td>
+                  <td data-label="Factura" className="v-text-center v-bold">
+                    {s.nro_factura}
+                  </td>
+                  <td data-label="Cliente" style={{ textTransform: 'uppercase' }}>
+                    {s.paciente}
+                  </td>
+                  <td data-label="Total" className="v-text-right v-bold">
+                    {formatCurrency(s.total)}
+                  </td>
+                  <td data-label="Acciones" className="v-text-center">
                     <button
-                      className="v-action-btn"
+                      className="v-icon-btn"
                       disabled={fetchingId === s.id}
                       onClick={() => handleOpenDetail(s.id)}
                     >
-                      {fetchingId === s.id ? <Loader2 size={16} className="v-spin" /> : <SlOptionsVertical size={16} />}
+                      {fetchingId === s.id ? (
+                        <Loader2 size={16} className="v-spin" />
+                      ) : (
+                        <SlOptionsVertical size={16} />
+                      )}
                     </button>
                   </td>
                 </tr>
@@ -165,27 +196,26 @@ const ListSales = () => {
         </table>
       </div>
 
-      {/* --- Controles de Paginación --- */}
+      {/* PAGINATION AREA */}
       {totalPages > 1 && (
-        <div className="pagination-controls flex items-center justify-between" style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="v-pagination-area">
           <button 
-            className="btn-secondary flex items-center gap-1"
+            className="v-icon-btn" /* O puedes usar un estilo de botón secundario si prefieres */
             disabled={currentPage === 1}
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-            style={{ display: 'flex', alignItems: 'center', gap: '5px', opacity: currentPage === 1 ? 0.5 : 1, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+            style={{ opacity: currentPage === 1 ? 0.5 : 1 }}
           >
             <ChevronLeft size={16} /> Anterior
           </button>
           
-          <span className="v-page-info">
-            Página <strong>{currentPage}</strong> de <strong>{totalPages}</strong>
-          </span>
+          <div className="v-page-node">{currentPage}</div>
+          <span className="v-page-info">de {totalPages}</span>
 
           <button 
-            className="btn-secondary flex items-center gap-1"
+            className="v-icon-btn"
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-            style={{ display: 'flex', alignItems: 'center', gap: '5px', opacity: currentPage === totalPages ? 0.5 : 1, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+            style={{ opacity: currentPage === totalPages ? 0.5 : 1 }}
           >
             Siguiente <ChevronRight size={16} />
           </button>

@@ -34,6 +34,39 @@
   border-bottom: 2px solid var(--pl-secondary); /* Acento en azul-verde */
 }
 
+/* --- ACCIONES DEL HEADER Y BOTÓN DE CIERRE --- */
+.pl-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem; /* Space between the Add button and Close button */
+}
+
+.pl-btn-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px; /* Matches the approximate height of the add button */
+  height: 42px;
+  background: var(--pac-soft);
+  color: var(--pac-muted);
+  border: 1px solid var(--pac-border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: var(--pac-transition);
+}
+
+.pl-btn-close:hover {
+  background: var(--pl-danger);
+  color: #fff;
+  border-color: var(--pl-danger);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(232, 64, 83, 0.25); /* Subtle red shadow */
+}
+
+.pl-btn-close:active {
+  transform: translateY(0);
+}
+
 .pl-title-group h2 { 
   font-size: 1.625rem; 
   font-weight: 800; 

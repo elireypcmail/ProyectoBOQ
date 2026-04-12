@@ -32,6 +32,49 @@
   border-bottom: 2px solid var(--seller-secondary);
 }
 
+/* Agrupación de botones a la derecha */
+.seller-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Botón de cierre con estilo unificado */
+.seller-btn-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px; /* Altura ajustada para seller-btn-main */
+  height: 42px;
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.seller-btn-close:hover {
+  background: var(--seller-primary, #e84053);
+  color: #fff;
+  border-color: var(--seller-primary, #e84053);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(232, 64, 83, 0.2);
+}
+
+.seller-btn-close:active {
+  transform: translateY(0);
+}
+
+/* Ajuste para pantallas pequeñas */
+@media (max-width: 768px) {
+  .seller-top-header {
+    flex-direction: column;
+    gap: 1.25rem;
+    text-align: center;
+  }
+}
+
 .seller-title-area h2 { 
   font-size: 1.625rem; font-weight: 800; margin: 0; color: var(--seller-secondary);
 }

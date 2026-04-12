@@ -15,7 +15,7 @@
 
 /* ===== Container ===== */
 .pfm-container {
-  background: var(--bg);
+  background: #fff;
   border-radius: 18px;
   width: 100%;
   max-width: 800px;

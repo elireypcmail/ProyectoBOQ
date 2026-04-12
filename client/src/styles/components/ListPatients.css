@@ -16,7 +16,6 @@
 
 .pac-container {
   width: 88%;
-  max-width: 1200px;
   background: var(--pac-bg);
   padding: 1.75rem;
   border-radius: 16px;
@@ -79,6 +78,39 @@
   width: 100%; 
   font-size: 0.95rem;
   color: var(--pac-text-main);
+}
+
+/* --- ACCIONES DEL HEADER Y BOTÓN DE CIERRE --- */
+.pac-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem; /* Space between the Add button and Close button */
+}
+
+.pac-btn-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px; /* Matches the approximate height of the add button */
+  height: 42px;
+  background: var(--pac-soft);
+  color: var(--pac-muted);
+  border: 1px solid var(--pac-border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: var(--pac-transition);
+}
+
+.pac-btn-close:hover {
+  background: var(--pac-danger);
+  color: #fff;
+  border-color: var(--pac-danger);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(232, 64, 83, 0.25); /* Subtle red shadow */
+}
+
+.pac-btn-close:active {
+  transform: translateY(0);
 }
 
 /* --- TABLA --- */

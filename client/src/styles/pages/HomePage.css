@@ -16,7 +16,7 @@
   overflow: hidden;
 }
 
-/* --- Fondos (Igual al Login) --- */
+/* --- Fondos --- */
 .home-background {
   position: absolute;
   top: 0;
@@ -47,7 +47,7 @@
   position: relative;
   z-index: 10;
   height: 100%;
-  background: rgba(0, 0, 0, 0.8); /* Sidebar oscuro sólido o semi */
+  background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(10px);
   transition: var(--transition);
 }
@@ -88,6 +88,7 @@
   flex: 1;
   padding: 1rem 2rem 2rem;
   overflow-y: auto;
+  position: relative; /* Importante para el botón de cierre absoluto */
 }
 
 /* El contenedor tipo cristal para las listas */
@@ -100,7 +101,7 @@
   min-height: 80vh;
   padding: 20px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  color: var(--text-dark); /* Texto oscuro para legibilidad sobre el cristal claro */
+  color: var(--text-dark);
 }
 
 /* --- Botón Móvil --- */
@@ -115,49 +116,36 @@
   padding: 10px;
   border-radius: 10px;
   cursor: pointer;
-  display: none; /* Se activa en media query */
+  display: none;
 }
 
-/* --- Responsive --- */
-@media (max-width: 768px) {
-  .home-background {
-    background-image: var(--bg-mobile);
-  }
+/* --- 🔥 NUEVO: Botón de Cierre de Componente --- */
 
-  .mobile-toggle {
-    display: flex;
-  }
-
-  .sidebar-container {
-    position: fixed;
-    left: -280px; /* Ancho del sidebar */
-  }
-
-  .sidebar-container.open {
-    left: 0;
-  }
-
-  .content-area {
-    padding: 1rem;
-    margin-top: 40px;
-  }
-
-  .top-bar {
-    padding: 1rem;
-    justify-content: flex-end;
-  }
+/* --- 🔥 NUEVO: Logo de Bienvenida Central --- */
+.welcome-container {
+  display: flex;
+  height: 100%;
+  width: 50%;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.8s ease-out;
+  margin: 0 auto;
 }
 
-/* Personalización de Scrollbar para que se vea moderno */
-.content-area::-webkit-scrollbar {
-  width: 6px;
-}
-.content-area::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
+.central-welcome-logo {
+  /* max-width: 450px; */
+  width: 100%;
+  filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.5));
+  opacity: 0.9;
+  user-select: none;
 }
 
-/* 🔥 Logo flotante superior derecha */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Logo flotante superior derecha --- */
 .floating-logo {
   position: fixed;
   top: 2%;
@@ -174,10 +162,63 @@
   opacity: 0.9;
 }
 
-/* Responsive */
+/* --- Responsive --- */
 @media (max-width: 768px) {
+  .home-background {
+    background-image: var(--bg-mobile);
+  }
+
+  .welcome-container {
+    display: flex;
+    height: 100%;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .mobile-toggle {
+    display: flex;
+  }
+
+  .sidebar-container {
+    position: fixed;
+    left: -280px;
+  }
+
+  .sidebar-container.open {
+    left: 0;
+  }
+
+  .content-area {
+    padding: 1rem;
+    margin-top: 40px;
+  }
+
+  .top-bar {
+    padding: 1rem;
+    justify-content: flex-end;
+  }
+
   .floating-logo {
     height: 40px;
     right: 20px;
+    width: auto;
   }
+
+  .central-welcome-logo {
+    width: 90%;
+  }
+
+  .close-component-btn {
+    top: 15px;
+    right: 15px;
+  }
+}
+
+/* Personalización de Scrollbar */
+.content-area::-webkit-scrollbar {
+  width: 6px;
+}
+.content-area::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
 }

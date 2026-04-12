@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Search, Plus, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Plus, Loader2, ChevronLeft, ChevronRight, X} from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
 
 // Contexts
@@ -11,9 +11,9 @@ import UserFormModal from "./Ui/UserFormModal";
 import UserDetailModal from "./Ui/UserDetailModal";
 
 // Styles
-import "../../styles/components/ListSales.css";
+import "../../styles/components/ListZone.css";
 
-const ListUsers = () => {
+const ListUsers = ({ onClose }) => {
   const { usersList, fetchAllUsers, fetchUserById, createNewUser, editUser, deleteUser } = useAuth();
   const { entities, getAllEntities } = useEntity();
 
@@ -124,14 +124,14 @@ const ListUsers = () => {
   );
 
   return (
-    <div className="v-main-container">
+    <div className="pl-main-container">
       {/* HEADER */}
-      <div className="v-header-section">
-        <div className="v-header-info">
-          <h2 className="v-title">Gestión de Usuarios</h2>
-          <p className="v-subtitle">
+      <div className="pl-header-section">
+        <div className="pl-title-group">
+          <h2>Gestión de Usuarios</h2>
+          <p>
             {loading ? (
-              <span className="v-loader-text">
+              <span>
                 <Loader2 size={14} className="v-spin" /> Cargando...
               </span>
             ) : (
@@ -140,18 +140,30 @@ const ListUsers = () => {
           </p>
         </div>
 
-        <button 
-          className="v-btn-add" 
-          onClick={() => { setSelectedUser(null); setIsFormOpen(true); }}
-        >
-          <Plus size={16} /> Nuevo Usuario
-        </button>
+        <div className="pl-actions-group">
+          <button 
+            className="pl-btn-action" 
+            onClick={() => { setSelectedUser(null); setIsFormOpen(true); }}
+          >
+            <Plus size={16} /> Nuevo Usuario
+          </button>
+
+          {onClose && (
+            <button 
+              className="pl-btn-close" 
+              onClick={onClose}
+              title="Cerrar ventana"
+            >
+              <X size={20} strokeWidth={2.5} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* TOOLBAR */}
-      <div className="v-toolbar">
-        <div className="v-search-box">
-          <Search size={16} />
+      <div className="pl-toolbar">
+        <div className="pl-search-wrapper">
+          <Search size={16} color="var(--pl-muted)" />
           <input
             placeholder="BUSCAR POR NOMBRE O EMAIL..."
             value={searchTerm}
@@ -161,28 +173,28 @@ const ListUsers = () => {
       </div>
 
       {/* TABLA */}
-      <div className="v-table-container">
-        <table className="v-data-table">
+      <div className="pl-table-frame">
+        <table className="pl-data-table">
           <thead>
             <tr>
               <th>Nombre de Usuario</th>
               <th>Email</th>
-              <th className="v-text-center">Rol</th>
-              <th className="v-text-center">Acciones</th>
+              <th>Rol</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             {currentItems.length > 0 ? (
               currentItems.map((u) => (
-                <tr key={u.id} className="v-table-row">
-                  <td className="v-text-center v-bold">{u.nombre}</td>
-                  <td className="v-text-center">{u.email}</td>
-                  <td className="v-text-center">
+                <tr key={u.id}>
+                  <td data-label="Nombre de Usuario" className="pl-sku-cell">{u.nombre}</td>
+                  <td data-label="Email">{u.email}</td>
+                  <td data-label="Rol">
                     <span className="v-role-badge">{u.rol}</span>
                   </td>
-                  <td className="v-text-center">
+                  <td data-label="Acciones">
                     <button
-                      className="v-action-btn"
+                      className="pl-icon-only-btn"
                       disabled={fetchingId === u.id}
                       onClick={() => handleOpenDetail(u.id)}
                     >
@@ -197,7 +209,7 @@ const ListUsers = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="4" className="v-empty-state">
+                <td colSpan="4" style={{ padding: '3rem', color: 'var(--pl-muted)' }}>
                   {loading ? "Cargando datos..." : "No se encontraron registros."}
                 </td>
               </tr>
@@ -208,17 +220,20 @@ const ListUsers = () => {
 
       {/* PAGINACIÓN */}
       {totalPages > 1 && (
-        <div className="pagination-controls">
+        <div className="pl-pagination-area">
           <button 
-            className="v-btn-pagination"
+            className="pl-btn-secondary-outline"
             disabled={currentPage === 1}
             onClick={() => setCurrentPage(prev => prev - 1)}
           >
             <ChevronLeft size={16} /> Anterior
           </button>
-          <span className="v-page-info">Página {currentPage} de {totalPages}</span>
+          
+          <div className="pl-page-node">{currentPage}</div>
+          <span style={{ color: 'var(--pl-muted)', fontSize: '0.85rem' }}>de {totalPages}</span>
+
           <button 
-            className="v-btn-pagination"
+            className="pl-btn-secondary-outline"
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage(prev => prev + 1)}
           >

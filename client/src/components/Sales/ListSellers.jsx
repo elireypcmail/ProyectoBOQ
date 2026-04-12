@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Search, ChevronLeft, ChevronRight, Plus, Trash2, AlertTriangle } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Plus, Trash2, AlertTriangle, X } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
 
 // Contexts
@@ -13,7 +13,7 @@ import SellerFormModal from './Ui/SellerFormModal';
 // CSS
 import "../../styles/components/ListSellers.css";
 
-const ListSellers = () => {
+const ListSellers = ({ onClose }) => {
   const {
     sellers,
     getAllSellers,
@@ -141,14 +141,28 @@ const ListSellers = () => {
 
   return (
     <div className="seller-panel-container">
+      {/* HEADER */}
       <div className="seller-top-header">
         <div className="seller-title-area">
           <h2>Gestión de Vendedores</h2>
           <p>{filteredSellers.length} registrados en el sistema</p>
         </div>
-        <button className="seller-btn-main" onClick={handleOpenCreate}>
-          <Plus size={18} /> Nuevo Vendedor
-        </button>
+
+        <div className="seller-actions-group">
+          <button className="seller-btn-main" onClick={handleOpenCreate}>
+            <Plus size={18} /> Nuevo Vendedor
+          </button>
+
+          {onClose && (
+            <button 
+              className="seller-btn-close" 
+              onClick={onClose}
+              title="Cerrar ventana"
+            >
+              <X size={20} strokeWidth={2.5} />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="seller-action-bar">

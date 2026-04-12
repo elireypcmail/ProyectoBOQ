@@ -1,12 +1,12 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Search, Plus, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Plus, Loader2, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
 import { useIncExp } from "../../context/IncExpContext"; 
 import PurchaseFormModal from "./Ui/PurchaseFormModal";
 import PurchaseDetailModal from "./Ui/PurchaseDetailModal";
 import "../../styles/components/ListZone.css";
 
-const ListPurchases = () => {
+const ListPurchases = ({ onClose }) => {
   const { shoppings, getAllShoppings, getShoppingById, loading } = useIncExp();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -106,15 +106,27 @@ const ListPurchases = () => {
             )}
           </p>
         </div>
-        <button 
-          className="pl-btn-action" 
-          onClick={() => { 
-            setSelectedPurchase(null); 
-            setIsFormOpen(true); 
-          }}
-        >
-          <Plus size={18} /> Nueva Compra
-        </button>
+        <div className="pl-actions-group">
+          <button 
+            className="pl-btn-action" 
+            onClick={() => { 
+              setSelectedPurchase(null); 
+              setIsFormOpen(true); 
+            }}
+          >
+            <Plus size={18} /> Nueva Compra
+          </button>
+
+          {onClose && (
+            <button 
+              className="pl-btn-close" 
+              onClick={onClose}
+              title="Cerrar ventana"
+            >
+              <X size={20} strokeWidth={2.5} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* TOOLBAR */}

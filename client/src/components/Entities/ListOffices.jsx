@@ -8,12 +8,13 @@ import {
   Trash2,
   AlertTriangle,
   Plus,
+  X
 } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
 import OfficesFormModal from "./ui/OfficesFormModal";
 import "../../styles/components/ListZone.css";
 
-const ListOffices = () => {
+const ListOffices = ({ onClose }) => {
   const { entities, getAllEntities, deleteEntityById } = useEntity();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -93,6 +94,9 @@ const ListOffices = () => {
         <div className="pl-actions-group">
           <button className="pl-btn-action" onClick={handleOpenCreate}>
             <Plus size={16} /> Nueva Oficina
+          </button>
+          <button className="pl-btn-close" onClick={onClose}>
+            <X size={16} />
           </button>
         </div>
       </div>

@@ -6,18 +6,19 @@ import {
   ChevronRight,
   Plus,
   AlertTriangle,
-  Trash2
+  Trash2,
+  X,
 } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
 
 // Modals Refactorizados
-import DoctorFormModal from './ui/DoctorFormModal';
-import ModalDetailedDoctor from './ui/ModalDetailedDoctor'; 
+import DoctorFormModal from "./ui/DoctorFormModal";
+import ModalDetailedDoctor from "./ui/ModalDetailedDoctor";
 
 import "../../styles/components/ListZone.css";
 
-const ListDoctors = () => {
-  const { 
+const ListDoctors = ({ onClose }) => {
+  const {
     medicos,
     tipoMedicos,
     getAllMedicos,
@@ -25,7 +26,7 @@ const ListDoctors = () => {
     createNewMedico,
     editedMedico,
     deleteMedicoById,
-    createNewTipoMedico
+    createNewTipoMedico,
   } = useHealth();
 
   // Estados de UI
@@ -49,8 +50,8 @@ const ListDoctors = () => {
     const list = medicos || [];
 
     // 1. Filtrar por término de búsqueda
-    const filtered = list.filter(m =>
-      m.nombre.toUpperCase().includes(searchTerm.toUpperCase())
+    const filtered = list.filter((m) =>
+      m.nombre.toUpperCase().includes(searchTerm.toUpperCase()),
     );
 
     // 2. Ordenar alfabéticamente por nombre
@@ -66,7 +67,7 @@ const ListDoctors = () => {
   const totalPages = Math.ceil(filteredMedicos.length / itemsPerPage);
   const currentMedicos = filteredMedicos.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    currentPage * itemsPerPage,
   );
 
   // -------------------- Acciones Core --------------------
@@ -78,7 +79,7 @@ const ListDoctors = () => {
         id_tipoMedico: Number(formData.id_tipomedico),
         email: formData.email.trim(), // Added email
         notificaciones: formData.notificaciones, // Added boolean
-        estatus: true
+        estatus: true,
       };
 
       if (selectedMedico) {
@@ -86,7 +87,7 @@ const ListDoctors = () => {
       } else {
         await createNewMedico(payload);
       }
-      
+
       setIsFormModalOpen(false);
       setSelectedMedico(null);
       getAllMedicos();
@@ -108,19 +109,35 @@ const ListDoctors = () => {
   };
 
   return (
-<div className="pl-main-container">
+    <div className="pl-main-container">
       {/* HEADER */}
       <div className="pl-header-section">
         <div className="pl-title-group">
           <h2>Gestión de Personal Médico</h2>
           <p>Personal médico registrado: {filteredMedicos.length}</p>
         </div>
-        <button className="pl-btn-action" onClick={() => { 
-          setSelectedMedico(null); 
-          setIsFormModalOpen(true); 
-        }}>
-          <Plus size={18} /> Nuevo Médico
-        </button>
+
+        <div className="pl-actions-group">
+          <button
+            className="pl-btn-action"
+            onClick={() => {
+              setSelectedMedico(null);
+              setIsFormModalOpen(true);
+            }}
+          >
+            <Plus size={18} /> Nuevo Médico
+          </button>
+
+          {onClose && (
+            <button
+              className="pl-btn-close"
+              onClick={onClose}
+              title="Cerrar ventana"
+            >
+              <X size={20} strokeWidth={2.5} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* TOOLBAR */}
@@ -131,9 +148,9 @@ const ListDoctors = () => {
             type="text"
             placeholder="BUSCAR PERSONAL MÉDICO..."
             value={searchTerm}
-            onChange={(e) => { 
-              setSearchTerm(e.target.value.toUpperCase()); 
-              setCurrentPage(1); 
+            onChange={(e) => {
+              setSearchTerm(e.target.value.toUpperCase());
+              setCurrentPage(1);
             }}
           />
         </div>
@@ -147,35 +164,42 @@ const ListDoctors = () => {
               <th>Nombre</th>
               <th>Teléfono</th>
               <th>Tipo</th>
-              <th style={{ width: '80px' }}>Acciones</th>
+              <th style={{ width: "80px" }}>Acciones</th>
             </tr>
           </thead>
           <tbody>
-            {currentMedicos.length > 0 ? currentMedicos.map(medico => (
-              <tr key={medico.id}>
-                <td data-label="Nombre" className="bold">
-                   {medico.nombre.toUpperCase()}
-                </td>
-                <td data-label="Teléfono">
-                  {medico.telefono ? `+${medico.telefono}` : "-"}
-                </td>
-                <td data-label="Tipo">
-                  <span className="badge-type">
-                    {medico.tipo?.toUpperCase()}
-                  </span>
-                </td>
-                <td data-label="Acciones">
-                  <button className="pl-icon-only-btn" onClick={() => { 
-                    setSelectedMedico(medico); 
-                    setIsDetailsModalOpen(true); 
-                  }}>
-                    <SlOptionsVertical size={16}/>
-                  </button>
-                </td>
-              </tr>
-            )) : (
+            {currentMedicos.length > 0 ? (
+              currentMedicos.map((medico) => (
+                <tr key={medico.id}>
+                  <td data-label="Nombre" className="bold">
+                    {medico.nombre.toUpperCase()}
+                  </td>
+                  <td data-label="Teléfono">
+                    {medico.telefono ? `+${medico.telefono}` : "-"}
+                  </td>
+                  <td data-label="Tipo">
+                    <span className="badge-type">
+                      {medico.tipo?.toUpperCase()}
+                    </span>
+                  </td>
+                  <td data-label="Acciones">
+                    <button
+                      className="pl-icon-only-btn"
+                      onClick={() => {
+                        setSelectedMedico(medico);
+                        setIsDetailsModalOpen(true);
+                      }}
+                    >
+                      <SlOptionsVertical size={16} />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
               <tr>
-                <td colSpan="4" className="no-results">No se encontraron médicos</td>
+                <td colSpan="4" className="no-results">
+                  No se encontraron médicos
+                </td>
               </tr>
             )}
           </tbody>
@@ -185,18 +209,20 @@ const ListDoctors = () => {
       {/* PAGINACIÓN */}
       {totalPages > 1 && (
         <div className="pl-pagination-area">
-          <button 
+          <button
             className="pl-page-node"
-            disabled={currentPage === 1} 
-            onClick={() => setCurrentPage(p => p - 1)}
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((p) => p - 1)}
           >
             <ChevronLeft size={20} />
           </button>
-          <span className="pl-pagination-info">Página <b>{currentPage}</b> de {totalPages}</span>
-          <button 
+          <span className="pl-pagination-info">
+            Página <b>{currentPage}</b> de {totalPages}
+          </span>
+          <button
             className="pl-page-node"
-            disabled={currentPage === totalPages} 
-            onClick={() => setCurrentPage(p => p + 1)}
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage((p) => p + 1)}
           >
             <ChevronRight size={20} />
           </button>
@@ -204,9 +230,12 @@ const ListDoctors = () => {
       )}
 
       {/* MODAL: CREAR / EDITAR */}
-      <DoctorFormModal 
+      <DoctorFormModal
         isOpen={isFormModalOpen}
-        onClose={() => { setIsFormModalOpen(false); setSelectedMedico(null); }}
+        onClose={() => {
+          setIsFormModalOpen(false);
+          setSelectedMedico(null);
+        }}
         onSave={handleSaveDoctor}
         tipoMedicos={tipoMedicos}
         selectedMedico={selectedMedico}
@@ -214,11 +243,14 @@ const ListDoctors = () => {
       />
 
       {/* MODAL: DETALLES */}
-      <ModalDetailedDoctor 
+      <ModalDetailedDoctor
         isOpen={isDetailsModalOpen}
         doctor={selectedMedico}
         onClose={() => setIsDetailsModalOpen(false)}
-        onEdit={() => { setIsDetailsModalOpen(false); setIsFormModalOpen(true); }}
+        onEdit={() => {
+          setIsDetailsModalOpen(false);
+          setIsFormModalOpen(true);
+        }}
         onDelete={() => setIsDeleteModalOpen(true)}
       />
 
@@ -230,10 +262,20 @@ const ListDoctors = () => {
               <AlertTriangle size={28} />
               <h3>¿Eliminar médico?</h3>
             </div>
-            <p>¿Estás seguro de eliminar a <strong>{selectedMedico.nombre.toUpperCase()}</strong>?</p>
+            <p>
+              ¿Estás seguro de eliminar a{" "}
+              <strong>{selectedMedico.nombre.toUpperCase()}</strong>?
+            </p>
             <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setIsDeleteModalOpen(false)}>Cancelar</button>
-              <button className="btn-danger" onClick={handleDelete}><Trash2 size={16} /> Eliminar</button>
+              <button
+                className="btn-secondary"
+                onClick={() => setIsDeleteModalOpen(false)}
+              >
+                Cancelar
+              </button>
+              <button className="btn-danger" onClick={handleDelete}>
+                <Trash2 size={16} /> Eliminar
+              </button>
             </div>
           </div>
         </div>

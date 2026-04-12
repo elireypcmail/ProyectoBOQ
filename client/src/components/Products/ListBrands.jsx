@@ -8,12 +8,13 @@ import {
   Trash2,
   Save,
   AlertTriangle,
-  Plus
+  Plus,
+  X
 } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
 import "../../styles/components/ListZone.css";
 
-const ListBrands = () => {
+const ListBrands = ({onClose}) => {
   const { 
     entities, 
     getAllEntities, 
@@ -118,15 +119,31 @@ const ListBrands = () => {
 
   return (
     <div className="pl-main-container">
-      {/* HEADER */}
+{/* HEADER */}
       <div className="pl-header-section">
         <div className="pl-title-group">
           <h2>GESTIÓN DE MARCAS</h2>
           <p>{filteredBrands.length} MARCAS REGISTRADAS</p>
         </div>
-        <button className="pl-btn-action" onClick={() => { setEditName(""); setIsCreateModalOpen(true); }}>
-          <Plus size={16} /> NUEVA MARCA
-        </button>
+
+        <div className="pl-actions-group">
+          <button 
+            className="pl-btn-action" 
+            onClick={() => { setEditName(""); setIsCreateModalOpen(true); }}
+          >
+            <Plus size={16} /> NUEVA MARCA
+          </button>
+
+          {onClose && (
+            <button 
+              className="pl-btn-close" 
+              onClick={onClose}
+              title="Cerrar ventana"
+            >
+              <X size={20} strokeWidth={2.5} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* TOOLBAR */}

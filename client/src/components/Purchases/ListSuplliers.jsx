@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Search, ChevronLeft, ChevronRight, Plus, Trash2, AlertTriangle, Loader2 } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Plus, Trash2, AlertTriangle, Loader2, X } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
 
 // Context & Modals
@@ -10,7 +10,7 @@ import SupplierFormModal from './Ui/SupplierFormModal';
 // Importación del nuevo CSS
 import "../../styles/components/ListSuppliers.css";
 
-const ListSuppliers = () => {
+const ListSuppliers = ({ onClose }) => {
   const {
     suppliers,
     getAllSuppliers,
@@ -102,9 +102,22 @@ const ListSuppliers = () => {
           <h2>GESTIÓN DE PROVEEDORES</h2>
           <p>{filteredSuppliers.length} PROVEEDORES REGISTRADOS</p>
         </div>
-        <button className="sp-btn-action" onClick={handleOpenCreate}>
-          <Plus size={16} /> NUEVO PROVEEDOR
-        </button>
+
+        <div className="sp-actions-group">
+          <button className="sp-btn-action" onClick={handleOpenCreate}>
+            <Plus size={16} /> NUEVO PROVEEDOR
+          </button>
+
+          {onClose && (
+            <button 
+              className="sp-btn-close" 
+              onClick={onClose}
+              title="Cerrar ventana"
+            >
+              <X size={20} strokeWidth={2.5} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* TOOLBAR */}

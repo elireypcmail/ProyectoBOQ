@@ -8,12 +8,13 @@ import {
   Trash2,
   Save,
   AlertTriangle,
-  Plus
+  Plus,
+  X
 } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
 import "../../styles/components/ListZone.css";
 
-const ListCategories = () => {
+const ListCategories = ({ onClose }) => {
   const { 
     categories,
     getAllCategories,
@@ -130,9 +131,25 @@ const ListCategories = () => {
           <h2>GESTIÓN DE CATEGORÍAS</h2>
           <p>{filteredCategories.length} CATEGORÍAS REGISTRADAS</p>
         </div>
-        <button className="pl-btn-action" onClick={() => { setEditName(""); setIsCreateModalOpen(true); }}>
-          <Plus size={16} /> NUEVA CATEGORÍA
-        </button>
+
+        <div className="pl-actions-group">
+          <button 
+            className="pl-btn-action" 
+            onClick={() => { setEditName(""); setIsCreateModalOpen(true); }}
+          >
+            <Plus size={16} /> NUEVA CATEGORÍA
+          </button>
+
+          {onClose && (
+            <button 
+              className="pl-btn-close" 
+              onClick={onClose}
+              title="Cerrar ventana"
+            >
+              <X size={20} strokeWidth={2.5} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* TOOLBAR */}

@@ -9,11 +9,12 @@ import {
   Save,
   AlertTriangle,
   Plus,
+  X
 } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
 import "../../styles/components/ListZone.css";
 
-const ListZones = () => {
+const ListZones = ({onClose}) => {
   const {
     entities,
     getAllEntities,
@@ -142,6 +143,9 @@ const ListZones = () => {
             }}
           >
             <Plus size={16} /> Nueva Zona
+          </button>
+          <button className="pl-btn-close" onClick={onClose}>
+            <X size={16} />
           </button>
         </div>
       </div>
