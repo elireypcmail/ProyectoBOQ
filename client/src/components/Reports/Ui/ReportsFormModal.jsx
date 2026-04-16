@@ -18,6 +18,9 @@ const ReportsFormModal = ({ isOpen, onClose, editData = null }) => {
   const initialFormState = {
     id_paciente: "",
     nombre_paciente: "",
+    documento_paciente: "", 
+    id_clinica: "",
+    nombre_clinica: "",
     personal_asignado: [], 
   };
 
@@ -28,26 +31,18 @@ const ReportsFormModal = ({ isOpen, onClose, editData = null }) => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 
-  /**
-   * Helper para convertir strings con coma decimal a números reales.
-   * Maneja casos como "1.250,50" o "12,5" o números puros.
-   */
   const parseQuantity = (value) => {
     if (value === null || value === undefined || value === "") return 0;
     if (typeof value === "number") return value;
-
     let cleanValue = value.toString();
-    // Si tiene puntos de miles y coma decimal (ej: 1.250,50)
     if (cleanValue.includes(",") && cleanValue.includes(".")) {
       cleanValue = cleanValue.replace(/\./g, "").replace(",", ".");
     } else {
-      // Si solo tiene coma (ej: 12,5)
       cleanValue = cleanValue.replace(",", ".");
     }
     return parseFloat(cleanValue) || 0;
   };
 
-  // Validación Paso 2: Al menos un producto y todos con cantidad > 0
   const isStep2Valid = items.length > 0 && items.every(item => parseQuantity(item.cantidad) > 0);
 
   useEffect(() => {
@@ -56,6 +51,9 @@ const ReportsFormModal = ({ isOpen, onClose, editData = null }) => {
         id: editData.id,
         id_paciente: editData.id_paciente || "",
         nombre_paciente: editData.paciente_nombre || "",
+        documento_paciente: editData.paciente_documento || editData.cedula || "",
+        id_clinica: editData.id_clinica || "",
+        nombre_clinica: editData.clinica_nombre || "",
         personal_asignado: editData.personal?.map((p) => ({
           id: p.id_medico,
           nombre: p.medico,
@@ -79,13 +77,18 @@ const ReportsFormModal = ({ isOpen, onClose, editData = null }) => {
   const handleFinalSubmit = async () => {
     setIsSubmitting(true);
     try {
+      // Obtener el usuario del localStorage
+      const userStorage = localStorage.getItem("UserId");
+      const userData = userStorage ? JSON.parse(userStorage) : null;
+      const idUsuario = userData?.id || null;
+
       const payload = {
         ...formData,
+        id_usuario: idUsuario, // Inyectamos el ID del usuario logueado
         detalle: items.map((item) => ({
           id_producto: item.id || item.id_producto,
           id_inventario: item.inventario_id || item.id_inventario,
           nombre_producto: item.descripcion || item.producto,
-          // Convertimos a número real antes de enviar al API
           cantidad: parseQuantity(item.cantidad),
         })),
       };

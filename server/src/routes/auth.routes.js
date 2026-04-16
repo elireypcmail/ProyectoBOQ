@@ -16,15 +16,23 @@ import { loginSchema } from "../schemas/auth.schema.js"
 /* ================= AUTH ================= */
 // router.post(_var.LOGIN, validateSchema(loginSchema), controller.login)
 router.post("/login", controller.login)
-router.post("/register", controller.register)
-router.get("/usuarios", controller.getAllUsers)
-router.get("/usuarios/:id", controller.getAllUsersById)
-router.put("/usuarios/:id", controller.updateUser)
-router.delete("/usuarios/:id", controller.setStatus)
 router.post("/logout", controller.logout)
 router.get("/verify", controller.verifyToken)
 
-/* ================= ENTITIES USER ================= */
+/* ================= USUARIOS ================= */
+router.post("/register", controller.register)
+router.get("/usuarios", controller.getAllUsers)
+router.get("/usuarios/:id", controller.getUserById)
+router.put("/usuarios/:id", controller.updateUser)
+router.delete("/usuarios/:id", controller.setStatus)
+
+/* ================= ROLES ================= */
+router.get("/roles", controller.getAllRoles)
+router.post("/roles", controller.registerRole)
+router.put("/roles/:id", controller.updateRole)
+router.delete("/roles/:id", controller.deleteRole)
+
+/* ================= ENTIDADES ================= */
 /*
   Entidades soportadas:
   - offices

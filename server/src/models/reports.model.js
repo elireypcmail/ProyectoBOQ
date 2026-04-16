@@ -77,8 +77,26 @@ export class ReportsModel {
           r.estatus,
           r.fecha_creacion,
 
+          -- 👤 PACIENTE
           p.id AS id_paciente,
           p.nombre AS paciente_nombre,
+          p.documento AS paciente_documento,
+
+          -- 🏥 CLINICA
+          c.id AS id_clinica,
+          c.nombre AS clinica_nombre,
+
+          -- 👤 USUARIO (Quién realizó el presupuesto/reporte)
+          -- Lo traemos desde auditoria buscando la creación original
+          (
+            SELECT u.nombre 
+            FROM auditoria a
+            INNER JOIN usuarios u ON u.id = a.usuario_id
+            WHERE a.id_entidad = r.id 
+              AND a.entidad = 'reportes' 
+              AND a.accion = 'CREAR REPORTE DE INSTRUMENTACION'
+            LIMIT 1
+          ) AS realizado_por,
 
           -- 📦 DETALLE
           (
@@ -87,26 +105,11 @@ export class ReportsModel {
               SELECT 
                 rd.id AS id_detalle,
                 rd.id_inventario,
-
-                -- 🧾 PRODUCTO
                 prod.id AS id_producto,
                 prod.descripcion,
-
-                -- 📦 INVENTARIO COMPLETO
                 i.sku,
-                i.existencia_general,
-                i.costo_unitario,
-                i.precio_venta,
-                i.margen_ganancia,
-                i.stock_minimo_general,
-                i.estatus AS inventario_estatus,
-                i.estatus_lotes,
-                i.fecha_creacion AS inventario_fecha_creacion,
-
-                -- 📊 DETALLE REPORTE
                 rd.cantidad,
                 rd.backorder
-
               FROM reportes_detalle rd
               INNER JOIN inventario i ON i.id = rd.id_inventario
               INNER JOIN productos prod ON prod.id = i.id_producto
@@ -133,6 +136,7 @@ export class ReportsModel {
 
         FROM reportes r
         INNER JOIN pacientes p ON p.id = r.id_paciente
+        LEFT JOIN clinicas c ON c.id = r.id_clinica
         WHERE r.id = $1
         LIMIT 1
       `, [id]);
@@ -153,7 +157,6 @@ export class ReportsModel {
 
     } catch (error) {
       console.error("Error en getReportById:", error);
-
       return {
         status: false,
         code: 500,
@@ -174,41 +177,31 @@ export class ReportsModel {
 
       const { 
         id_paciente, 
-        id_clinica = null,
+        id_clinica,
         detalle = [], 
-        personal_asignado = [] 
+        personal_asignado = [],
+        id_usuario // <--- Asegúrate de recibirlo como id_usuario o idUser
       } = data;
 
       // 🔴 Validaciones básicas
-      if (!id_paciente) {
-        throw new Error("El id_paciente es obligatorio");
-      }
+      if (!id_paciente) throw new Error("El id_paciente es obligatorio");
+      if (!detalle.length) throw new Error("El reporte debe tener al menos un producto");
+      if (!id_usuario) throw new Error("El id_usuario es necesario para la auditoría");
 
-      if (!detalle.length) {
-        throw new Error("El reporte debe tener al menos un producto");
-      }
-
-      // 1. 🔢 Generar número de reporte (bloqueando para evitar duplicados)
+      // 1. 🔢 Generar número de reporte
       const lastReportRes = await connection.query(
-        `SELECT nro_reporte 
-        FROM reportes 
+        `SELECT nro_reporte FROM reportes 
         WHERE nro_reporte LIKE 'REP-%'
-        ORDER BY id DESC 
-        LIMIT 1
-        FOR UPDATE`
+        ORDER BY id DESC LIMIT 1 FOR UPDATE`
       );
 
       let nextNumber = 1;
-
       if (lastReportRes.rows.length > 0) {
-        const lastNro = lastReportRes.rows[0].nro_reporte;
-        const parts = lastNro.split('-');
-
+        const parts = lastReportRes.rows[0].nro_reporte.split('-');
         if (parts.length > 1 && !isNaN(parts[1])) {
           nextNumber = parseInt(parts[1], 10) + 1;
         }
       }
-
       const nro_reporte = `REP-${nextNumber.toString().padStart(4, '0')}`;
 
       // 2. 🧾 Insertar cabecera
@@ -217,29 +210,22 @@ export class ReportsModel {
           (id_paciente, id_clinica, nro_reporte, total, estatus_uso) 
         VALUES ($1, $2, $3, $4, $5) 
         RETURNING id`,
-        [id_paciente, id_clinica, nro_reporte, 0, 1]
+        [id_paciente, id_clinica || null, nro_reporte, 0, 1]
       );
 
       const idReporte = reportRes.rows[0].id;
 
       // 3. 📦 Insertar detalle
       for (const item of detalle) {
-
-        if (!item.id_inventario) {
-          throw new Error("Todos los items deben tener id_inventario");
-        }
+        if (!item.id_inventario) throw new Error("Todos los items deben tener id_inventario");
 
         let cantInsumo = item.cantidad;
-
         if (typeof cantInsumo === "string") {
           cantInsumo = parseFloat(cantInsumo.replace(",", "."));
         }
-
         cantInsumo = Math.floor(cantInsumo || 0);
 
-        if (cantInsumo <= 0) {
-          throw new Error("La cantidad debe ser mayor a 0");
-        }
+        if (cantInsumo <= 0) throw new Error("La cantidad debe ser mayor a 0");
 
         await connection.query(
           `INSERT INTO reportes_detalle 
@@ -249,25 +235,19 @@ export class ReportsModel {
         );
       }
 
-      // 4. 👨‍⚕️ Insertar personal (igual que ventas)
+      // 4. 👨‍⚕️ Insertar personal
       for (const person of personal_asignado) {
+        if (!person.id) throw new Error("El personal asignado debe tener id");
 
-        if (!person.id) {
-          throw new Error("El personal asignado debe tener id");
-        }
-
-        // 🔍 Buscar si ya existe en tabla personal
         const personalRes = await connection.query(
           `SELECT id FROM personal WHERE id_medico = $1 LIMIT 1`,
           [person.id]
         );
 
         let idPersonal;
-
         if (personalRes.rows.length) {
           idPersonal = personalRes.rows[0].id;
         } else {
-          // 🆕 Crear si no existe
           const newPersonal = await connection.query(
             `INSERT INTO personal (id_medico) VALUES ($1) RETURNING id`,
             [person.id]
@@ -275,31 +255,49 @@ export class ReportsModel {
           idPersonal = newPersonal.rows[0].id;
         }
 
-        // 🔗 Relacionar con reporte
         await connection.query(
-          `INSERT INTO reportes_personal (id_reporte, id_personal)
-          VALUES ($1, $2)`,
+          `INSERT INTO reportes_personal (id_reporte, id_personal) VALUES ($1, $2)`,
           [idReporte, idPersonal]
         );
       }
+
+      // 5. 🛡️ Registro en Auditoría
+      // Guardamos el objeto completo que se creó para tener referencia histórica
+      const datosNuevos = {
+        id_paciente,
+        id_clinica,
+        nro_reporte,
+        total: 0,
+        detalle,
+        personal_asignado
+      };
+
+      await connection.query(
+        `INSERT INTO auditoria 
+          (entidad, id_entidad, accion, datos_previos, datos_nuevos, usuario_id) 
+        VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          'reportes',       // entidad
+          idReporte,        // id_entidad
+          'CREAR REPORTE DE INSTRUMENTACION',         // accion
+          {},               // datos_previos (vacío porque es creación)
+          datosNuevos,      // datos_nuevos
+          id_usuario        // usuario_id
+        ]
+      );
 
       await connection.query("COMMIT");
 
       return {
         status: true,
         code: 201,
-        msg: "Reporte creado exitosamente",
-        data: {
-          id: idReporte,
-          nro_reporte
-        }
+        msg: "Reporte creado y auditado exitosamente",
+        data: { id: idReporte, nro_reporte }
       };
 
     } catch (error) {
       if (connection) await connection.query("ROLLBACK");
-
       console.error("Error en createReports:", error);
-
       return {
         status: false,
         code: 500,

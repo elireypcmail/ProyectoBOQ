@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Search, Plus, Loader2, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Search, Plus, Loader2, ChevronLeft, ChevronRight, X, ClipboardList } from "lucide-react"; // Añadido ClipboardList
 import { SlOptionsVertical } from "react-icons/sl";
 
 // Context
@@ -7,7 +7,8 @@ import { useSales } from "../../context/SalesContext";
 
 // Modals
 import BudgetsFormModal from "./Ui/BudgetsFormModal";
-import BudgetDetailModal from "./Ui/BudgetDetailModal"; // ✅ Descomentado
+import BudgetDetailModal from "./Ui/BudgetDetailModal";
+import NotesModal from "./Ui/SubModals/NotesModal"; // ✅ Importado el nuevo modal
 
 // CSS
 import "../../styles/components/ListSellers.css";
@@ -18,7 +19,8 @@ const ListBudgets = ({onClose}) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedBudget, setSelectedBudget] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isDetailOpen, setIsDetailOpen] = useState(false); // ✅ Controla la visibilidad del detalle
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isNotesOpen, setIsNotesOpen] = useState(false); // ✅ Nuevo estado para las notas
   const [fetchingId, setFetchingId] = useState(null);
 
   // --- Estado de Paginación ---
@@ -36,10 +38,7 @@ const ListBudgets = ({onClose}) => {
   const handleOpenDetail = async (id) => {
     try {
       setFetchingId(id);
-
-      // Intentamos obtener el detalle completo (con productos) desde el backend
       const response = await getBudgetById(id);
-
       if (response.status) {
         setSelectedBudget(response.data);
         setIsDetailOpen(true);
@@ -51,10 +50,8 @@ const ListBudgets = ({onClose}) => {
     }
   };
 
-  // Filtrado y Ordenación
   const filteredBudgets = useMemo(() => {
     if (!budgets) return [];
-
     const filtered = budgets.filter(
       (b) =>
         String(b.nro_presupuesto).includes(searchTerm) ||
@@ -62,7 +59,6 @@ const ListBudgets = ({onClose}) => {
           .toUpperCase()
           .includes(searchTerm.toUpperCase()),
     );
-
     return [...filtered].sort((a, b) => {
       const dateA = new Date(a.fecha_creacion || 0);
       const dateB = new Date(b.fecha_creacion || 0);
@@ -70,7 +66,6 @@ const ListBudgets = ({onClose}) => {
     });
   }, [budgets, searchTerm]);
 
-  // --- Cálculos de Paginación ---
   const totalPages = Math.ceil(filteredBudgets.length / ITEMS_PER_PAGE);
   const currentItems = filteredBudgets.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
@@ -113,6 +108,15 @@ const ListBudgets = ({onClose}) => {
         </div>
 
         <div className="seller-actions-group">
+          {/* ✅ Botón de Notas Predefinidas al lado de Nuevo Proforma */}
+          <button
+            className="seller-btn-secondary" 
+            style={{ display: 'flex', gap: '8px', alignItems: 'center', backgroundColor: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer' }}
+            onClick={() => setIsNotesOpen(true)}
+          >
+            <ClipboardList size={16} /> Notas
+          </button>
+
           <button
             className="seller-btn-main"
             onClick={() => {
@@ -220,12 +224,10 @@ const ListBudgets = ({onClose}) => {
           >
             <ChevronLeft size={16} />
           </button>
-
           <span style={{ fontSize: "0.9rem", color: "var(--seller-muted)" }}>
             Página <strong>{currentPage}</strong> de{" "}
             <strong>{totalPages}</strong>
           </span>
-
           <button
             className="seller-page-btn"
             disabled={currentPage === totalPages}
@@ -246,7 +248,6 @@ const ListBudgets = ({onClose}) => {
         editData={selectedBudget}
       />
 
-      {/* ✅ Modal de Detalle Activado */}
       <BudgetDetailModal
         isOpen={isDetailOpen}
         budget={selectedBudget}
@@ -259,6 +260,12 @@ const ListBudgets = ({onClose}) => {
           setIsDetailOpen(false);
           setIsFormOpen(true);
         }}
+      />
+
+      {/* ✅ Modal de Notas Predefinidas */}
+      <NotesModal 
+        isOpen={isNotesOpen} 
+        onClose={() => setIsNotesOpen(false)} 
       />
     </div>
   );

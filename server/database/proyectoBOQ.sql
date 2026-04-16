@@ -6,11 +6,55 @@ CREATE TABLE usuarios (
   nombre VARCHAR(50) NOT NULL,
   email VARCHAR(100) NOT NULL,
   contrasena VARCHAR(255) NOT NULL,
-  rol VARCHAR(20) NOT NULL,
   id_oficina INT,
   id_deposito INT,
   telefono VARCHAR(20),
   estatus BOOLEAN NOT NULL DEFAULT TRUE,
+  fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE roles (
+  id SERIAL PRIMARY KEY,
+  nombre VARCHAR(50) UNIQUE NOT NULL,
+);
+
+CREATE TABLE usuario_roles (
+  id SERIAL PRIMARY KEY,
+  usuario_id INT REFERENCES usuarios(id) ON DELETE CASCADE,
+  rol_id INT REFERENCES roles(id) ON DELETE CASCADE
+);
+
+CREATE TABLE permisos (
+  id SERIAL PRIMARY KEY,
+  nombre VARCHAR(100) UNIQUE NOT NULL
+);
+
+CREATE TABLE rol_permisos (
+  id SERIAL PRIMARY KEY,
+  rol_id INT REFERENCES roles(id) ON DELETE CASCADE,
+  permiso_id INT REFERENCES permisos(id) ON DELETE CASCADE
+);
+
+CREATE TABLE usuario_permisos (
+  id SERIAL PRIMARY KEY,
+  usuario_id INT REFERENCES usuarios(id) ON DELETE CASCADE,
+  permiso_id INT REFERENCES permisos(id) ON DELETE CASCADE
+);
+
+CREATE TABLE parametros (
+  id SERIAL PRIMARY KEY,
+  descripcion VARCHAR(100) NOT NULL,
+  valor TEXT NOT NULL,
+  estatus BOOLEAN NOT NULL DEFAULT TRUE,
+  fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE parametros_images (
+  id SERIAL PRIMARY KEY,
+  nombre TEXT NOT NULL,
+  nombre_file TEXT,
+  data BYTEA NOT NULL,
+  mime_type VARCHAR(50) NOT NULL,
   fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
@@ -256,6 +300,7 @@ CREATE TABLE presupuestos (
   id_paciente INT NOT NULL REFERENCES pacientes(id) ON DELETE CASCADE,
   id_clinica INT REFERENCES clinicas(id) ON DELETE CASCADE,
   id_seguro INT REFERENCES seguros(id) ON DELETE CASCADE,
+  particular BOOLEAN,
   nro_presupuesto VARCHAR(100) NOT NULL,
   total DECIMAL(10,2) NOT NULL,
   notas TEXT,

@@ -8,6 +8,7 @@ import _var               from "./global/_var.js"
 
 // Routes
 import authRouter from "./routes/auth.routes.js"
+import parametersRouter from "./routes/parameters.routes.js"
 import patientsRouter from "./routes/patients.routes.js"
 import doctorsRouter from "./routes/doctors.routes.js"
 import typesDocRouter from "./routes/typesDoc.routes.js"
@@ -48,6 +49,7 @@ server.listen(_var.PORT, "0.0.0.0", () => {
 
 // Use routes
 app.use("/auth",authRouter)
+app.use("/parametros", parametersRouter)
 app.use("/medicos",doctorsRouter)
 app.use("/tipos/medicos",typesDocRouter)
 app.use("/personal",StaffRouter)

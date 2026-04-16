@@ -192,3 +192,65 @@
     content: attr(data-label); position: absolute; left: 1rem; font-weight: 700; font-size: 0.7rem; color: var(--pl-muted);
   }
 }
+
+/* Selector de Tabs */
+.v-tab-selector {
+  display: flex;
+  background: var(--pl-soft);
+  padding: 0.25rem;
+  border-radius: 10px;
+  gap: 0.25rem;
+  border: 1px solid var(--pl-border);
+  margin-top: 0.5rem; /* Ajuste para que no pegue con el título */
+  width: fit-content;
+}
+
+.v-tab-selector button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--pl-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: var(--pl-transition);
+}
+
+.v-tab-selector button svg {
+  transition: var(--pl-transition);
+}
+
+/* Estado Hover */
+.v-tab-selector button:hover {
+  color: var(--pl-secondary);
+  background: rgba(7, 88, 121, 0.05);
+}
+
+/* Estado Activo (Seleccionado) */
+.v-tab-selector button.active {
+  background: #fff;
+  color: var(--pl-secondary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.v-tab-selector button.active svg {
+  color: var(--pl-primary); /* Un toque de rojo para resaltar el icono activo */
+}
+
+/* Responsivo para móviles */
+@media (max-width: 768px) {
+  .v-tab-selector {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .v-tab-selector button {
+    flex: 1;
+    justify-content: center;
+    padding: 0.6rem;
+  }
+}

@@ -79,6 +79,55 @@
 
 .sdm-meta-top p { margin: 2px 0; }
 
+/* --- COMPONENTES DE PERSONAL MÉDICO (Añadir al final del archivo) --- */
+
+.sdm-personal-tags {
+    margin-top: 25px;
+    margin-bottom: 25px;
+}
+
+.personal-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.staff-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    background-color: #f8fafc; /* Coherente con sdm-notes-box */
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: #1e293b;
+    transition: all 0.2s ease;
+}
+
+.staff-badge:hover {
+    background-color: #f1f5f9;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+}
+
+.staff-badge .staff-name {
+    font-weight: 700;
+}
+
+.staff-badge .staff-role {
+    margin-left: 8px;
+    padding-left: 8px;
+    border-left: 1px solid #cbd5e1;
+    font-size: 0.75rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+/* --- REESTRUCTURACIÓN DEL JSX --- */
+/* Usa esta estructura en tu componente React para aplicar las clases anteriores */
+
 /* Cliente y Badges */
 .sdm-invoice-client-row {
     display: flex;

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Sidebar from "../components/Layout/Sidebar";
 import ListUsers from "../components/Users/ListUsers";
+import ListSettings from "../components/Settings/ListSettings";
 import ListPatients from "../components/Patients/ListPatients";
 import ListInsurances from "../components/Patients/ListInsurances";
 import ListStories from "../components/Patients/ListStories";
@@ -115,13 +116,17 @@ export default function HomePage() {
             <div className="rendered-content">
               {/* Reportes: Disponible para todos los roles cuando está activo */}
               {activeComponent === "reports" && (
-                <ListReports onClose={closeComponent} />
+                <>
+                  <ListReports onClose={closeComponent} />
+                  {/* <ListProducts onClose={closeComponent} /> */}
+                </>
               )}
 
               {/* Módulos restringidos para rol diferente a OPRI */}
               {userRole !== "OPRI" && activeComponent && (
                 <>
                   {activeComponent === "patients" && <ListPatients onClose={closeComponent} />}
+                  {activeComponent === "settings" && <ListSettings onClose={closeComponent} />}
                   {activeComponent === "insurances" && <ListInsurances onClose={closeComponent} />}
                   {activeComponent === "stories" && <ListStories onClose={closeComponent} />}
                   {activeComponent === "products" && <ListProducts onClose={closeComponent} />}

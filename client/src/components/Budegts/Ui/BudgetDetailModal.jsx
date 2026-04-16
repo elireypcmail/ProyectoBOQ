@@ -1,18 +1,36 @@
 import React, { useState } from "react";
-import { X, Trash2, Loader2, FileText } from "lucide-react";
+import { X, Trash2, Loader2, FileText, User } from "lucide-react";
 import { useSales } from "../../../context/SalesContext";
+import { useSettings } from "../../../context/SettingsContext"; 
 import jsPDF from 'jspdf';
 import "../../../styles/ui/SalesDetailModal.css";
 
 const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
   const { deleteBudgetById, getAllBudgets } = useSales();
+  const { parametersList, imagesList } = useSettings(); 
   const [isProcessing, setIsProcessing] = useState(false);
 
   if (!isOpen || !budget) return null;
 
   const isActive = budget.estatus_uso !== 0;
+  const esParticular = budget.es_particular || budget.particular || !budget.id_seguro;
 
-  // --- HELPERS ---
+  // --- DATOS DINÁMICOS DESDE SETTINGS ---
+  const rifConfig = parametersList?.find(p => p.descripcion === "Rif")?.valor || "J-40030914-3";
+  const direccionConfig = parametersList?.find(p => p.descripcion === "Direccion")?.valor || "Barrio Obrero, San Cristóbal";
+  const tlfConfig = parametersList?.find(p => p.descripcion === "NroTlf")?.valor || "0414-0781328";
+  const emailConfig = parametersList?.find(p => p.descripcion === "Email")?.valor || "mundoimplantesca22@gmail.com";
+  const notaConfigurada = parametersList?.find(p => p.descripcion === "NotaPresupuesto")?.valor;
+
+  // --- BUSCADOR DE IMÁGENES (EVITA DEFORMACIÓN) ---
+  const getImg = (name) => {
+    const img = imagesList?.find(i => i.nombre.toLowerCase().includes(name.toLowerCase()));
+    return img && img.data ? {
+      src: `data:${img.mime_type};base64,${img.data}`,
+      type: img.mime_type.split('/')[1].toUpperCase()
+    } : null;
+  };
+
   const formatNum = (val) => {
     return Number(val || 0).toLocaleString('es-ES', {
       minimumFractionDigits: 2,
@@ -27,150 +45,145 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
     });
   };
 
-  // --- LÓGICA GENERACIÓN PDF ---
   const generatePDF = () => {
     const doc = new jsPDF();
     const margin = 15;
     const pageWidth = doc.internal.pageSize.width;
-    let y = 20;
+    let y = 15;
 
-    // 1. HEADER
-    doc.setFillColor(30, 41, 59);
-    doc.rect(0, 0, pageWidth, 40, 'F');
-    
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(22);
-    doc.setFont("helvetica", "bold");
-    doc.text("PRESUPUESTO", margin, 25);
-    
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text("DOCUMENTO NO VÁLIDO COMO FACTURA", margin, 32);
-
-    doc.setFillColor(236, 49, 55);
-    doc.rect(pageWidth - 65, 0, 65, 40, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(9);
-    doc.text("NÚMERO DE CONTROL", pageWidth - 60, 15);
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.text(budget.nro_presupuesto || `PRO-${budget.id}`, pageWidth - 60, 25);
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Emisión: ${formatDate(budget.fecha_creacion)}`, pageWidth - 60, 33);
-
-    // 2. DATOS DEL CLIENTE
-    y = 55;
-    doc.setTextColor(100);
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "bold");
-    doc.text("INFORMACIÓN DEL PACIENTE", margin, y);
-    
-    y += 6;
-    doc.setDrawColor(230);
-    doc.line(margin, y, pageWidth - margin, y);
-    
-    y += 10;
-    doc.setTextColor(40);
-    doc.setFontSize(12);
-    doc.text((budget.paciente_nombre || "PACIENTE GENERAL").toUpperCase(), margin, y);
-    
-    y += 7;
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(80);
-    doc.text(`Clínica: ${budget.clinica_nombre || "N/A"}`, margin, y);
-    doc.text(`Seguro: ${budget.seguro_nombre || "N/A"}`, margin + 80, y);
-
-    // 3. TABLA DE PRODUCTOS
-    y += 20;
-    const tableHeaderY = y;
-    doc.setFillColor(248, 250, 252);
-    doc.rect(margin, tableHeaderY, pageWidth - (margin * 2), 10, 'F');
-    
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(30, 41, 59);
-    doc.text("DESCRIPCIÓN DEL PRODUCTO / SERVICIO", margin + 3, tableHeaderY + 6.5);
-    doc.text("CANT.", 135, tableHeaderY + 6.5, { align: 'right' });
-    doc.text("PRECIO U.", 160, tableHeaderY + 6.5, { align: 'right' });
-    doc.text("TOTAL", 195, tableHeaderY + 6.5, { align: 'right' });
-
-    y += 16;
-    doc.setFont("helvetica", "normal");
-    
-    (budget.items || budget.detalle || []).forEach((item) => {
-      if (y > 250) { doc.addPage(); y = 20; }
-
-      const desc = (item.descripcion || item.producto || "SIN DESCRIPCIÓN").toUpperCase();
-      const splitDesc = doc.splitTextToSize(desc, 90);
-      
-      doc.setDrawColor(241, 245, 249);
-      doc.line(margin, y + 2, pageWidth - margin, y + 2);
-
-      doc.setTextColor(40);
-      doc.text(splitDesc, margin + 3, y);
-      
-      doc.setTextColor(80);
-      doc.text(parseFloat(item.cantidad).toString(), 135, y, { align: 'right' });
-      doc.text(`${formatNum(item.precio_venta)}`, 160, y, { align: 'right' });
-      
-      doc.setTextColor(40);
-      doc.setFont("helvetica", "bold");
-      doc.text(`${formatNum(item.cantidad * item.precio_venta)}`, 195, y, { align: 'right' });
-      doc.setFont("helvetica", "normal");
-
-      y += (splitDesc.length * 5) + 5;
-    });
-
-    // 4. BLOQUE DE TOTALES
-    y += 10;
-    const totalBoxWidth = 70;
-    const totalBoxX = pageWidth - margin - totalBoxWidth;
-
-    doc.setDrawColor(30, 41, 59);
-    doc.setLineWidth(0.5);
-    doc.line(totalBoxX, y, pageWidth - margin, y);
-
-    y += 8;
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text("TOTAL PRESUPUESTADO", totalBoxX, y);
-    doc.text(`${formatNum(budget.total)}`, pageWidth - margin, y, { align: 'right' });
-
-    // --- SECCIÓN DE NOTAS EN PDF ---
-    if (budget.notas && budget.notas.trim() !== "") {
-      y += 15;
-      if (y > 250) { doc.addPage(); y = 20; }
-      
-      doc.setFontSize(8);
-      doc.setTextColor(100);
-      doc.setFont("helvetica", "bold");
-      doc.text("NOTAS Y OBSERVACIONES:", margin, y);
-      
-      y += 5;
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(40);
-      const splitNotes = doc.splitTextToSize(budget.notas.toUpperCase(), pageWidth - (margin * 2));
-      doc.text(splitNotes, margin, y);
-      y += (splitNotes.length * 4);
+    // 1. HEADER - LOGO
+    const logo = getImg("Logo");
+    if (logo) {
+      try {
+        // Redimensionado proporcional para evitar que se vea "feo"
+        doc.addImage(logo.src, logo.type, margin, y, 40, 15, undefined, 'FAST');
+      } catch (e) { console.warn("Error logo", e); }
     }
 
-    // 5. FOOTER
-    y = 275;
-    doc.setFontSize(7);
-    doc.setTextColor(150);
-    doc.text("Este presupuesto tiene una validez de 15 días continuos a partir de la fecha de emisión.", margin, y);
-    doc.text("Los precios están sujetos a cambios sin previo aviso según disponibilidad de inventario.", margin, y + 4);
+    // DATOS EMPRESA
+    const infoX = margin + 45;
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text("MUNDO IMPLANTES C.A.", infoX, y + 4);
+    
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text(`RIF: ${rifConfig}`, infoX, y + 8);
+    
+    const splitAddr = doc.splitTextToSize(direccionConfig, 80);
+    doc.text(splitAddr, infoX, y + 12);
+    
+    const contactY = y + 12 + (splitAddr.length * 3.5);
+    doc.text(`Telf: ${tlfConfig} | Email: ${emailConfig}`, infoX, contactY);
+
+    // TÍTULO COTIZACIÓN
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(232, 64, 83); // Rojo Mundo Implantes
+    doc.text("COTIZACIÓN", pageWidth - margin - 45, y + 5);
+    doc.setFontSize(10);
+    doc.text(`No. ${budget.nro_presupuesto || budget.id}`, pageWidth - margin - 45, y + 11);
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Emisión: ${formatDate(budget.fecha_creacion)}`, pageWidth - margin - 45, y + 16);
+
+    // 2. PACIENTE
+    y = 52;
+    doc.setDrawColor(235);
+    doc.line(margin, y - 5, pageWidth - margin, y - 5);
+    
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text("PACIENTE:", margin, y);
+    doc.setFont("helvetica", "normal");
+    doc.text((budget.paciente_nombre || "PÚBLICO GENERAL").toUpperCase(), margin + 20, y);
     
     doc.setFont("helvetica", "bold");
-    doc.text("Página 1 de 1", pageWidth - margin, y + 4, { align: 'right' });
+    doc.text("CÉDULA:", pageWidth - 75, y);
+    doc.setFont("helvetica", "normal");
+    doc.text(budget.paciente_documento || "N/A", pageWidth - 58, y);
 
-    doc.save(`PRESUPUESTO_${budget.nro_presupuesto || budget.id}.pdf`);
+    y += 6;
+    doc.setFont("helvetica", "bold");
+    doc.text("CONDICIÓN:", margin, y);
+    doc.setFont("helvetica", "normal");
+    const cond = esParticular ? "PARTICULAR" : `SEGURO: ${budget.seguro_nombre}`;
+    doc.text(cond.toUpperCase(), margin + 22, y);
+
+    // 3. TABLA DE PRODUCTOS
+    y += 10;
+    doc.setFillColor(248, 249, 250);
+    doc.rect(margin, y - 4, pageWidth - (margin * 2), 6, 'F');
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "bold");
+    doc.text("DESCRIPCIÓN", margin + 2, y);
+    doc.text("CANT.", 135, y, { align: 'center' });
+    doc.text("P/UNT.", 165, y, { align: 'right' });
+    doc.text("TOTAL", 195, y, { align: 'right' });
+
+    y += 7;
+    doc.setFont("helvetica", "normal");
+    const items = budget.items || budget.detalle || [];
+    items.forEach((item) => {
+      if (y > 240) { doc.addPage(); y = 20; }
+      const desc = (item.descripcion || item.producto || "").toUpperCase();
+      const splitDesc = doc.splitTextToSize(desc, 110);
+      doc.text(splitDesc, margin + 2, y);
+      doc.text(parseFloat(item.cantidad).toString(), 135, y, { align: 'center' });
+      doc.text(formatNum(item.precio_venta), 165, y, { align: 'right' });
+      doc.text(formatNum(item.cantidad * item.precio_venta), 195, y, { align: 'right' });
+      y += (splitDesc.length * 4.5) + 1.5;
+    });
+
+    // TOTAL
+    y += 5;
+    doc.setDrawColor(0);
+    doc.line(145, y, 195, y);
+    y += 6;
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("TOTAL USD:", 145, y);
+    doc.text(`$ ${formatNum(budget.total)}`, 195, y, { align: 'right' });
+
+    // 4. OBSERVACIONES
+    y += 15;
+    if (y > 230) { doc.addPage(); y = 20; }
+    doc.setFontSize(7.5);
+    doc.text("OBSERVACIONES / TÉRMINOS:", margin, y);
+    doc.setFont("helvetica", "normal");
+    y += 4;
+    const terminos = (notaConfigurada || "DOCUMENTO VÁLIDO POR 2 DÍAS HÁBILES.").toUpperCase();
+    const splitTerm = doc.splitTextToSize(terminos, pageWidth - (margin * 2));
+    doc.text(splitTerm, margin, y);
+
+    // 5. FIRMA Y SELLO
+    y = 265;
+    const firma = getImg("Firma");
+    const sello = getImg("Sello");
+
+    if (firma) {
+      try {
+        doc.addImage(firma.src, firma.type, margin + 5, y - 16, 30, 12, undefined, 'MEDIUM');
+      } catch (e) {}
+    }
+    if (sello) {
+      try {
+        doc.addImage(sello.src, sello.type, margin + 40, y - 22, 22, 22, undefined, 'MEDIUM');
+      } catch (e) {}
+    }
+
+    doc.setLineWidth(0.4);
+    doc.line(margin, y, margin + 65, y);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "bold");
+    doc.text("FIRMA AUTORIZADA Y SELLO", margin + 10, y + 4);
+
+    doc.save(`COTIZACION_${budget.nro_presupuesto || budget.id}.pdf`);
   };
 
   const handleDelete = async () => {
-    if (!window.confirm("¿Desea eliminar este presupuesto?")) return;
+    if (!window.confirm("¿Desea eliminar esta cotización?")) return;
     setIsProcessing(true);
     try {
       const res = await deleteBudgetById(budget.id);
@@ -185,11 +198,10 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
   return (
     <div className="sdm-overlay">
       <div className="sdm-modal-container">
-
         <div className="sdm-invoice-paper">
           <div className="sdm-invoice-top-header">
             <div className="invoice-brand">
-              <h2 className="sdm-main-title">PRESUPUESTO</h2>
+              <h2 className="sdm-main-title">COTIZACIÓN</h2>
               <p className="sdm-brand-sub">Ref: {budget.nro_presupuesto}</p>
             </div>
             <div className="sdm-meta-top">
@@ -202,12 +214,12 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
             <div className="client-info">
               <label>Paciente:</label>
               <h4 className="bold">{budget.paciente_nombre || "General"}</h4>
-              <p>Clínica: {budget.clinica_nombre || "N/A"}</p>
-              <p>Seguro: {budget.seguro_nombre || "N/A"}</p>
+              <p>Cédula: {budget.paciente_documento || "N/A"}</p>
+              <p>Condición: <span className="bold">{esParticular ? "PARTICULAR" : budget.seguro_nombre}</span></p>
             </div>
             <div className="status-info">
                <div className={`sdm-badge ${isActive ? 'confirmed' : 'pending'}`}>
-                 {isActive ? 'SIN USAR' : 'USADO'}
+                 {isActive ? 'SIN USAR' : 'USADA'}
                </div>
             </div>
           </div>
@@ -227,11 +239,10 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
                   <tr key={i}>
                     <td>
                       <div className="item-name">{item.descripcion || item.producto}</div>
-                      <div className="item-sku">SKU: {item.sku || 'N/A'}</div>
                     </td>
                     <td className="text-right">{item.cantidad}</td>
-                    <td className="text-right font-mono">{formatNum(item.precio_venta)}</td>
-                    <td className="text-right font-mono bold">{formatNum(item.cantidad * item.precio_venta)}</td>
+                    <td className="text-right font-mono">${formatNum(item.precio_venta)}</td>
+                    <td className="text-right font-mono bold">${formatNum(item.cantidad * item.precio_venta)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -240,7 +251,6 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
 
           <div className="sdm-invoice-footer-grid">
             <div className="sdm-footer-left">
-               {/* SECCIÓN DE NOTAS VISUAL */}
                {budget.notas && budget.notas.trim() !== "" && (
                  <div className="sdm-notes-box">
                     <label className="sdm-section-label" style={{ display: 'flex', alignItems: 'center', gap: '5px', border: 'none', marginBottom: '5px' }}>
@@ -255,7 +265,7 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
             <div className="sdm-totals-box">
               <div className="sdm-total-row sdm-grand-total">
                 <span className="bold">Total</span>
-                <span className="bold amount font-mono text-red">{formatNum(budget.total)}</span>
+                <span className="bold amount font-mono text-red">${formatNum(budget.total)}</span>
               </div>
             </div>
           </div>

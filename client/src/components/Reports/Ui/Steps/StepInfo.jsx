@@ -4,10 +4,12 @@ import {
   UserCircle, 
   Stethoscope, 
   Plus, 
-  Trash2 
+  Trash2,
+  Building2 
 } from "lucide-react";
 
 import { useHealth } from "../../../../context/HealtContext";
+import { useClinics } from "../../../../context/ClinicsContext";
 import DoctorFormModal from "../../../Patients/ui/DoctorFormModal";
 
 import "../../../../styles/ui/stepsBudgets/StepInfo.css";
@@ -23,6 +25,8 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
     createNewMedico 
   } = useHealth();
 
+  const { clinics, getAllClinics } = useClinics();
+
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
 
   useEffect(() => {
@@ -31,28 +35,34 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
         getAllPacientes(),
         getAllMedicos(),
         getAllTipoMedicos(),
+        getAllClinics(),
       ]);
     };
     fetchData();
   }, []);
 
+  // Validación: Paciente y Clínica son requeridos
   useEffect(() => {
-    // Validación: El paciente es obligatorio
-    const isValid = !!formData.id_paciente;
+    const isValid = !!formData.id_paciente && !!formData.id_clinica;
     onValidationChange?.(isValid);
-  }, [formData.id_paciente, onValidationChange]);
+  }, [formData.id_paciente, formData.id_clinica, onValidationChange]);
 
   const options = useMemo(() => ({
     pacientes: (pacientes || []).map((p) => ({
       value: p.id,
       label: p.nombre?.toUpperCase(),
+      cedula: p.cedula || p.documento || "", // Captura del documento
+    })),
+    clinicas: (clinics || []).map((c) => ({
+      value: c.id,
+      label: c.nombre?.toUpperCase(),
     })),
     medicos: (medicos || []).map((m) => ({
       value: m.id,
       label: m.nombre?.toUpperCase(),
       tipo: m.tipo?.toUpperCase() || "GENERAL",
     })),
-  }), [pacientes, medicos]);
+  }), [pacientes, medicos, clinics]);
 
   const formatDoctorOption = ({ label, tipo }) => (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -101,29 +111,51 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
     <section className="prof-container">
       <div className="prof-header">
         <h3 className="prof-title">Información del Reporte</h3>
-        <p className="prof-subtitle">Defina el paciente y el personal médico asignado.</p>
+        <p className="prof-subtitle">Defina el paciente, la clínica y el personal médico asignado.</p>
       </div>
 
       <div className="prof-main-card">
         <h4 className="prof-card-tag">Datos Principales</h4>
         
-        {/* SECCIÓN PACIENTE */}
-        <div className="prof-field-group">
-          <label className="prof-label">
-            <UserCircle size={18} className="prof-icon" /> PACIENTE *
-          </label>
-          <Select
-            isClearable
-            options={options.pacientes}
-            value={options.pacientes.find(o => o.value === formData.id_paciente) || null}
-            onChange={(opt) => setFormData(p => ({
-              ...p,
-              id_paciente: opt?.value || "",
-              nombre_paciente: opt?.label || ""
-            }))}
-            placeholder="BUSCAR PACIENTE..."
-            styles={profSelectStyles}
-          />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          {/* SECCIÓN PACIENTE */}
+          <div className="prof-field-group">
+            <label className="prof-label">
+              <UserCircle size={18} className="prof-icon" /> PACIENTE *
+            </label>
+            <Select
+              isClearable
+              options={options.pacientes}
+              value={options.pacientes.find(o => o.value === formData.id_paciente) || null}
+              onChange={(opt) => setFormData(p => ({
+                ...p,
+                id_paciente: opt?.value || "",
+                nombre_paciente: opt?.label || "",
+                documento_paciente: opt?.cedula || "" // Carga silenciosa del documento
+              }))}
+              placeholder="BUSCAR PACIENTE..."
+              styles={profSelectStyles}
+            />
+          </div>
+
+          {/* SECCIÓN CLÍNICA */}
+          <div className="prof-field-group">
+            <label className="prof-label">
+              <Building2 size={18} className="prof-icon" /> CLÍNICA *
+            </label>
+            <Select
+              isClearable
+              options={options.clinicas}
+              value={options.clinicas.find(o => o.value === formData.id_clinica) || null}
+              onChange={(opt) => setFormData(p => ({
+                ...p,
+                id_clinica: opt?.value || "",
+                nombre_clinica: opt?.label || ""
+              }))}
+              placeholder="SELECCIONAR CLÍNICA..."
+              styles={profSelectStyles}
+            />
+          </div>
         </div>
 
         {/* SECCIÓN PERSONAL MÉDICO */}
@@ -148,7 +180,7 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
 
           <Select
             options={options.medicos}
-            value={null} // Siempre vuelve a null para permitir múltiples selecciones
+            value={null} 
             formatOptionLabel={formatDoctorOption}
             onChange={(opt) => {
               if (opt && !formData.personal_asignado?.some((p) => p.id === opt.value)) {
@@ -165,7 +197,6 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
             styles={profSelectStyles}
           />
 
-          {/* LISTA DE MÉDICOS AGREGADOS */}
           <div className="si-linear-list" style={{ marginTop: '1rem' }}>
             {formData.personal_asignado?.length > 0 ? (
               formData.personal_asignado.map((med) => (
@@ -179,7 +210,14 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
                     <span className="si-item-name" style={{ fontWeight: '600', fontSize: '0.9rem', marginRight: '10px' }}>
                       {med.nombre}
                     </span>
-                    <span className="si-item-badge" style={{ fontSize: '0.7rem', color: '#ffffff', textTransform: 'uppercase' }}>
+                    <span className="si-item-badge" style={{ 
+                      fontSize: '0.7rem', 
+                      color: '#ffffff', 
+                      textTransform: 'uppercase',
+                      backgroundColor: '#64748b',
+                      padding: '2px 6px',
+                      borderRadius: '4px'
+                    }}>
                       {med.tipo}
                     </span>
                   </div>

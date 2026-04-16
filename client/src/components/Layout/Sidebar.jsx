@@ -70,6 +70,7 @@ const Sidebar = ({ setActiveComponent, activeComponent, userRole }) => {
         { name: "Depósitos", key: "deposits", icon: <Warehouse size={18} /> },
         { name: "Vendedores", key: "sellers", icon: <UserPlus size={18} /> },
         { name: "Usuarios", key: "users", icon: <Users size={18} /> },
+        { name: "Ajustes", key: "settings", icon: <Users size={18} /> },
       ]
     },
   ];

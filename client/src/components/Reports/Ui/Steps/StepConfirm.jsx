@@ -3,7 +3,7 @@ import '../../../../styles/ui/steps/StepSalesConfirm.css';
 
 const StepConfirm = ({ formData, items }) => {
   
-  // Función simple para parsear cantidades
+  // Función para parsear cantidades con formato local (coma decimal)
   const safeParseQty = (val) => {
     if (val === null || val === undefined || val === "" || val === false) return 0;
     if (typeof val === "number") return val;
@@ -22,7 +22,16 @@ const StepConfirm = ({ formData, items }) => {
       <div className="invoice-info-grid">
         <div className="invoice-grid-item">
           <label>Paciente</label>
-          <span className="bold">{formData.nombre_paciente || "No asignado"}</span>
+          <span className="bold" style={{ display: 'block' }}>
+            {formData.nombre_paciente || "No asignado"}
+          </span>
+          {/* Mostramos el documento cargado silenciosamente */}
+          <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
+            {formData.documento_paciente ? `${formData.documento_paciente}` : "Sin documento"}
+          </span>
+
+          <label style={{ marginTop: '10px' }}>Clínica</label>
+          <span className="bold">{formData.nombre_clinica || "No asignada"}</span>
         </div>
         
         <div className="invoice-grid-item col-span-2">
@@ -78,13 +87,12 @@ const StepConfirm = ({ formData, items }) => {
         </table>
       </div>
 
-      {/* Sección de totales eliminada o convertida en conteo simple si se desea */}
-      {/* <div className="invoice-totals-section">
+      <div className="invoice-totals-section">
         <div className="invoice-total-row">
           <span>Total de Ítems</span>
-          <span className="font-mono">{items.length}</span>
+          <span className="font-mono" style={{ fontWeight: 'bold' }}>{items.length}</span>
         </div>
-      </div> */}
+      </div>
     </div>
   );
 };

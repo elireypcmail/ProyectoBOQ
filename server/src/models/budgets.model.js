@@ -72,6 +72,7 @@ export class BudgetsModel {
       const result = await connection.query(`
         SELECT 
           p.id,
+          p.particular,
           p.nro_presupuesto,
           p.estatus,
           p.estatus_uso,
@@ -82,6 +83,7 @@ export class BudgetsModel {
           -- Datos del Paciente
           p.id_paciente,
           pac.nombre AS paciente_nombre,
+          pac.documento AS paciente_documento,
           
           -- Datos de Clínica y Seguro
           p.id_clinica,
@@ -158,6 +160,7 @@ export class BudgetsModel {
         cliente,
         id_clinica,
         id_seguro,
+        particular,
         detalle = [],
         total,
         notas,
@@ -187,17 +190,19 @@ export class BudgetsModel {
           id_paciente,
           id_clinica,
           id_seguro,
+          particular,
           nro_presupuesto,
           total,
           notas,
           estatus_uso,
           estatus
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7, $8)
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
         RETURNING id`,
         [
           targetPatient,
           id_clinica || null,
           id_seguro || null,
+          particular || false,
           nroPresupuesto,
           parseMonto(total),
           notas || null,

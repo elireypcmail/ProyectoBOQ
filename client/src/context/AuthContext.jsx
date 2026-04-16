@@ -10,10 +10,13 @@ import {
   getUserById,
   createUser,
   updateUser,
-  deleteUser
+  deleteUser,
+  getAllRoles,      
+  createRole,       
+  updateRole,       
+  deleteRole        
 } from "../api/auth";
 
-// Context
 export const AuthContext = createContext();
 
 export const useAuth = () => {
@@ -31,21 +34,21 @@ export const AuthProvider = ({ children }) => {
   const [errors, setErrors] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // New state for user management
+  // User & Role Management states
   const [usersList, setUsersList] = useState([]);
+  const [rolesList, setRolesList] = useState([]); 
 
   const signIn = async (userCredentials) => {
     try {
       const res = await loginRequest(userCredentials);
-      
-      Cookies.set('token', res.data.token, { expires: 7 });
-      let userInfo = res.data.data.user;
+      Cookies.set('token', res.data.token, { expires: 0.125 });
+      let userInfo = res.data.data;
 
       localStorage.setItem("UserId", JSON.stringify(userInfo));
-      setUser(res.data);
+      setUser(userInfo);
       setIsAuthenticated(true);
     } catch (error) {
-      setErrors([error.response?.data || "Login failed"]);
+      setErrors([error.response?.data?.msg || "Login failed"]);
     }
   };
 
@@ -56,7 +59,7 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
   };
 
-  // -------------------- User Management Functions --------------------
+  // -------------------- User Management (Original) --------------------
 
   const fetchAllUsers = async () => {
     try {
@@ -64,7 +67,7 @@ export const AuthProvider = ({ children }) => {
       setUsersList(res.data.data);
       return res.data;
     } catch (error) {
-      setErrors([error.response?.data || "Failed to fetch users"]);
+      setErrors([error.response?.data?.msg || "Failed to fetch users"]);
     }
   };
 
@@ -73,18 +76,17 @@ export const AuthProvider = ({ children }) => {
       const res = await getUserById(id);
       return res.data.data;
     } catch (error) {
-      setErrors([error.response?.data || "Failed to fetch user"]);
+      setErrors([error.response?.data?.msg || "Failed to fetch user"]);
     }
   };
 
   const createNewUser = async (data) => {
     try {
       const res = await createUser(data);
-      // Optimistically update the state
-      setUsersList([...usersList, res.data]); 
+      setUsersList([...usersList, res.data.data]); 
       return res.data;
     } catch (error) {
-      setErrors([error.response?.data || "Failed to create user"]);
+      setErrors([error.response?.data?.msg || "Failed to create user"]);
       throw error;
     }
   };
@@ -92,11 +94,10 @@ export const AuthProvider = ({ children }) => {
   const editUser = async (id, data) => {
     try {
       const res = await updateUser(id, data);
-      // Update the specific user in the local state array
-      setUsersList(usersList.map(u => u.id === id ? res.data : u));
+      setUsersList(usersList.map(u => u.id === id ? res.data.data : u));
       return res.data;
     } catch (error) {
-      setErrors([error.response?.data || "Failed to update user"]);
+      setErrors([error.response?.data?.msg || "Failed to update user"]);
       throw error;
     }
   };
@@ -104,10 +105,53 @@ export const AuthProvider = ({ children }) => {
   const removeUser = async (id) => {
     try {
       await deleteUser(id);
-      // Remove the deleted user from the local state
       setUsersList(usersList.filter(u => u.id !== id));
     } catch (error) {
-      setErrors([error.response?.data || "Failed to delete user"]);
+      setErrors([error.response?.data?.msg || "Failed to delete user"]);
+    }
+  };
+
+  // -------------------- Role Management (Nuevo) --------------------
+
+  const fetchAllRoles = async () => {
+    try {
+      const res = await getAllRoles();
+      setRolesList(res.data.data);
+      return res.data.data;
+    } catch (error) {
+      setErrors([error.response?.data?.msg || "Error al obtener roles"]);
+    }
+  };
+
+  const createNewRole = async (data) => {
+    try {
+      const res = await createRole(data);
+      setRolesList([...rolesList, res.data.data]);
+      return res.data;
+    } catch (error) {
+      setErrors([error.response?.data?.msg || "Error al crear rol"]);
+      throw error;
+    }
+  };
+
+  const editRole = async (id, data) => {
+    try {
+      const res = await updateRole(id, data);
+      setRolesList(rolesList.map(r => r.id === id ? res.data.data : r));
+      return res.data;
+    } catch (error) {
+      setErrors([error.response?.data?.msg || "Error al actualizar rol"]);
+      throw error;
+    }
+  };
+
+  const removeRole = async (id) => {
+    try {
+      await deleteRole(id);
+      setRolesList(rolesList.filter(r => r.id !== id));
+    } catch (error) {
+      setErrors([error.response?.data?.msg || "Error al eliminar rol"]);
+      throw error;
     }
   };
 
@@ -124,16 +168,16 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const checkLogin = async () => {
-      const cookies = Cookies.get();
+      const token = Cookies.get('token');
 
-      if (!cookies.token) {
+      if (!token) {
         setIsAuthenticated(false);
         setLoading(false);
         return setUser(null);
       }
 
       try {
-        const res = await verifyTokenRequest(cookies.token);
+        const res = await verifyTokenRequest();
         if (!res.data) {
           setIsAuthenticated(false);
           setLoading(false);
@@ -141,8 +185,7 @@ export const AuthProvider = ({ children }) => {
         } 
         
         setIsAuthenticated(true);
-        setUser(res.data);
-        localStorage.setItem('timeSelect', JSON.stringify(res.data.time_select));
+        setUser(res.data.user);
         setLoading(false);
       } catch (error) {
         setIsAuthenticated(false);
@@ -170,7 +213,14 @@ export const AuthProvider = ({ children }) => {
       fetchUserById,
       createNewUser,
       editUser,
-      removeUser
+      removeUser,
+
+      // Role Management
+      rolesList,
+      fetchAllRoles,
+      createNewRole,
+      editRole,
+      removeRole
     }}>
       {children}
     </AuthContext.Provider>
