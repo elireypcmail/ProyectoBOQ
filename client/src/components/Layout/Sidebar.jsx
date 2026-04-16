@@ -70,22 +70,30 @@ const Sidebar = ({ setActiveComponent, activeComponent, userRole }) => {
         { name: "Depósitos", key: "deposits", icon: <Warehouse size={18} /> },
         { name: "Vendedores", key: "sellers", icon: <UserPlus size={18} /> },
         { name: "Usuarios", key: "users", icon: <Users size={18} /> },
-        { name: "Ajustes", key: "settings", icon: <Users size={18} /> },
       ]
     },
   ];
 
-  // 🔥 FILTRADO POR ROL:
-  // Si el rol es OPRI, filtramos para que solo vea el grupo que contiene "Reportes"
-  // y dentro de ese grupo, solo dejamos el hijo "reports".
+  // 🔥 FILTRADO POR ROL AJUSTADO:
   const menuItems = userRole === "OPRI" 
     ? allMenuItems
-        .filter(item => item.key === "admin-group")
-        .map(item => ({
-          ...item,
-          name: "Instrumentación", // Renombramos el grupo para el OPRI
-          children: item.children.filter(child => child.key === "reports")
-        }))
+        .filter(item => item.key === "admin-group" || item.key === "products-group")
+        .map(item => {
+          if (item.key === "admin-group") {
+            return {
+              ...item,
+              name: "Instrumentación",
+              children: item.children.filter(child => child.key === "reports")
+            };
+          }
+          if (item.key === "products-group") {
+            return {
+              ...item,
+              children: item.children.filter(child => child.key === "products")
+            };
+          }
+          return item;
+        })
     : allMenuItems;
 
   const handleNavigation = (key) => {

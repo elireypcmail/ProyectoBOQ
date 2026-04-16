@@ -371,6 +371,7 @@ CREATE TABLE ventas (
   id_oficina INT REFERENCES oficinas(id) ON DELETE CASCADE,
   id_deposito INT REFERENCES depositos(id) ON DELETE CASCADE,
   id_seguro INT REFERENCES seguros(id) ON DELETE CASCADE,
+  particular BOOLEAN,
   id_presupuesto INT REFERENCES presupuestos(id) ON DELETE CASCADE,
   nro_factura VARCHAR(100) NOT NULL,
   subtotal1 DECIMAL(10,2) NOT NULL,

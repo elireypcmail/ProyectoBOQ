@@ -15,6 +15,7 @@ import { SlOptionsVertical } from "react-icons/sl"
 import ProductFormModal from "../Ui/ProductFormModal"
 import ModalDetailed from "../Ui/ModalDetailed"
 import ModalCreateCatalog from "../Ui/ModalCreateCatalog"
+import ProductModalDetail from "./Ui/ProductModalDetail"
 
 import "../../styles/components/ListProd.css"
 
@@ -34,6 +35,11 @@ const ListProducts = ({ onClose }) => {
     createNewBrand,
     saveFilesProduct,
   } = useProducts()
+
+  // Recuperar rol del usuario
+  const storedUser = localStorage.getItem("UserId");
+  const userData = storedUser ? JSON.parse(storedUser) : null;
+  const userRole = userData?.rol;
 
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedProduct, setSelectedProduct] = useState(null)
@@ -163,7 +169,6 @@ const ListProducts = ({ onClose }) => {
             <Plus size={16} /> Nuevo Producto
           </button>
 
-          {/* Botón de cierre integrado */}
           {onClose && (
             <button 
               className="pl-btn-close" 
@@ -188,7 +193,7 @@ const ListProducts = ({ onClose }) => {
         </div>
       </div>
 
-      {/* Tabla de Productos con etiquetas responsive */}
+      {/* Tabla de Productos */}
       <div className="pl-table-frame">
         <table className="pl-data-table">
           <thead>
@@ -257,6 +262,8 @@ const ListProducts = ({ onClose }) => {
         </div>
       )}
 
+      {/* MODALES */}
+      
       <ProductFormModal
         isOpen={isFormOpen}
         onClose={() => {
@@ -272,26 +279,38 @@ const ListProducts = ({ onClose }) => {
         onCreateBrand={handleOnCreateBrand}
       />
 
-      <ModalDetailed
-        isOpen={isDetailOpen}
-        product={selectedProduct}
-        category={
-          categories.find((c) => c.id === selectedProduct?.id_categoria)?.nombre
-        }
-        brand={brands.find((b) => b.id === selectedProduct?.id_marca)?.nombre}
-        onClose={() => {
-          setIsDetailOpen(false)
-          setSelectedProduct(null)
-        }}
-        onEdit={() => {
-          setIsDetailOpen(false)
-          setIsFormOpen(true)
-        }}
-        onDelete={() => {
-          setIsDetailOpen(false)
-          setIsDeleteModalOpen(true)
-        }}
-      />
+      {/* Renderizado Condicional del Detalle según ROL */}
+      {userRole === "OPRI" ? (
+        <ProductModalDetail
+          isOpen={isDetailOpen}
+          product={selectedProduct}
+          category={categories.find((c) => c.id === selectedProduct?.id_categoria)?.nombre}
+          brand={brands.find((b) => b.id === selectedProduct?.id_marca)?.nombre}
+          onClose={() => {
+            setIsDetailOpen(false)
+            setSelectedProduct(null)
+          }}
+        />
+      ) : (
+        <ModalDetailed
+          isOpen={isDetailOpen}
+          product={selectedProduct}
+          category={categories.find((c) => c.id === selectedProduct?.id_categoria)?.nombre}
+          brand={brands.find((b) => b.id === selectedProduct?.id_marca)?.nombre}
+          onClose={() => {
+            setIsDetailOpen(false)
+            setSelectedProduct(null)
+          }}
+          onEdit={() => {
+            setIsDetailOpen(false)
+            setIsFormOpen(true)
+          }}
+          onDelete={() => {
+            setIsDetailOpen(false)
+            setIsDeleteModalOpen(true)
+          }}
+        />
+      )}
 
       <ModalCreateCatalog
         isOpen={isCatalogModalOpen}

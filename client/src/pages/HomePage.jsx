@@ -32,20 +32,34 @@ import logo from "../assets/images/logoBlanco.png";
 export default function HomePage() {
   const storedUser = localStorage.getItem("UserId");
   const userData = storedUser ? JSON.parse(storedUser) : null;
+  console.log(userData)
   const userRole = userData?.rol;
 
-  /**
-   * ESTADO INICIAL: null
-   * Esto garantiza que al loguearse o refrescar, se vea la bienvenida.
-   */
   const [activeComponent, setActiveComponent] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [clickCount, setClickCount] = useState(0); 
   const sidebarRef = useRef(null);
+  const clickTimerRef = useRef(null);
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
   
-  // Función para resetear el estado y volver a la pantalla de inicio
   const closeComponent = () => setActiveComponent(null);
+
+  const handleLogoAction = () => {
+    if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+
+    const newCount = clickCount + 1;
+    
+    if (newCount === 7) {
+      setActiveComponent("settings");
+      setClickCount(0);
+    } else {
+      setClickCount(newCount);
+      clickTimerRef.current = setTimeout(() => {
+        setClickCount(0);
+      }, 3000);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -62,7 +76,6 @@ export default function HomePage() {
   return (
     <EntityProvider>
       <div className={`home-layout ${isSidebarOpen ? "sidebar-open" : ""}`}>
-        {/* Background Dinámico */}
         <div
           className="home-background"
           style={{
@@ -72,17 +85,19 @@ export default function HomePage() {
         />
         <div className="home-overlay" />
 
-        {/* Logo flotante (Solo visible cuando hay un componente activo) */}
         {activeComponent && (
-          <img src={logo} alt="Logo Mundo Implantes" className="floating-logo" />
+          <img 
+            src={logo} 
+            alt="Logo Mundo Implantes" 
+            className="floating-logo" 
+            onClick={handleLogoAction}
+          />
         )}
 
-        {/* Botón Hamburguesa (Móvil) */}
         <button className="mobile-toggle" onClick={toggleSidebar}>
           {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
 
-        {/* Sidebar Wrapper */}
         <aside
           ref={sidebarRef}
           className={`sidebar-wrapper ${isSidebarOpen ? "is-open" : ""}`}
@@ -92,44 +107,42 @@ export default function HomePage() {
             userRole={userRole}
             setActiveComponent={(comp) => {
               setActiveComponent(comp);
-              setIsSidebarOpen(false); // Cierra el sidebar al seleccionar en móvil
+              setIsSidebarOpen(false);
             }}
           />
         </aside>
 
-        {/* Contenido Principal */}
         <main className="main-viewport">
           <section className="content-area">
             
-            {/* PANTALLA DE BIENVENIDA (Se muestra si activeComponent es null) */}
             {!activeComponent && (
               <div className="welcome-container">
                 <img 
                   src={logo} 
                   alt="Mundo Implantes" 
                   className="central-welcome-logo" 
+                  onClick={handleLogoAction}
                 />
               </div>
             )}
 
-            {/* RENDERIZADO DE COMPONENTES */}
             <div className="rendered-content">
-              {/* Reportes: Disponible para todos los roles cuando está activo */}
+              {/* Componentes accesibles para TODOS (incluido OPRI) */}
               {activeComponent === "reports" && (
-                <>
-                  <ListReports onClose={closeComponent} />
-                  {/* <ListProducts onClose={closeComponent} /> */}
-                </>
+                <ListReports onClose={closeComponent} />
+              )}
+              
+              {activeComponent === "products" && (
+                <ListProducts onClose={closeComponent} />
               )}
 
-              {/* Módulos restringidos para rol diferente a OPRI */}
+              {/* Componentes restringidos: Solo si NO es OPRI */}
               {userRole !== "OPRI" && activeComponent && (
                 <>
                   {activeComponent === "patients" && <ListPatients onClose={closeComponent} />}
                   {activeComponent === "settings" && <ListSettings onClose={closeComponent} />}
                   {activeComponent === "insurances" && <ListInsurances onClose={closeComponent} />}
                   {activeComponent === "stories" && <ListStories onClose={closeComponent} />}
-                  {activeComponent === "products" && <ListProducts onClose={closeComponent} />}
                   {activeComponent === "categories" && <ListCategories onClose={closeComponent} />}
                   {activeComponent === "brands" && <ListBrands onClose={closeComponent} />}
                   {activeComponent === "lots" && <ListLots onClose={closeComponent} />}

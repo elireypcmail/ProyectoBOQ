@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
-  X, Trash2, Edit3, CheckCircle2, Loader2, Clipboard, CreditCard
+  X, Trash2, Edit3, CheckCircle2, Loader2, Clipboard, CreditCard, ShieldCheck, UserCircle
 } from "lucide-react";
 import { useIncExp } from "../../../context/IncExpContext";
 import ModalConfirmSale from "./ModalConfirmSale";
@@ -13,11 +13,9 @@ const SaleDetailModal = ({ isOpen, sale, onClose, onEdit }) => {
   const [showModalResult, setShowModalResult] = useState(false);
   const [modalConfig, setModalConfig] = useState({ title: "", message: "", type: "success" });
   
-  // 🔥 ESTADO SOLO PARA EL ABONO (Sincronización reactiva)
   const [currentAbonado, setCurrentAbonado] = useState(sale?.abonado || 0);
   const [showPaymentsModal, setShowPaymentsModal] = useState(false);
 
-  // 🔄 Sincronizar abono cuando se abre el modal o cambia la lista global de ventas
   useEffect(() => {
     if (isOpen && sale?.id) {
       const updatedSale = sales?.find(s => s.id === sale.id);
@@ -27,17 +25,14 @@ const SaleDetailModal = ({ isOpen, sale, onClose, onEdit }) => {
 
   if (!isOpen || !sale) return null;
 
-  // --- LÓGICA DE ESTADO ---
   const isActive = sale.estatus !== false;
   const isPending = sale.estado_venta?.toLowerCase() === "pendiente";
   const canModify = isActive && isPending;
 
-  // Cálculos dinámicos basados en el abono actualizado
   const totalNeto = Number(sale.total || 0);
   const saldoPendiente = totalNeto - Number(currentAbonado || 0);
   const esPagado = saldoPendiente <= 0.01;
 
-  // --- HELPERS ---
   const formatNum = (val) => {
     return Number(val || 0).toLocaleString('es-ES', { 
       minimumFractionDigits: 2, 
@@ -52,17 +47,11 @@ const SaleDetailModal = ({ isOpen, sale, onClose, onEdit }) => {
     });
   };
 
-  // --- ACCIONES ---
   const handleConfirm = async () => {
     if (!canModify) return;
-    
     setIsProcessing(true);
-    
     try {
       const res = await confirmSale(sale.id);
-      console.log("Respuesta del servidor:", res);
-
-      // Verificamos el status que definimos en el backend
       if (res.status) {
         setModalConfig({
           title: "VENTA CONFIRMADA",
@@ -70,12 +59,8 @@ const SaleDetailModal = ({ isOpen, sale, onClose, onEdit }) => {
           type: "success",
         });
         setShowModalResult(true);
-        
-        // Refrescar la lista de ventas si la función existe
         if (getAllSales) await getAllSales();
-        
       } else {
-        // Corregido: message ahora recibe el string directamente
         setModalConfig({ 
           title: "ERROR AL CONFIRMAR", 
           message: res.msg || "NO SE PUDO COMPLETAR LA OPERACIÓN.", 
@@ -84,7 +69,6 @@ const SaleDetailModal = ({ isOpen, sale, onClose, onEdit }) => {
         setShowModalResult(true);
       }
     } catch (error) {
-      console.error("Error en handleConfirm:", error);
       setModalConfig({ 
         title: "ERROR DE RED", 
         message: "HUBO UN FALLO AL COMUNICAR CON EL SERVIDOR.", 
@@ -129,10 +113,26 @@ const SaleDetailModal = ({ isOpen, sale, onClose, onEdit }) => {
 
           <div className="sdm-invoice-client-row">
             <div className="client-info">
-              <label>Factura a:</label>
-              <h4>{sale.paciente_nombre || "Paciente General"}</h4>
-              <p>Seguro: {sale.seguro_nombre || "N/A"}</p>
+              <label><UserCircle size={12} style={{marginRight: '4px'}}/> Factura a:</label>
+              <h4 style={{ marginBottom: '8px' }}>{sale.paciente_nombre || "Paciente General"}</h4>
+              
+              {/* Lógica Seguro vs Particular */}
+              {sale.particular || !sale.seguro_nombre ? (
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', backgroundColor: '#f1f5f9', color: '#475569', padding: '3px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 800, border: '1px solid #e2e8f0' }}>
+                  MODALIDAD: PARTICULAR
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', backgroundColor: '#eff6ff', color: '#2563eb', padding: '3px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 800, border: '1px solid #dbeafe', width: 'fit-content' }}>
+                    <ShieldCheck size={12} /> MODALIDAD: SEGURO
+                  </div>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#1e40af', marginTop: '2px' }}>
+                    {sale.seguro_nombre}
+                  </span>
+                </div>
+              )}
             </div>
+
             <div className="status-info">
               <div className={`sdm-badge ${!isActive ? "cancelled" : isPending ? "pending" : "confirmed"}`}>
                 {!isActive ? "ANULADA" : isPending ? "PENDIENTE" : "CONFIRMADA"}

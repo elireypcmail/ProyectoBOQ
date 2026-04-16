@@ -51,6 +51,7 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
     id_seguro: "",
     nombre_seguro: "",
     id_presupuesto: "",
+    particular: false,
   };
 
   const initialTotalsState = {
@@ -120,6 +121,7 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
         id_seguro: editData.id_seguro || "",
         nombre_seguro: editData.seguro_nombre || "",
         id_presupuesto: editData.id_presupuesto || "",
+        particular: editData.particular || false,
       });
 
       setItems(editData.items?.map(item => ({

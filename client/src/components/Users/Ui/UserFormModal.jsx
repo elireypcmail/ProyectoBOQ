@@ -290,9 +290,9 @@ const UserFormModal = ({
         </div>
 
         <div className="sellerMf-footer">
-          <button onClick={onClose}>{TEXTOS.botones.cancelar}</button>
+          <button className="pl-btn-secondary" onClick={onClose}>{TEXTOS.botones.cancelar}</button>
 
-          <button onClick={handleSubmit} disabled={isSaving}>
+          <button className="pl-btn-action" onClick={handleSubmit} disabled={isSaving}>
             {isSaving ? <Loader2 size={18} /> : <Save size={18} />}
             {user ? TEXTOS.botones.actualizar : TEXTOS.botones.guardar}
           </button>

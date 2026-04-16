@@ -52,8 +52,44 @@ const StepConfirm = ({ formData, items, totals }) => {
         <div className="invoice-client-info" style={{ flex: 1 }}>
           <label style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600 }}>Factura a:</label>
           <h4 style={{ margin: '5px 0', fontSize: '1.1rem' }}>{formData.nombre_paciente || "Paciente General"}</h4>
-          <h4 style={{ margin: '5px 0', fontSize: '1.1rem' }}>{formData.documento_paciente}</h4>
-          <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Depósito: {formData.nombre_deposito}</p>
+          <h4 style={{ margin: '5px 0', fontSize: '1.1rem', color: '#64748b' }}>{formData.documento_paciente}</h4>
+          
+          {/* DISTINTIVO DE SEGURO O PARTICULAR */}
+          <div style={{ marginTop: '10px' }}>
+            {formData.particular ? (
+              <span style={{ 
+                backgroundColor: '#f1f5f9', 
+                color: '#475569', 
+                padding: '4px 10px', 
+                borderRadius: '6px', 
+                fontSize: '0.75rem', 
+                fontWeight: 700,
+                border: '1px solid #e2e8f0'
+              }}>
+                MODALIDAD: PARTICULAR
+              </span>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{ 
+                  backgroundColor: '#eff6ff', 
+                  color: '#2563eb', 
+                  padding: '4px 10px', 
+                  borderRadius: '6px', 
+                  fontSize: '0.75rem', 
+                  fontWeight: 700,
+                  border: '1px solid #dbeafe',
+                  alignSelf: 'flex-start'
+                }}>
+                  MODALIDAD: SEGURO
+                </span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#1e40af', marginLeft: '2px' }}>
+                  {formData.nombre_seguro || "No especificado"}
+                </span>
+              </div>
+            )}
+          </div>
+
+          <p style={{ marginTop: '10px', fontSize: '0.85rem', color: '#64748b' }}>Depósito: {formData.nombre_deposito}</p>
         </div>
         
         <div className="invoice-meta-info" style={{ textAlign: 'right', flex: 1 }}>

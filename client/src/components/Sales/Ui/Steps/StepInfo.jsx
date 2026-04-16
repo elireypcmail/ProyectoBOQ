@@ -8,6 +8,9 @@ import {
   Warehouse,
   Plus,
   Fingerprint,
+  ShieldCheck,
+  CheckSquare,
+  Square
 } from "lucide-react";
 
 import { useHealth } from "../../../../context/HealtContext";
@@ -24,6 +27,7 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
     pacientes,
     medicos,
     tipoMedicos,
+    seguros,
     getAllPacientes,
     getAllMedicos,
     getAllSeguros,
@@ -55,7 +59,6 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
     fetchData();
   }, []);
 
-  // Validación: Solo requerimos Paciente y Vendedor para avanzar
   useEffect(() => {
     const isValid = !!(formData.id_paciente && formData.id_vendedor);
     onValidationChange?.(isValid);
@@ -70,8 +73,11 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
       pacientes: (pacientes || []).map((p) => ({
         value: p.id,
         label: p.nombre?.toUpperCase(),
-        // Capturamos el documento (ajusta 'documento' o 'cedula' según tu API)
         documento: p.documento || p.cedula || "S/D",
+      })),
+      seguros: (seguros || []).map((s) => ({
+        value: s.id,
+        label: s.nombre?.toUpperCase(),
       })),
       sellers: (sellers || []).map((s) => ({
         value: s.id,
@@ -105,7 +111,7 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
         id_oficina: c.id_oficina,
       })),
     }),
-    [pacientes, sellers, medicos, entities, clinics, formData.id_vendedor, selectedSellerData]
+    [pacientes, seguros, sellers, medicos, entities, clinics, formData.id_vendedor, selectedSellerData]
   );
 
   const handlePatientChange = (opt) => {
@@ -113,7 +119,16 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
       ...p,
       id_paciente: opt?.value || "",
       nombre_paciente: opt?.label || "",
-      documento_paciente: opt?.documento || "", // Se guarda el documento en el form
+      documento_paciente: opt?.documento || "",
+    }));
+  };
+
+  const handleParticularChange = () => {
+    const newVal = !formData.particular;
+    setFormData((p) => ({
+      ...p,
+      particular: newVal,
+      ...(newVal ? { id_seguro: null, nombre_seguro: "" } : {}),
     }));
   };
 
@@ -121,23 +136,14 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
     if (!opt) {
       setFormData((prev) => ({
         ...prev,
-        id_vendedor: "",
-        nombre_vendedor: "",
-        id_oficina: "",
-        nombre_oficina: "",
-        id_deposito: "",
-        nombre_deposito: "",
+        id_vendedor: "", nombre_vendedor: "",
+        id_oficina: "", nombre_oficina: "",
+        id_deposito: "", nombre_deposito: "",
       }));
       return;
     }
-
-    const oficinaSeleccionada = entities?.oficinas?.find(
-      (o) => o.id === opt.id_oficina
-    );
-
-    const depositoSugerido = entities?.depositos?.find((d) => 
-      opt.zona && d.nombre.toLowerCase().includes(opt.zona.toLowerCase())
-    );
+    const oficinaSeleccionada = entities?.oficinas?.find(o => o.id === opt.id_oficina);
+    const depositoSugerido = entities?.depositos?.find(d => opt.zona && d.nombre.toLowerCase().includes(opt.zona.toLowerCase()));
 
     setFormData((prev) => ({
       ...prev,
@@ -155,9 +161,7 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
       setFormData(prev => ({ ...prev, id_clinica: "", nombre_clinica: "" }));
       return;
     }
-    const oficinaRelacionada = (entities?.oficinas || []).find(
-      (o) => o.id === opt?.id_oficina
-    );
+    const oficinaRelacionada = (entities?.oficinas || []).find(o => o.id === opt?.id_oficina);
     setFormData((prev) => ({
       ...prev,
       id_clinica: opt.value,
@@ -167,22 +171,6 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
     }));
   };
 
-  const formatDoctorOption = ({ label, tipo }) => (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <span>{label}</span>
-      <span style={{ 
-        fontSize: '0.7rem', 
-        backgroundColor: '#f3f4f6', 
-        padding: '2px 8px', 
-        borderRadius: '4px',
-        color: '#666',
-        fontWeight: 'bold'
-      }}>
-        {tipo}
-      </span>
-    </div>
-  );
-
   const siSelectStyles = {
     control: (base, state) => ({
       ...base,
@@ -190,6 +178,7 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
       borderColor: state.isFocused ? "#ec3137" : "#ddd",
       minHeight: "45px",
       fontSize: "0.95rem",
+      backgroundColor: state.isDisabled ? "#f1f5f9" : "#fff",
       boxShadow: "none",
       transition: "all 0.2s",
       "&:hover": { borderColor: "#ec3137" },
@@ -213,9 +202,7 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
       <div className="pform-form-grid">
         {/* CLIENTE */}
         <div className="pform-group col-span-2">
-          <label>
-            <UserCircle size={14} /> CLIENTE O PACIENTE <span className="required">*</span>
-          </label>
+          <label><UserCircle size={14} /> CLIENTE O PACIENTE <span className="required">*</span></label>
           <Select
             isClearable
             options={options.pacientes}
@@ -224,7 +211,6 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
             placeholder="Seleccionar paciente..."
             styles={siSelectStyles}
           />
-          {/* Muestra el documento debajo si existe */}
           {formData.documento_paciente && (
             <div className="si-document-hint" style={{ marginTop: '5px', fontSize: '0.8rem', color: '#666', display: 'flex', alignItems: 'center', gap: '4px' }}>
               <Fingerprint size={12} /> <span className="bold">Documento:</span> {formData.documento_paciente}
@@ -266,9 +252,7 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
 
         {/* DEPÓSITO */}
         <div className="pform-group col-span-2">
-          <label>
-            <Warehouse size={14} /> DEPÓSITO ( OPCIONAL )
-          </label>
+          <label><Warehouse size={14} /> DEPÓSITO ( OPCIONAL )</label>
           <Select
             isClearable
             options={options.depositos}
@@ -287,9 +271,7 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
 
         {/* CLÍNICA */}
         <div className="pform-group col-span-2">
-          <label>
-            <Building2 size={14} /> CLÍNICA / DESTINO ( OPCIONAL )
-          </label>
+          <label><Building2 size={14} /> CLÍNICA / DESTINO ( OPCIONAL )</label>
           <Select
             isClearable
             options={options.clinics}
@@ -300,25 +282,69 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
           />
         </div>
 
+        {/* SEGURO CON CHECKBOX AL LADO */}
+        <div className="pform-group col-span-2">
+          <label><ShieldCheck size={14} /> SEGURO ( OPCIONAL )</label>
+          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            <div style={{ flex: 1 }}>
+              <Select
+                isClearable
+                isDisabled={formData.particular}
+                options={options.seguros}
+                value={formData.particular ? null : options.seguros.find((o) => o.value === formData.id_seguro) || null}
+                onChange={(opt) =>
+                  setFormData((p) => ({
+                    ...p,
+                    id_seguro: opt?.value || null,
+                    nombre_seguro: opt?.label || "",
+                  }))
+                }
+                placeholder={formData.particular ? "N/A (PARTICULAR)" : "Seleccionar seguro..."}
+                styles={siSelectStyles}
+              />
+            </div>
+            
+            <div
+              onClick={handleParticularChange}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "0 12px",
+                height: "45px",
+                borderRadius: "8px",
+                border: "1px solid",
+                borderColor: formData.particular ? "#ec3137" : "#ddd",
+                backgroundColor: formData.particular ? "#fff5f5" : "transparent",
+                cursor: "pointer",
+                minWidth: "90px",
+                transition: "all 0.2s ease"
+              }}
+            >
+              {formData.particular ? <CheckSquare size={16} color="#ec3137" /> : <Square size={16} color="#64748b" />}
+              <span style={{ 
+                fontSize: "0.65rem", 
+                fontWeight: "800", 
+                marginTop: "2px",
+                color: formData.particular ? "#ec3137" : "#64748b" 
+              }}>PARTICULAR</span>
+            </div>
+          </div>
+        </div>
+
         {/* EQUIPO MÉDICO */}
         <div className="pform-group col-span-2">
           <div className="si-label-row">
-            <label>
-              <Stethoscope size={14} /> EQUIPO MÉDICO ASIGNADO ( OPCIONAL )
-            </label>
+            <label><Stethoscope size={14} /> EQUIPO MÉDICO ASIGNADO ( OPCIONAL )</label>
             <button
-              type="button"
-              className="si-btn-add-inline"
+              type="button" className="si-btn-add-inline"
               onClick={() => setIsFormModalOpen(true)}
-            >
-              <Plus size={14} /> Nuevo Médico
-            </button>
+            ><Plus size={14} /> Nuevo Médico</button>
           </div>
-
           <Select
             options={options.medicos}
             value={null}
-            formatOptionLabel={formatDoctorOption}
             onChange={(opt) => {
               if (opt && !formData.personal_asignado?.some((p) => p.id === opt.value)) {
                 setFormData((prev) => ({
@@ -333,7 +359,6 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
             placeholder="Buscar y agregar médicos..."
             styles={siSelectStyles}
           />
-
           <div className="si-linear-list">
             {formData.personal_asignado?.length > 0 ? (
               formData.personal_asignado.map((med) => (
@@ -343,22 +368,15 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
                     <span className="si-item-badge">{med.tipo}</span>
                   </div>
                   <button
-                    type="button"
-                    className="si-item-delete"
-                    onClick={() =>
-                      setFormData((prev) => ({
+                    type="button" className="si-item-delete"
+                    onClick={() => setFormData((prev) => ({
                         ...prev,
                         personal_asignado: prev.personal_asignado.filter((p) => p.id !== med.id),
-                      }))
-                    }
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                    }))}
+                  ><Trash2 size={16} /></button>
                 </div>
               ))
-            ) : (
-              <span className="si-empty-text">No hay médicos asignados.</span>
-            )}
+            ) : <span className="si-empty-text">No hay médicos asignados.</span>}
           </div>
         </div>
       </div>
@@ -367,11 +385,7 @@ const StepInfo = ({ formData, setFormData, onValidationChange }) => {
         isOpen={isFormModalOpen}
         onClose={() => setIsFormModalOpen(false)}
         onSave={async (data) => {
-          await createNewMedico({
-            ...data,
-            id_tipoMedico: Number(data.id_tipomedico),
-            estatus: true,
-          });
+          await createNewMedico({ ...data, id_tipoMedico: Number(data.id_tipomedico), estatus: true });
           await getAllMedicos();
           setIsFormModalOpen(false);
         }}

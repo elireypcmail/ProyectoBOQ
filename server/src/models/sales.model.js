@@ -79,6 +79,7 @@ export class SalesModel {
         SELECT 
           v.id,
           v.nro_factura,
+          v.particular,
           v.estado_venta,
           v.estado_pago,
           v.estatus,
@@ -448,6 +449,7 @@ export class SalesModel {
         id_vendedor,
         id_oficina,
         id_seguro,
+        particular,
         id_presupuesto, // ID principal si aplica
         id_deposito,
         personal_asignado = [],
@@ -493,15 +495,15 @@ export class SalesModel {
       /* 2️⃣ CREAR VENTA */
       const ventaRes = await connection.query(
         `INSERT INTO ventas (
-          id_paciente, id_clinica, id_vendedor, id_oficina, id_seguro,
+          id_paciente, id_clinica, id_vendedor, id_oficina, id_seguro, particular,
           id_presupuesto, id_deposito, nro_factura, subtotal1, descuentoPor,
           descuento, subtotal2, impuesto, total, abonado, notas_abono,
           estado_pago, estado_venta
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,'PENDIENTE')
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,'PENDIENTE')
         RETURNING id`,
         [
           id_paciente, id_clinica || null, id_vendedor, id_oficina || null, id_seguro || null,
-          id_presupuesto || null, id_deposito || null, nroFactura, subtotal1, descPorcentaje,
+          particular || null, id_presupuesto || null, id_deposito || null, nroFactura, subtotal1, descPorcentaje,
           m_descuento, subtotal2, parseMonto(impuesto), parseMonto(total), parseMonto(abonado),
           notas_abono || null, estado_pago || "Pendiente"
         ]
