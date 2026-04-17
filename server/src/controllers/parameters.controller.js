@@ -5,6 +5,58 @@ import sharp from 'sharp'
 
 export const controller = {};
 
+/* ================= AUTH PARAMETROS ================= */
+controller.loginParameter = async (req, res) => {
+  try {
+    const { contrasena } = req.body;
+
+    console.log(req.body)
+
+    if (!contrasena) {
+      return res.status(400).json({ status: false, msg: "Contraseña es requerida" });
+    }
+
+    const response = await Parameters.verifyParametroClave(contrasena);
+
+console.log("Login response:", response);
+
+    return res.status(response.code || 200).json(response);
+  } catch (error) {
+    console.error("LOGIN PARAMETER ERROR:", error);
+    return res.status(500).json({ status: false, msg: "Error al iniciar sesión", error: error.message });
+  }
+};
+
+controller.regPasswordParameter = async (req, res) => {
+  try {
+    const { contraseña } = req.body;
+    if (!contraseña) {
+      return res.status(400).json({ status: false, msg: "Contraseña es requerida" });
+    }
+
+    const response = await Parameters.createParametroClave({ contrasena: contraseña });
+    return res.status(response.code || 200).json(response);
+  } catch (error) {
+    console.error("REGISTER PASSWORD PARAMETER ERROR:", error);
+    return res.status(500).json({ status: false, msg: "Error interno del servidor", error: error.message });
+  }
+};
+
+controller.updatePasswordParameter = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ status: false, msg: "Todas las contraseñas son requeridas" });
+    }
+
+    const response = await Parameters.updatePassword(oldPassword, newPassword);
+    return res.status(response.code || 200).json(response);
+  } catch (error) {
+    console.error("UPDATE PASSWORD PARAMETER ERROR:", error);
+    return res.status(500).json({ status: false, msg: "Error al actualizar contraseña", error: error.message });
+  }
+};
+
 /* ================= PARAMETROS ================= */
 
 controller.registerParameter = async (req, res) => {
@@ -36,19 +88,6 @@ controller.getAllParameters = async (req, res) => {
     return res.status(500).json({ status: false, msg: "Error al obtener parámetros", error: error.message });
   }
 };
-
-// controller.getParameterById = async (req, res) => {
-//   try {
-//     const { nombre } = req.params;
-//     if (!nombre) return res.status(400).json({ status: false, msg: "nombre es requerido" });
-
-//     // const response = await Parameters.getBynombre(nombre);
-//     return res.status(response.code || 200).json(response);
-//   } catch (error) {
-//     console.error("GET PARAMETER BY ID ERROR:", error);
-//     return res.status(500).json({ status: false, msg: "Error al obtener el parámetro", error: error.message });
-//   }
-// };
 
 controller.updateParameter = async (req, res) => {
   try {

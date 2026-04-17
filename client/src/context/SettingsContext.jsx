@@ -1,7 +1,8 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
 // API Imports (Assuming these are exported from your api file)
-import { 
+import {
+  authParameters,
   getAllParameters,
   getParameterById,
   createParameter,
@@ -10,7 +11,7 @@ import {
   getAllImages,
   registerImage,
   updateImage,
-  deleteImage 
+  deleteImage
 } from "../api/settings";
 
 export const SettingsContext = createContext();
@@ -30,6 +31,18 @@ export const SettingsProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
 
   // -------------------- Parameters Management --------------------
+
+  const loginParameters = async (data) => {
+    try {
+      console.log(data)
+      const res = await authParameters(data);
+      console.log(res.data)
+      return res.data;
+    } catch (error) {
+      setErrors([error.response?.data?.msg || "Error authenticating parameters"]);
+      throw error;
+    }
+  };
 
   const fetchAllParameters = async () => {
     setLoading(true);
@@ -137,6 +150,7 @@ export const SettingsProvider = ({ children }) => {
       loading,
 
       // Parameter Methods
+      loginParameters,
       fetchAllParameters,
       createNewParameter,
       editParameter,

@@ -152,22 +152,26 @@ const ListProducts = ({ onClose }) => {
         </div>
         
         <div className="pl-actions-group"> 
-          <button
-            className="pl-btn-secondary"
-            onClick={() => setIsCatalogModalOpen(true)}
-          >
-            <FileText size={16} /> Crear Catálogo
-          </button>
-          
-          <button
-            className="pl-btn-action"
-            onClick={() => {
-              setSelectedProduct(null);
-              setIsFormOpen(true);
-            }}
-          >
-            <Plus size={16} /> Nuevo Producto
-          </button>
+          {userRole !== "OPRI" && (
+            <>
+              <button
+                className="pl-btn-secondary"
+                onClick={() => setIsCatalogModalOpen(true)}
+              >
+                <FileText size={16} /> Crear Catálogo
+              </button>
+              
+              <button
+                className="pl-btn-action"
+                onClick={() => {
+                  setSelectedProduct(null);
+                  setIsFormOpen(true);
+                }}
+              >
+                <Plus size={16} /> Nuevo Producto
+              </button>
+            </>
+          )}
 
           {onClose && (
             <button 

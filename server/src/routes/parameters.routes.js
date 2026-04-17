@@ -6,10 +6,15 @@ import { controller } from "../controllers/parameters.controller.js"
 // Middleware
 import { upload } from "../middlewares/upload.js"
 
+/* ================= AUTH PARAMETROS ================= */
+router.post("/auth/login", controller.loginParameter)
+router.post("/auth", controller.regPasswordParameter)
+router.put("/auth", controller.updatePasswordParameter)
+
+
 /* ================= PARAMETROS ================= */
 router.post("/", controller.registerParameter)
 router.get("/", controller.getAllParameters)
-// router.get("/:nombre", controller.getParameterById)
 router.put("/:id", controller.updateParameter)
 router.delete("/:id", controller.deleteParameter)
 

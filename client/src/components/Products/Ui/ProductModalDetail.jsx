@@ -23,8 +23,6 @@ const ProductModalDetail = ({
   const formatCurrency = (value) => {
     if (value === undefined || value === null) return "$0,00";
     return new Intl.NumberFormat("es-VE", {
-      style: "currency",
-      currency: "USD",
       minimumFractionDigits: 2,
     }).format(value);
   };
@@ -102,29 +100,14 @@ const ProductModalDetail = ({
               <div className="pdm-stat-card inventory" style={{ marginBottom: '1.5rem' }}>
                  <div className="pdm-stat-icon"><Package size={20} /></div>
                  <div className="pdm-stat-content">
-                    <small>EXISTENCIA GENERAL ACTUALIZADA</small>
+                    <small>EXISTENCIA GENERAL</small>
                     <strong style={{ fontSize: '1.2rem' }}>{product.existencia_general} UNIDADES</strong>
                  </div>
               </div>
 
               {/* Grid de Stats Médicos/Financieros */}
               <div className="pdm-stats-grid">
-                <div className="pdm-stat-card warning">
-                  <div className="pdm-stat-icon"><AlertCircle size={18} /></div>
-                  <div className="pdm-stat-content">
-                    <small>STOCK MÍNIMO</small>
-                    <strong>{product.stock_minimo_general} UNIDADES</strong>
-                  </div>
-                </div>
                 
-                <div className="pdm-stat-card finance">
-                  <div className="pdm-stat-icon"><DollarSign size={18} /></div>
-                  <div className="pdm-stat-content">
-                    <small>COSTO UNITARIO</small>
-                    <strong>{formatCurrency(product.costo_unitario)}</strong>
-                  </div>
-                </div>
-
                 <div className="pdm-stat-card finance">
                   <div className="pdm-stat-icon"><TrendingUp size={18} /></div>
                   <div className="pdm-stat-content">
@@ -132,16 +115,7 @@ const ProductModalDetail = ({
                     <strong>{formatCurrency(product.precio_venta)}</strong>
                   </div>
                 </div>
-                
-                <div className="pdm-stat-card finance">
-                  <div className="pdm-stat-icon" style={{ background: '#eef2ff', color: '#6366f1' }}>
-                    <Percent size={18} /> 
-                  </div>
-                  <div className="pdm-stat-content">
-                    <small>MARGEN DE GANANCIA</small>
-                    <strong>{product.margen_ganancia}%</strong>
-                  </div>
-                </div>
+
               </div>
             </div>
           )}

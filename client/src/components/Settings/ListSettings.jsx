@@ -3,14 +3,17 @@ import { Search, Plus, Loader2, X, Image as ImageIcon, Settings } from "lucide-r
 import { SlOptionsVertical } from "react-icons/sl";
 import { useSettings } from "../../context/SettingsContext";
 import FormModalSetting from "./Ui/FormModalSetting";
+import ModalAuth from "./Ui/ModalAuth"; 
 import "../../styles/components/ListZone.css";
 
 const ListSettings = ({ onClose }) => {
   const { 
     parametersList, fetchAllParameters, createNewParameter, editParameter,
-    imagesList, fetchAllImages, uploadImage, deleteImage
+    imagesList, fetchAllImages, uploadImage, deleteImage,
+    loginParameters 
   } = useSettings();
 
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState("parametros");
   const [loading, setLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -20,33 +23,35 @@ const ListSettings = ({ onClose }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
+  // Carga de datos supeditada a la autenticación
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        await Promise.all([fetchAllParameters(), fetchAllImages()]);
-      } catch (error) {
-        console.error("Error loading settings:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
-  }, []);
+    if (isAuthenticated) {
+      const loadData = async () => {
+        setLoading(true);
+        try {
+          await Promise.all([fetchAllParameters(), fetchAllImages()]);
+        } catch (error) {
+          console.error("Error loading settings:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      loadData();
+    }
+  }, [isAuthenticated, fetchAllParameters, fetchAllImages]);
 
   const handleSave = async (payload) => {
     try {
       setIsSaving(true);
       
-      // --- 1. PROCESAMIENTO DE ELIMINACIONES EXPLÍCITAS ---
-      // Si el modal nos manda IDs para borrar (porque el usuario dio click en la X)
-      if (payload.imagesToDelete && payload.imagesToDelete.length > 0) {
-        for (const id of payload.imagesToDelete) {
-          await deleteImage(id);
+      // 1. Eliminaciones pendientes de imágenes
+      if (payload.imagesToDelete?.length > 0) {
+        for (const id of payload.imagesToDelete) { 
+          await deleteImage(id); 
         }
       }
 
-      // --- 2. PROCESAMIENTO DE NUEVAS IMÁGENES ---
+      // 2. Procesamiento de archivos de imagen (Logo, Firma, Sello)
       const imageConfigs = [
         { file: payload.logo, name: "Logo" },
         { file: payload.firmaDigital, name: "Firma" },
@@ -54,18 +59,14 @@ const ListSettings = ({ onClose }) => {
       ];
 
       for (const img of imageConfigs) {
-        // Solo subimos si es un archivo nuevo (File)
         if (img.file && img.file instanceof File) {
-          
-          // Opcional: Borrar si ya existe una con el mismo nombre y no fue borrada arriba
+          // Si ya existe una imagen con ese nombre, se reemplaza (borrar anterior)
           const existingImg = imagesList.find(i => 
             i.nombre.toLowerCase().includes(img.name.toLowerCase()) && 
             !payload.imagesToDelete?.includes(i.id)
           );
-
-          if (existingImg) {
-            await deleteImage(existingImg.id);
-          }
+          
+          if (existingImg) await deleteImage(existingImg.id);
 
           const fData = new FormData();
           fData.append("files", img.file);
@@ -74,7 +75,7 @@ const ListSettings = ({ onClose }) => {
         }
       }
 
-      // --- 3. PROCESAMIENTO DE PARÁMETROS DE TEXTO ---
+      // 3. Procesamiento de Parámetros de Texto
       const textParams = [
         { desc: "Rif", val: payload.rif },
         { desc: "Direccion", val: payload.direccion },
@@ -85,7 +86,6 @@ const ListSettings = ({ onClose }) => {
 
       for (const param of textParams) {
         const existing = parametersList.find(p => p.descripcion === param.desc);
-        // Evitamos undefined y manejamos strings vacíos
         const valueToSave = param.val || "";
 
         if (!existing && valueToSave.trim() !== "") {
@@ -97,7 +97,7 @@ const ListSettings = ({ onClose }) => {
 
       setIsFormOpen(false);
       setSelectedItem(null);
-      // Refrescar datos globales
+      // Refrescar lista local
       await Promise.all([fetchAllParameters(), fetchAllImages()]);
       
     } catch (error) {
@@ -124,6 +124,17 @@ const ListSettings = ({ onClose }) => {
     return filteredItems.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [filteredItems, currentPage]);
 
+  // Bloqueo por autenticación
+  if (!isAuthenticated) {
+    return (
+      <ModalAuth 
+        onVerify={loginParameters} 
+        onVerifySuccess={() => setIsAuthenticated(true)} 
+        onCancel={onClose}
+      />
+    );
+  }
+
   return (
     <div className="pl-main-container">
       <div className="pl-header-section">
@@ -131,7 +142,10 @@ const ListSettings = ({ onClose }) => {
           <h2>Configuración del Sistema</h2>
         </div>
         <div className="pl-actions-group">
-          <button className="pl-btn-action" onClick={() => { setSelectedItem(null); setIsFormOpen(true); }}>
+          <button 
+            className="pl-btn-action" 
+            onClick={() => { setSelectedItem(null); setIsFormOpen(true); }}
+          >
             <Plus size={16} /> Ajustes Generales
           </button>
           {onClose && (
@@ -152,10 +166,16 @@ const ListSettings = ({ onClose }) => {
           />
         </div>
         <div className="v-tab-selector">
-          <button className={activeTab === "parametros" ? "active" : ""} onClick={() => setActiveTab("parametros")}>
+          <button 
+            className={activeTab === "parametros" ? "active" : ""} 
+            onClick={() => { setActiveTab("parametros"); setCurrentPage(1); }}
+          >
             <Settings size={14} /> Parámetros
           </button>
-          <button className={activeTab === "imagenes" ? "active" : ""} onClick={() => setActiveTab("imagenes")}>
+          <button 
+            className={activeTab === "imagenes" ? "active" : ""} 
+            onClick={() => { setActiveTab("imagenes"); setCurrentPage(1); }}
+          >
             <ImageIcon size={14} /> Imágenes
           </button>
         </div>
@@ -190,7 +210,7 @@ const ListSettings = ({ onClose }) => {
                             <img 
                               src={`data:${item.mime_type};base64,${item.data}`} 
                               alt={item.nombre} 
-                              style={{ width: '30%', objectFit: 'contain', borderRadius: '4px' }} 
+                              style={{ width: '40px', height: '40px', objectFit: 'contain', borderRadius: '4px' }} 
                             />
                           ) : (
                             <ImageIcon size={20} color="var(--pl-muted)" />
@@ -201,7 +221,10 @@ const ListSettings = ({ onClose }) => {
                     </>
                   )}
                   <td>
-                    <button className="pl-icon-only-btn" onClick={() => { setSelectedItem(item); setIsFormOpen(true); }}>
+                    <button 
+                      className="pl-icon-only-btn" 
+                      onClick={() => { setSelectedItem(item); setIsFormOpen(true); }}
+                    >
                       <SlOptionsVertical size={16} />
                     </button>
                   </td>

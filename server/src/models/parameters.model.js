@@ -1,8 +1,117 @@
 // Dependencies
 import pool from "../connection/db.connect.js";
+import bcrypt from "bcryptjs";
 
 /* ================= PARAMETERS MODEL ================= */
 export class Parameters {
+  // --- LOGIN PARAMETER ---
+  static async createParametroClave(data) {
+    let connection;
+    try {
+      connection = await pool.connect();
+
+      const { contrasena } = data;
+      const descripcion = "ClaveParametros";
+
+      await connection.query("BEGIN");
+
+      // 🔍 1. Verificar si ya existe la configuración de la clave
+      const verify = await connection.query(
+        "SELECT id FROM parametros WHERE descripcion = $1",
+        [descripcion]
+      );
+
+      if (verify.rows.length > 0) {
+        await connection.query("ROLLBACK");
+        return { status: false, msg: "La clave de parámetros ya está configurada", code: 409 };
+      }
+
+      // 🔐 2. Hash de la contraseña
+      // Nota: Se mantiene el .toUpperCase() según tu lógica original
+      const hashedPassword = await bcrypt.hash(contrasena, 10);
+
+      // ⚙️ 3. Insertar en la tabla de parametros
+      await connection.query(
+        `INSERT INTO parametros (descripcion, valor, estatus)
+        VALUES ($1, $2, $3)
+        RETURNING id, descripcion, fecha_creacion`,
+        [descripcion, hashedPassword, true]
+      );
+
+      await connection.query("COMMIT");
+
+      return {
+        status: true,
+        msg: "Contraseña de parámetros configurada correctamente",
+        code: 201,
+      };
+
+    } catch (error) {
+      if (connection) await connection.query("ROLLBACK");
+
+      console.error("CREATE PARAMETRO ERROR:", error);
+
+      return {
+        status: false,
+        msg: "Error al configurar la contraseña",
+        code: 500,
+        error: error.message
+      };
+    } finally {
+      if (connection) connection.release();
+    }
+  }
+
+  // --- LOGIN / VERIFICAR ---
+  static async verifyParametroClave(contrasena) {
+    let connection;
+    try {
+      connection = await pool.connect();
+
+      // 🔍 1. Buscar el valor de la clave en la tabla de parámetros
+      const query = `
+        SELECT valor 
+        FROM parametros 
+        WHERE descripcion = 'ClaveParametros' AND estatus = TRUE
+        LIMIT 1
+      `;
+      
+      const result = await connection.query(query);
+
+      if (result.rows.length === 0) {
+        return { status: false, msg: "Clave de acceso no configurada", code: 404 };
+      }
+
+      const hashAlmacenado = result.rows[0].valor;
+
+      // 🔐 2. Comparar contraseña (aplicando toUpperCase para coincidir con el Create)
+      const isMatch = await bcrypt.compare(contrasena, hashAlmacenado);
+      
+      if (!isMatch) {
+        return { status: false, msg: "Contraseña de parámetros incorrecta", code: 401 };
+      }
+
+      // ✅ 3. Éxito
+      return {
+        status: true,
+        msg: "Acceso concedido",
+        code: 200
+      };
+
+    } catch (error) {
+      console.error("VERIFY PARAMETRO ERROR:", error);
+      return { 
+        status: false, 
+        msg: "Error interno al verificar acceso", 
+        code: 500, 
+        error: error.message 
+      };
+    } finally {
+      if (connection) connection.release();
+    }
+  }
+
+
   // --- GET ALL PARAMETERS ---
   static async getAll() {
     let connection;

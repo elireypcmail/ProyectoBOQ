@@ -1,5 +1,8 @@
 import { instanceApp } from './axios'
 
+// -------------------- Auth Parametros --------------------
+export const authParameters = (data) => instanceApp.post("/parametros/auth/login", data);
+
 // -------------------- Parametros --------------------
 export const getAllParameters = () => instanceApp.get("/parametros");
 export const getParameterById = (name) => instanceApp.get(`/parametros/${name}`);
