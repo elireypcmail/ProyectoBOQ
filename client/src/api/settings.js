@@ -2,6 +2,7 @@ import { instanceApp } from './axios'
 
 // -------------------- Auth Parametros --------------------
 export const authParameters = (data) => instanceApp.post("/parametros/auth/login", data);
+export const editAuthParameters = (data) => instanceApp.put("/parametros/auth/update", data);
 
 // -------------------- Parametros --------------------
 export const getAllParameters = () => instanceApp.get("/parametros");

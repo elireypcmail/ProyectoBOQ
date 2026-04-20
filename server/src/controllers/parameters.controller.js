@@ -44,12 +44,17 @@ controller.regPasswordParameter = async (req, res) => {
 
 controller.updatePasswordParameter = async (req, res) => {
   try {
-    const { oldPassword, newPassword } = req.body;
-    if (!oldPassword || !newPassword) {
+    const { newClave } = req.body;
+
+    if (!newClave) {
       return res.status(400).json({ status: false, msg: "Todas las contraseñas son requeridas" });
     }
 
-    const response = await Parameters.updatePassword(oldPassword, newPassword);
+    console.log(req.body)
+
+    const response = await Parameters.updateParametroClave( newClave);
+    console.log(response)
+
     return res.status(response.code || 200).json(response);
   } catch (error) {
     console.error("UPDATE PASSWORD PARAMETER ERROR:", error);

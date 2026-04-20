@@ -62,6 +62,66 @@ export class Parameters {
     }
   }
 
+  // --- UPDATE LOGIN PARAMETER ---
+  static async updateParametroClave(newClave) {
+    let connection;
+    try {
+      connection = await pool.connect();
+
+      const descripcion = "ClaveParametros";
+
+      await connection.query("BEGIN");
+
+      // 🔍 1. Verify if the parameter actually exists
+      const verify = await connection.query(
+        "SELECT id FROM parametros WHERE descripcion = $1",
+        [descripcion]
+      );
+
+      if (verify.rows.length === 0) {
+        await connection.query("ROLLBACK");
+        return { 
+          status: false, 
+          msg: "La clave de parámetros no existe. Debe crearla primero.", 
+          code: 404 
+        };
+      }
+
+      // 🔐 2. Hash the new password
+      const hashedPassword = await bcrypt.hash(newClave, 10);
+
+      // ⚙️ 3. Update the existing parameter
+      await connection.query(
+        `UPDATE parametros 
+         SET valor = $1 
+         WHERE descripcion = $2`,
+        [hashedPassword, descripcion]
+      );
+
+      await connection.query("COMMIT");
+
+      return {
+        status: true,
+        msg: "Contraseña de parámetros actualizada correctamente",
+        code: 200, // Changed to 200 OK for successful update
+      };
+
+    } catch (error) {
+      if (connection) await connection.query("ROLLBACK");
+
+      console.error("UPDATE PARAMETRO ERROR:", error);
+
+      return {
+        status: false,
+        msg: "Error al actualizar la contraseña",
+        code: 500,
+        error: error.message
+      };
+    } finally {
+      if (connection) connection.release();
+    }
+  }
+  
   // --- LOGIN / VERIFICAR ---
   static async verifyParametroClave(contrasena) {
     let connection;

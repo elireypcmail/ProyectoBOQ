@@ -3,6 +3,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 // API Imports (Assuming these are exported from your api file)
 import {
   authParameters,
+  editAuthParameters,
   getAllParameters,
   getParameterById,
   createParameter,
@@ -40,6 +41,19 @@ export const SettingsProvider = ({ children }) => {
       return res.data;
     } catch (error) {
       setErrors([error.response?.data?.msg || "Error authenticating parameters"]);
+      throw error;
+    }
+  };
+
+  const editAuthParams = async (data) => {
+    try {
+      console.log("editAuthParams called with data:", data);
+      console.log(data)
+      const res = await editAuthParameters(data);
+      console.log(res.data)
+      return res.data;
+    } catch (error) {
+      setErrors([error.response?.data?.msg || "Error editing authentication parameters"]);
       throw error;
     }
   };
@@ -151,6 +165,7 @@ export const SettingsProvider = ({ children }) => {
 
       // Parameter Methods
       loginParameters,
+      editAuthParams,
       fetchAllParameters,
       createNewParameter,
       editParameter,

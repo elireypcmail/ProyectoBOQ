@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Search, Plus, Loader2, X, Image as ImageIcon, Settings } from "lucide-react";
+import { Search, Plus, Loader2, X, Image as ImageIcon, Settings, Key } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
 import { useSettings } from "../../context/SettingsContext";
 import FormModalSetting from "./Ui/FormModalSetting";
 import ModalAuth from "./Ui/ModalAuth"; 
+import FormModalPass from "./Ui/FormModalPass"; // Imported the new modal
 import "../../styles/components/ListZone.css";
 
 const ListSettings = ({ onClose }) => {
@@ -19,11 +20,14 @@ const ListSettings = ({ onClose }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedItem, setSelectedItem] = useState(null);
+  
+  // Modal States
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isPassModalOpen, setIsPassModalOpen] = useState(false); // New state for ClaveParametro
+
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
-  // Carga de datos supeditada a la autenticación
   useEffect(() => {
     if (isAuthenticated) {
       const loadData = async () => {
@@ -38,20 +42,18 @@ const ListSettings = ({ onClose }) => {
       };
       loadData();
     }
-  }, [isAuthenticated, fetchAllParameters, fetchAllImages]);
+  }, [isAuthenticated]); // Added missing dependency
 
   const handleSave = async (payload) => {
     try {
       setIsSaving(true);
       
-      // 1. Eliminaciones pendientes de imágenes
       if (payload.imagesToDelete?.length > 0) {
         for (const id of payload.imagesToDelete) { 
           await deleteImage(id); 
         }
       }
 
-      // 2. Procesamiento de archivos de imagen (Logo, Firma, Sello)
       const imageConfigs = [
         { file: payload.logo, name: "Logo" },
         { file: payload.firmaDigital, name: "Firma" },
@@ -60,7 +62,6 @@ const ListSettings = ({ onClose }) => {
 
       for (const img of imageConfigs) {
         if (img.file && img.file instanceof File) {
-          // Si ya existe una imagen con ese nombre, se reemplaza (borrar anterior)
           const existingImg = imagesList.find(i => 
             i.nombre.toLowerCase().includes(img.name.toLowerCase()) && 
             !payload.imagesToDelete?.includes(i.id)
@@ -75,7 +76,6 @@ const ListSettings = ({ onClose }) => {
         }
       }
 
-      // 3. Procesamiento de Parámetros de Texto
       const textParams = [
         { desc: "Rif", val: payload.rif },
         { desc: "Direccion", val: payload.direccion },
@@ -97,7 +97,6 @@ const ListSettings = ({ onClose }) => {
 
       setIsFormOpen(false);
       setSelectedItem(null);
-      // Refrescar lista local
       await Promise.all([fetchAllParameters(), fetchAllImages()]);
       
     } catch (error) {
@@ -124,7 +123,6 @@ const ListSettings = ({ onClose }) => {
     return filteredItems.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [filteredItems, currentPage]);
 
-  // Bloqueo por autenticación
   if (!isAuthenticated) {
     return (
       <ModalAuth 
@@ -142,6 +140,15 @@ const ListSettings = ({ onClose }) => {
           <h2>Configuración del Sistema</h2>
         </div>
         <div className="pl-actions-group">
+          {/* 1. New Button exclusively for ClaveParametro next to Ajustes Generales */}
+          <button 
+            className="pl-btn-action pl-btn-secondary" 
+            style={{ marginRight: '8px' }}
+            onClick={() => setIsPassModalOpen(true)}
+          >
+            <Key size={16} /> Actualizar Clave
+          </button>
+          
           <button 
             className="pl-btn-action" 
             onClick={() => { setSelectedItem(null); setIsFormOpen(true); }}
@@ -200,7 +207,10 @@ const ListSettings = ({ onClose }) => {
                   {activeTab === "parametros" ? (
                     <>
                       <td className="pl-sku-cell">{item.descripcion}</td>
-                      <td>{item.valor}</td>
+                      <td>
+                        {/* Optionally mask the password visually in the table */}
+                        {item.descripcion === "ClaveParametro" ? "********" : item.valor}
+                      </td>
                     </>
                   ) : (
                     <>
@@ -221,9 +231,17 @@ const ListSettings = ({ onClose }) => {
                     </>
                   )}
                   <td>
+                    {/* 2. Logic to route ClaveParametro to the unique Modal */}
                     <button 
                       className="pl-icon-only-btn" 
-                      onClick={() => { setSelectedItem(item); setIsFormOpen(true); }}
+                      onClick={() => { 
+                        if (activeTab === "parametros" && item.descripcion === "ClaveParametro") {
+                          setIsPassModalOpen(true);
+                        } else {
+                          setSelectedItem(item); 
+                          setIsFormOpen(true); 
+                        }
+                      }}
                     >
                       <SlOptionsVertical size={16} />
                     </button>
@@ -248,6 +266,12 @@ const ListSettings = ({ onClose }) => {
         isSaving={isSaving}
         allParams={parametersList} 
         imagesList={imagesList}
+      />
+
+      {/* Unique Modal for ClaveParametro */}
+      <FormModalPass 
+        isOpen={isPassModalOpen}
+        onClose={() => setIsPassModalOpen(false)}
       />
     </div>
   );

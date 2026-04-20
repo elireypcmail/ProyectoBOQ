@@ -9,7 +9,7 @@ import { upload } from "../middlewares/upload.js"
 /* ================= AUTH PARAMETROS ================= */
 router.post("/auth/login", controller.loginParameter)
 router.post("/auth", controller.regPasswordParameter)
-router.put("/auth", controller.updatePasswordParameter)
+router.put("/auth/update", controller.updatePasswordParameter)
 
 
 /* ================= PARAMETROS ================= */
