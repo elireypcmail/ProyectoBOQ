@@ -24,16 +24,17 @@ CREATE TABLE usuario_roles (
   rol_id INT REFERENCES roles(id) ON DELETE CASCADE
 );
 
-CREATE TABLE permisos (
-  id SERIAL PRIMARY KEY,
-  nombre VARCHAR(100) UNIQUE NOT NULL
-);
-
 CREATE TABLE rol_permisos (
   id SERIAL PRIMARY KEY,
   rol_id INT REFERENCES roles(id) ON DELETE CASCADE,
   permiso_id INT REFERENCES permisos(id) ON DELETE CASCADE
 );
+
+CREATE TABLE permisos (
+  id SERIAL PRIMARY KEY,
+  nombre VARCHAR(100) UNIQUE NOT NULL
+);
+
 
 CREATE TABLE usuario_permisos (
   id SERIAL PRIMARY KEY,
