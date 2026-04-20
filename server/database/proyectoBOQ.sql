@@ -35,7 +35,6 @@ CREATE TABLE permisos (
   nombre VARCHAR(100) UNIQUE NOT NULL
 );
 
-
 CREATE TABLE usuario_permisos (
   id SERIAL PRIMARY KEY,
   usuario_id INT REFERENCES usuarios(id) ON DELETE CASCADE,
