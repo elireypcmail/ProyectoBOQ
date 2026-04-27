@@ -159,8 +159,21 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
     }
   }, [isOpen, editData]);
 
-  const safeParse = (val) =>
-    val !== "" && val !== null && val !== undefined ? parseFloat(val) || 0 : 0;
+  const safeParse = (value) => {
+    if (value === null || value === undefined || value === "") return 0;
+    if (typeof value === "number") return value;
+
+    let standardNumber = value.toString();
+    
+    if (standardNumber.includes(",") && standardNumber.includes(".")) {
+      standardNumber = standardNumber.replace(/\./g, "").replace(",", ".");
+    } 
+    else if (standardNumber.includes(",")) {
+      standardNumber = standardNumber.replace(",", ".");
+    }
+
+    return parseFloat(standardNumber) || 0;
+  };
 
   const isDuplicateInvoice = () => {
     if (!formData.nro_factura || !sales) return false;

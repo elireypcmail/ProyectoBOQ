@@ -3,6 +3,9 @@ import '../../../../styles/ui/steps/StepTotals.css';
 
 const StepTotals = ({ totals, setTotals }) => {
 
+  console.log("totals")
+  console.log(totals)
+
   /* ================= HELPERS ================= */
   
   const round2 = (num) => {
