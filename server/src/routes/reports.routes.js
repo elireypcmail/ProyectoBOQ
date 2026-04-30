@@ -9,9 +9,9 @@ import { controller } from "../controllers/reports.controller.js"
 /* ================= Routes ================= */
 router.get("/", controller.getAllReports)
 router.post("/", controller.createReport)
+router.put("/:id", controller.updateReport)
 router.get("/:id", controller.getReportById)
 router.put("/use/:id", controller.useReport)
-router.put("/:id", controller.updateReport)
 router.delete("/:id", controller.deleteReport)
 
 export default router

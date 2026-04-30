@@ -76,29 +76,46 @@ export class BudgetsModel {
           p.nro_presupuesto,
           p.estatus,
           p.estatus_uso,
+          p.tasa_bs,
           p.total,
           p.notas,
           p.fecha_creacion,
 
-          -- Datos del Paciente
+          -- 👤 PACIENTE
           p.id_paciente,
           pac.nombre AS paciente_nombre,
           pac.documento AS paciente_documento,
           
-          -- Datos de Clínica y Seguro
+          -- 🏥 CLINICA Y SEGURO
           p.id_clinica,
           c.nombre AS clinica_nombre,
           p.id_seguro,
           s.nombre AS seguro_nombre,
 
-          -- Detalle con relación a Inventario y Productos
+          -- 👨‍⚕️ MÉDICO TRATANTE (Ajustado)
+          p.id_medico,
+          m.nombre AS medico_nombre,
+          tm.nombre AS medico_tipo,
+
+          -- 👤 USUARIO (Quién realizó el presupuesto)
+          (
+            SELECT u.nombre 
+            FROM auditoria a
+            INNER JOIN usuarios u ON u.id = a.usuario_id
+            WHERE a.id_entidad = p.id 
+              AND a.entidad = 'presupuestos' 
+              AND a.accion = 'CREAR PRESUPUESTO' -- Ajustar según el nombre exacto en tu tabla auditoria
+            LIMIT 1
+          ) AS realizado_por,
+
+          -- 📦 DETALLE
           (
             SELECT COALESCE(json_agg(
               json_build_object(
                 'id_detalle', pd.id,
                 'id_inventario', pd.id_inventario,
                 'id_producto', i.id_producto,
-                'descripcion', pr.descripcion, -- Ahora viene de la tabla productos
+                'descripcion', pr.descripcion,
                 'sku', i.sku,
                 'cantidad', pd.cantidad,
                 'precio_venta', pd.precio_venta,
@@ -108,7 +125,7 @@ export class BudgetsModel {
             ), '[]'::json)
             FROM presupuestos_detalle pd
             INNER JOIN inventario i ON i.id = pd.id_inventario
-            INNER JOIN productos pr ON pr.id = i.id_producto -- Relación necesaria
+            INNER JOIN productos pr ON pr.id = i.id_producto
             WHERE pd.id_presupuesto = p.id
           ) AS detalle
 
@@ -116,6 +133,8 @@ export class BudgetsModel {
         LEFT JOIN pacientes pac ON pac.id = p.id_paciente
         LEFT JOIN clinicas c ON c.id = p.id_clinica
         LEFT JOIN seguros s ON s.id = p.id_seguro
+        LEFT JOIN medicos m ON m.id = p.id_medico            -- Relación con médicos
+        LEFT JOIN tipoMedicos tm ON tm.id = m.id_tipoMedico -- Relación con tipo de médico
         WHERE p.id = $1
       `, [id]);
 
@@ -134,6 +153,7 @@ export class BudgetsModel {
       };
 
     } catch (error) {
+      console.error("Error en getBudgetById:", error);
       return {
         status: false,
         code: 500,
@@ -154,12 +174,12 @@ export class BudgetsModel {
       connection = await pool.connect();
       await connection.query("BEGIN");
 
-      // Note: The controller sends 'cliente', mapped here to 'id_paciente' as a fallback
       const {
         id_paciente,
         cliente,
         id_clinica,
         id_seguro,
+        id_medico, // <--- 1. Extraemos el id_medico de la data
         particular,
         detalle = [],
         total,
@@ -190,18 +210,20 @@ export class BudgetsModel {
           id_paciente,
           id_clinica,
           id_seguro,
+          id_medico,     -- <--- 2. Agregamos la columna en el INSERT
           particular,
           nro_presupuesto,
           total,
           notas,
           estatus_uso,
           estatus
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) -- <--- 3. Aumentamos a 10 placeholders
         RETURNING id`,
         [
           targetPatient,
           id_clinica || null,
           id_seguro || null,
+          id_medico || null,  // <--- 4. Pasamos el valor al arreglo
           particular || false,
           nroPresupuesto,
           parseMonto(total),
@@ -277,6 +299,7 @@ export class BudgetsModel {
         cliente,
         id_clinica,
         id_seguro,
+        id_medico, // <--- 1. Extraemos id_medico
         detalle = [],
         total,
         estado_pago
@@ -291,13 +314,15 @@ export class BudgetsModel {
           id_paciente = $1,
           id_clinica = $2,
           id_seguro = $3,
-          total = $4,
-          estado_pago = $5
-        WHERE id = $6`,
+          id_medico = $4,
+          total = $5,
+          estado_pago = $6
+        WHERE id = $7`
         [
           targetPatient,
           id_clinica || null,
           id_seguro || null,
+          id_medico || null, // <--- 4. Pasamos el valor
           parseMonto(total),
           formattedEstadoPago,
           id
@@ -305,8 +330,6 @@ export class BudgetsModel {
       );
 
       /* 2️⃣ CLEAN OLD DETAILS */
-      // presupuestos_detalle is automatically deleted if ON DELETE CASCADE was configured properly, 
-      // but manually clearing ensures a clean slate during an update without deleting the parent.
       await connection.query(`DELETE FROM presupuestos_detalle WHERE id_presupuesto = $1`, [id]);
 
       /* 3️⃣ INSERT NEW DETAILS */
@@ -340,7 +363,6 @@ export class BudgetsModel {
       };
 
     } catch (error) {
-
       if (connection) await connection.query("ROLLBACK");
 
       return {
@@ -355,7 +377,7 @@ export class BudgetsModel {
     }
   }
 
-  /* ================= USE  ================= */
+  /* ================= USE BUDGET ================= */
   
   static async useBudgets(id) {
     let connection;
@@ -400,6 +422,90 @@ export class BudgetsModel {
         status: false,
         code: 500,
         msg: "Error deactivating budget",
+        error: error.message
+      };
+
+    } finally {
+      if (connection) connection.release();
+    }
+  }
+  /* ================= EXPORT BUDGET ================= */
+  
+  static async exportBudgets(id, data) {
+    let connection;
+
+    try {
+      connection = await pool.connect();
+      await connection.query("BEGIN");
+
+      const { tasa, id_usuario } = data;
+
+      /* 1️⃣ Obtener datos actuales para la auditoría y verificar existencia */
+      const budgetRes = await connection.query(
+        `SELECT id, estatus_uso, tasa_bs FROM presupuestos WHERE id = $1`,
+        [id]
+      );
+
+      if (budgetRes.rowCount === 0) {
+        await connection.query("ROLLBACK");
+        return { status: false, code: 404, msg: "Presupuesto no encontrado" };
+      }
+
+      const oldData = budgetRes.rows[0];
+
+      /* 2️⃣ Actualizar estatus y registrar la tasa de cambio */
+      // Ajusta 'tasa_bs' al nombre real de tu columna (ej: tasa_bcov, tasa_dia)
+      const updateRes = await connection.query(
+        `UPDATE presupuestos 
+        SET estatus_uso = 2, 
+            tasa_bs = $1 
+        WHERE id = $2 
+        RETURNING *`,
+        [tasa, id]
+      );
+
+      const newData = updateRes.rows[0];
+
+      /* 3️⃣ Registrar en Auditoría */
+      await connection.query(
+        `INSERT INTO auditoria (
+          entidad, 
+          id_entidad, 
+          accion, 
+          datos_previos, 
+          datos_nuevos, 
+          usuario_id, 
+          fecha
+        ) VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
+        [
+          'presupuestos',
+          id,
+          'EXPORTAR PDF Y ACTUALIZAR TASA',
+          JSON.stringify(oldData), // Lo que había antes
+          JSON.stringify({ 
+            estatus_uso: 2, 
+            tasa_bs: tasa 
+          }), // Lo que se cambió
+          id_usuario
+        ]
+      );
+
+      await connection.query("COMMIT");
+
+      return {
+        status: true,
+        code: 200,
+        msg: "Presupuesto exportado y auditado exitosamente",
+        data: newData
+      };
+
+    } catch (error) {
+      if (connection) await connection.query("ROLLBACK");
+      console.error("Error en exportBudgets:", error);
+      return {
+        status: false,
+        code: 500,
+        msg: "Error al procesar la exportación del presupuesto",
         error: error.message
       };
 

@@ -229,24 +229,34 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
 
   // Validation function before processing the sale
   const handleCheckStockAndSubmit = () => {
-    if (isDuplicateInvoice()) {
-      alert("Esta factura ya existe.");
-      setStep(1);
-      return;
-    }
+    if (isDuplicateInvoice()) {
+      alert("Esta factura ya existe.");
+      setStep(1);
+      return;
+    }
 
-    // Filter items where the requested quantity exceeds the available stock
-    const missingStockItems = items.filter(
-      (item) => safeParse(item.cantidad) > safeParse(item.existencia)
-    );
+    // Filter items where the requested quantity exceeds the available stock
+    const missingStockItems = items.filter((item) => {
+      const cantidadSolicitada = safeParse(item.cantidad);
+      
+      // Si el producto maneja lotes, validamos contra la suma de lo seleccionado en los lotes
+      if (item.maneja_lotes || (item.lotes_compra && item.lotes_compra.length > 0)) {
+        const totalEnLotes = item.lotes_compra.reduce((sum, lote) => sum + safeParse(lote.cantidad), 0);
+        // Si lo seleccionado en lotes es menor a lo que se quiere vender, hay error
+        return cantidadSolicitada > totalEnLotes;
+      }
 
-    if (missingStockItems.length > 0) {
-      setOutOfStockItems(missingStockItems);
-      setShowStockWarningModal(true);
-    } else {
-      processSale();
-    }
-  };
+      // Si no maneja lotes, validamos contra existencia normal
+      return cantidadSolicitada > safeParse(item.existencia);
+    });
+
+    if (missingStockItems.length > 0) {
+      setOutOfStockItems(missingStockItems);
+      setShowStockWarningModal(true);
+    } else {
+      processSale();
+    }
+  };
 
   // Renamed from handleFinalSubmit to processSale
   const processSale = async () => {
@@ -280,6 +290,9 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
           lotes: item.lotes_compra || [],
         })),
       };
+
+      console.log("payload")
+      console.log(payload)
 
       const res = editData
         ? await editSale(editData.id, payload)

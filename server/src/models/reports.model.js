@@ -183,6 +183,8 @@ export class ReportsModel {
         id_usuario // <--- Asegúrate de recibirlo como id_usuario o idUser
       } = data;
 
+      console.log(detalle)
+
       // 🔴 Validaciones básicas
       if (!id_paciente) throw new Error("El id_paciente es obligatorio");
       if (!detalle.length) throw new Error("El reporte debe tener al menos un producto");
@@ -316,55 +318,92 @@ export class ReportsModel {
       connection = await pool.connect();
       await connection.query("BEGIN");
 
-      const { id_paciente, id_clinica, total, detalle, personal } = data;
+      const { 
+        id_paciente, 
+        id_clinica, 
+        total,
+        detalle = [], 
+        personal_asignado = [], 
+        id_usuario 
+      } = data;
 
-      // 1. Update Cabecera
-      const updateRes = await connection.query(
+      // 1. Validaciones
+      if (!id) throw new Error("El id del reporte es obligatorio");
+      if (!id_usuario) throw new Error("El id_usuario es necesario para la auditoría");
+
+      const prevDataRes = await connection.query(`SELECT * FROM reportes WHERE id = $1`, [id]);
+      if (prevDataRes.rowCount === 0) throw new Error("Reporte no encontrado");
+      const datosPrevios = prevDataRes.rows[0];
+
+      const montoFinal = typeof total === 'string' ? parseFloat(total.replace(",", ".")) : (total || 0);
+      
+      await connection.query(
         `UPDATE reportes SET id_paciente = $1, id_clinica = $2, total = $3 WHERE id = $4`,
-        [id_paciente, id_clinica || null, parseMonto(total), id]
+        [id_paciente, id_clinica || null, montoFinal, id]
       );
 
-      if (updateRes.rowCount === 0) {
-        await connection.query("ROLLBACK");
-        return { status: false, code: 404, msg: "Report not found" };
-      }
-
-      // 2. Refresh Detalle (Si se envía)
-      if (detalle) {
+      if (detalle.length > 0) {
         await connection.query(`DELETE FROM reportes_detalle WHERE id_reporte = $1`, [id]);
+        
         for (const item of detalle) {
+          if (!item.id_inventario) throw new Error("Error: Un item no tiene id_inventario válido");
+
+          let cantInsumo = item.cantidad;
+          if (typeof cantInsumo === "string") {
+            cantInsumo = parseFloat(cantInsumo.replace(",", "."));
+          }
+          cantInsumo = Math.floor(cantInsumo || 0);
+
+          if (cantInsumo <= 0) continue;
+
           await connection.query(
-            `INSERT INTO reportes_detalle (id_reporte, id_inventario, cantidad, backorder) VALUES ($1, $2, $3, $4)`,
-            [id, item.id_inventario, parseMonto(item.cantidad), item.backorder || 0]
+            `INSERT INTO reportes_detalle (id_reporte, id_inventario, cantidad, backorder) 
+            VALUES ($1, $2, $3, $4)`,
+            [id, item.id_inventario, cantInsumo, item.backorder || 0]
           );
         }
       }
 
-      // 3. Refresh Personal (Si se envía)
-      if (personal) {
+      if (personal_asignado.length > 0) {
         await connection.query(`DELETE FROM reportes_personal WHERE id_reporte = $1`, [id]);
-        for (const idPers of personal) {
+        for (const person of personal_asignado) {
+          const personalRes = await connection.query(
+            `SELECT id FROM personal WHERE id_medico = $1 LIMIT 1`, [person.id]
+          );
+          
+          let idPersonal = personalRes.rows.length 
+            ? personalRes.rows[0].id 
+            : (await connection.query(`INSERT INTO personal (id_medico) VALUES ($1) RETURNING id`, [person.id])).rows[0].id;
+
           await connection.query(
             `INSERT INTO reportes_personal (id_reporte, id_personal) VALUES ($1, $2)`,
-            [id, idPers]
+            [id, idPersonal]
           );
         }
       }
 
+      await connection.query(
+        `INSERT INTO auditoria (entidad, id_entidad, accion, datos_previos, datos_nuevos, usuario_id) 
+        VALUES ($1, $2, $3, $4, $5, $6)`,
+        ['reportes', id, 'EDITAR REPORTE', datosPrevios, data, id_usuario]
+      );
+
       await connection.query("COMMIT");
+      
       return { 
         status: true, 
         code: 200, 
-        msg: "Report updated successfully" 
+        msg: "Reporte actualizado con éxito",
+        data: { 
+          id: id, 
+          nro_reporte: datosPrevios.nro_reporte 
+        }
       };
+
     } catch (error) {
       if (connection) await connection.query("ROLLBACK");
-      return { 
-        status: false, 
-        code: 500, 
-        msg: "Error updating report", 
-        error: error.message 
-      };
+      console.error("Error en updateReport:", error);
+      return { status: false, code: 500, msg: error.message };
     } finally {
       if (connection) connection.release();
     }

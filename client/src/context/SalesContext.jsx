@@ -118,6 +118,19 @@ export const SalesProvider = ({ children }) => {
     }
   };
 
+  const exportBudgetToPDF = async (budgetId, exportData) => {
+    try {
+      // exportData debe ser { tasa: 40,25, id_usuario: 1 }
+      const res = await SalesAPI.exportBudgetToPDF(budgetId, exportData);
+      return { status: true, data: res.data };
+    } catch (error) {
+      return { 
+        status: false, 
+        error: error.response?.data?.msg || error.message 
+      };
+    }
+  };
+
   // ====================================================
   // REPORTS (Reportes de Instrumentación)
   // ====================================================
@@ -199,7 +212,7 @@ export const SalesProvider = ({ children }) => {
     <SalesContext.Provider
       value={{
         sellers, getAllSellers, createNewSeller, editSeller, deleteSellerById,
-        budgets, getAllBudgets, getBudgetById, createNewBudget, editBudget, deleteBudgetById,
+        budgets, getAllBudgets, getBudgetById, createNewBudget, editBudget, deleteBudgetById, exportBudgetToPDF,
         reports, getAllReports, getReportById, createNewReport, editReport, deleteReportById,
         payments, getPaymentById, createNewPayment,
         errors

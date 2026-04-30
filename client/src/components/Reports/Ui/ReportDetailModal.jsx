@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { X, Trash2, Loader2, FileText, User, Building2, UserCheck } from "lucide-react";
+import { X, Trash2, Loader2, FileText, User, Building2, UserCheck, Edit3 } from "lucide-react"; // Añadido Edit3
 import { useSales } from "../../../context/SalesContext";
 import { useSettings } from "../../../context/SettingsContext"; 
 import jsPDF from 'jspdf';
 import "../../../styles/ui/SalesDetailModal.css";
 
-const ReportDetailModal = ({ isOpen, report, onClose }) => {
+const ReportDetailModal = ({ isOpen, report, onClose, onEdit }) => { // Añadido onEdit a las props
   const { deleteBudgetById, getAllBudgets } = useSales();
   const { parametersList, imagesList } = useSettings(); 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -174,7 +174,7 @@ const ReportDetailModal = ({ isOpen, report, onClose }) => {
     });
 
     // --- ESTA ES LA LÍNEA QUE FALTA ---
-  doc.save(`Reporte_${report.nro_reporte || report.id}.pdf`);
+    doc.save(`Reporte_${report.nro_reporte || report.id}.pdf`);
   };
 
   const handleDelete = async () => {
@@ -261,10 +261,15 @@ const ReportDetailModal = ({ isOpen, report, onClose }) => {
               <FileText size={16} /> Exportar Reporte
             </button>
             {report.estatus_uso === 1 && (
-              <button className="btn-action btn-delete" onClick={handleDelete} disabled={isProcessing}>
-                {isProcessing ? <Loader2 className="v-spin" size={16}/> : <Trash2 size={16} />} 
-                Anular
-              </button>
+              <>
+                <button className="btn-action btn-edit" onClick={() => onEdit(report)}>
+                  <Edit3 size={16} /> Editar
+                </button>
+                <button className="btn-action btn-delete" onClick={handleDelete} disabled={isProcessing}>
+                  {isProcessing ? <Loader2 className="v-spin" size={16}/> : <Trash2 size={16} />} 
+                  Anular
+                </button>
+              </>
             )}
           </div>
           <button className="btn-action btn-close" onClick={onClose}>Cerrar</button>

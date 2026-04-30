@@ -31,6 +31,7 @@ const ReportsFormModal = ({ isOpen, onClose, editData = null }) => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 
+  // 🧹 Limpieza y formateo de cantidades
   const parseQuantity = (value) => {
     if (value === null || value === undefined || value === "") return 0;
     if (typeof value === "number") return value;
@@ -45,6 +46,7 @@ const ReportsFormModal = ({ isOpen, onClose, editData = null }) => {
 
   const isStep2Valid = items.length > 0 && items.every(item => parseQuantity(item.cantidad) > 0);
 
+  // 📥 Efecto para cargar los datos en modo Edición
   useEffect(() => {
     if (isOpen && editData) {
       setFormData({
@@ -54,16 +56,18 @@ const ReportsFormModal = ({ isOpen, onClose, editData = null }) => {
         documento_paciente: editData.paciente_documento || editData.cedula || "",
         id_clinica: editData.id_clinica || "",
         nombre_clinica: editData.clinica_nombre || "",
-        personal_asignado: editData.personal?.map((p) => ({
+        personal_asignado: editData.personal_asignado?.map((p) => ({
           id: p.id_medico,
-          nombre: p.medico,
-          tipo: p.tipo_medico,
+          nombre: p.nombre,
+          tipo: p.tipo,
         })) || [],
       });
 
-      setItems(editData.items?.map(item => ({
+      // Mapeo seguro para los items del detalle
+      setItems(editData.detalle?.map(item => ({
         ...item,
         id: item.id_producto || item.id,
+        id_inventario: item.inventario_id || item.id_inventario,
         descripcion: item.producto || item.descripcion,
         sku: item.sku || "",
         cantidad: item.cantidad || 1,
@@ -74,22 +78,25 @@ const ReportsFormModal = ({ isOpen, onClose, editData = null }) => {
     }
   }, [isOpen, editData]);
 
+  // 🚀 Envío del formulario (Crear o Editar)
   const handleFinalSubmit = async () => {
     setIsSubmitting(true);
     try {
-      // Obtener el usuario del localStorage
+      // 🔑 Obtener el usuario del localStorage de forma segura
       const userStorage = localStorage.getItem("UserId");
       const userData = userStorage ? JSON.parse(userStorage) : null;
       const idUsuario = userData?.id || null;
 
       const payload = {
         ...formData,
-        id_usuario: idUsuario, // Inyectamos el ID del usuario logueado
+        id_usuario: idUsuario, // Inyectamos el ID del usuario logueado para auditoría
         detalle: items.map((item) => ({
           id_producto: item.id || item.id_producto,
-          id_inventario: item.inventario_id || item.id_inventario,
+          // Evita el error FK usando siempre el ID real del inventario:
+          id_inventario: item.inventario_id || item.id_inventario || item.id, 
           nombre_producto: item.descripcion || item.producto,
           cantidad: parseQuantity(item.cantidad),
+          backorder: item.backorder || 0
         })),
       };
 
@@ -105,6 +112,7 @@ const ReportsFormModal = ({ isOpen, onClose, editData = null }) => {
       }
     } catch (error) { 
       console.error("Error al enviar el reporte:", error); 
+      alert("Error de conexión con el servidor");
     } finally { 
       setIsSubmitting(false); 
     }
@@ -123,7 +131,10 @@ const ReportsFormModal = ({ isOpen, onClose, editData = null }) => {
   };
 
   const handleSelectProduct = (product) => {
-    if (items.some((i) => i.id === product.id)) return alert("Producto ya agregado");
+    // Verificamos si el producto ya está en la lista para no duplicar
+    if (items.some((i) => (i.id_inventario || i.id) === (product.inventario_id || product.id))) {
+      return alert("Producto ya agregado");
+    }
     setItems([...items, { ...product, cantidad: 1, isValid: true }]);
     setIsSearchModalOpen(false);
   };

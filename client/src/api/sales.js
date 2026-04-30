@@ -29,6 +29,7 @@ export const getBudgetById = (id) => instanceApp.get(`/presupuestos/${id}`);
 export const createBudget = (data) => instanceApp.post("/presupuestos", data);
 export const updateBudget = (id, data) => instanceApp.put(`/presupuestos/${id}`, data);
 export const deleteBudget = (id) => instanceApp.delete(`/presupuestos/${id}`);
+export const exportBudgetToPDF = (id, data) => instanceApp.put(`/presupuestos/export/${id}`, data);
 // -------------------- Reportes --------------------
 export const getAllReports = () => instanceApp.get("/reportes/instrumentacion");
 export const getReportById = (id) => instanceApp.get(`/reportes/instrumentacion/${id}`);

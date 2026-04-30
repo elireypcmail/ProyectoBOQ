@@ -41,7 +41,6 @@ controller.createReport = async (req, res) => {
       });
 
     const result = await ReportsModel.createReports(data);
-
     return res.status(result.code).json(result);
   } catch (error) {
     return res.status(500).json({ error: error.message });
@@ -59,14 +58,13 @@ controller.updateReport = async (req, res) => {
         error: "El id del Report es requerido",
       });
 
-    console.log(data);
-
     if (Object.keys(data).length === 0)
       return res.status(400).json({
         error: "No data to update",
       });
 
     const result = await ReportsModel.updateReport(id, data);
+
     return res.status(result.code).json(result);
   } catch (error) {
     return res.status(500).json({ error: error.message });

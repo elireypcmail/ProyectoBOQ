@@ -95,6 +95,28 @@ controller.useBudget = async (req, res) => {
   }
 };
 
+// Exportar presupuesto
+controller.exportBudget = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { tasa, id_usuario } = req.body;
+
+    console.log(req.body)
+
+    if (!id) return res.status(400).json({ error: "Budget id required" });
+    if (!tasa || !id_usuario) {
+      return res.status(400).json({ error: "Tasa de cambio e ID de usuario son requeridos" });
+    }
+
+    const result = await BudgetsModel.exportBudgets(id, { tasa, id_usuario });
+    console.log(result)
+
+    return res.status(result.code).json(result);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
 // Eliminar (desactivar) presupuesto
 controller.deleteBudget = async (req, res) => {
   try {

@@ -15,7 +15,8 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
     nro_lote: "",
     cantidad: "",
     fecha_vencimiento: "",
-    deposito_nombre: ""
+    deposito_nombre: "",
+    existencia_lote: 0 // Guardamos la existencia física aquí
   })
 
   const getRowId = (l) => l.id_temp || l.id_lote
@@ -47,13 +48,20 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
   const allocatedQuantity = currentBatches.reduce((acc, b) => acc + parseNum(b.cantidad), 0)
   const remainingQuantity = Math.max(0, maxQuantity - allocatedQuantity)
 
-  // Calcular el límite máximo permitido para el input actual
+  // NUEVA LÓGICA: Calcular el límite real basado en Requerimiento vs Existencia de Lote
   const currentInputLimit = useMemo(() => {
+    // 1. Cuánto falta por asignar del producto
     const editingQty = editingId 
       ? parseNum(currentBatches.find(l => getRowId(l) === editingId)?.cantidad) 
       : 0
-    return remainingQuantity + editingQty
-  }, [remainingQuantity, editingId, currentBatches])
+    const reqLimit = remainingQuantity + editingQty
+
+    // 2. Cuánto hay en el depósito seleccionado
+    const stockLimit = formData.existencia_lote || 0
+
+    // El límite es el menor de los dos
+    return Math.min(reqLimit, stockLimit)
+  }, [remainingQuantity, editingId, currentBatches, formData.existencia_lote, formData.id_lote])
 
   const formatNumber = (num) => {
     return Number(num || 0).toLocaleString('de-DE', { 
@@ -62,10 +70,8 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
     })
   }
 
-  // Manejador para restringir la escritura
   const handleQtyChange = (e) => {
     let val = e.target.value;
-    
     if (val === "" || val === ",") {
       setFormData({ ...formData, cantidad: val });
       return;
@@ -73,7 +79,7 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
 
     const numericVal = parseNum(val);
     
-    // Si lo que intenta escribir supera el máximo pendiente, lo seteamos al máximo
+    // Bloqueo estricto: no permite superar el stock del depósito ni el total requerido
     if (numericVal > currentInputLimit) {
       setFormData({ ...formData, cantidad: currentInputLimit.toString().replace(".", ",") });
     } else {
@@ -95,16 +101,23 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
 
   const handleBatchSelect = (opt) => {
     if (!opt) {
-      setFormData({ id_lote: "", id_deposito: "", nro_lote: "", cantidad: "", fecha_vencimiento: "", deposito_nombre: "" })
+      setFormData({ id_lote: "", id_deposito: "", nro_lote: "", cantidad: "", fecha_vencimiento: "", deposito_nombre: "", existencia_lote: 0 })
       return
     }
+
+    // Al seleccionar, si la cantidad que ya estaba escrita supera el nuevo stock, se ajusta
+    const currentQty = parseNum(formData.cantidad);
+    const newLimit = opt.existencia; 
+
     setFormData({
       ...formData,
       id_lote: opt.value,
       id_deposito: opt.id_deposito,
       nro_lote: opt.nro_lote,
       deposito_nombre: opt.nombre_deposito,
-      fecha_vencimiento: opt.vencimiento ? opt.vencimiento.substring(0, 10) : ""
+      existencia_lote: opt.existencia,
+      fecha_vencimiento: opt.vencimiento ? opt.vencimiento.substring(0, 10) : "",
+      cantidad: currentQty > newLimit ? newLimit.toString().replace(".", ",") : formData.cantidad
     })
   }
 
@@ -124,9 +137,11 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
       if (existingIndex !== -1) {
         updatedLotesCompra = [...currentBatches]
         const currentQty = parseNum(updatedLotesCompra[existingIndex].cantidad)
+        // Validar que la suma no exceda la existencia total del lote al agrupar
+        const totalNueva = Math.min(currentQty + numCantidad, formData.existencia_lote);
         updatedLotesCompra[existingIndex] = {
           ...updatedLotesCompra[existingIndex],
-          cantidad: currentQty + numCantidad
+          cantidad: totalNueva
         }
       } else {
         updatedLotesCompra = [...currentBatches, { ...formData, cantidad: numCantidad, id_temp: Date.now() }]
@@ -135,24 +150,29 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
 
     setItems(prev => prev.map(item => (item.id === product.id) ? { ...item, lotes_compra: updatedLotesCompra } : item))
     setEditingId(null)
-    setFormData({ id_lote: "", id_deposito: "", nro_lote: "", cantidad: "", fecha_vencimiento: "", deposito_nombre: "" })
-  }
-
-  const removeLoteLocal = (idTarget) => {
-    const updated = currentBatches.filter(l => getRowId(l) !== idTarget)
-    setItems(prev => prev.map(item => (item.id === product.id) ? { ...item, lotes_compra: updated } : item))
+    setFormData({ id_lote: "", id_deposito: "", nro_lote: "", cantidad: "", fecha_vencimiento: "", deposito_nombre: "", existencia_lote: 0 })
   }
 
   const handleEditClick = (lote) => {
+    // Al editar buscamos el lote en el catálogo original para saber su stock real actual
+    const originalLote = lotes.find(l => l.id === lote.id_lote);
+    const stockReal = originalLote ? parseNum(originalLote.cantidad) : parseNum(lote.cantidad);
+
     setEditingId(getRowId(lote))
     setFormData({
       id_lote: lote.id_lote,
       id_deposito: lote.id_deposito,
       nro_lote: lote.nro_lote,
       deposito_nombre: lote.deposito_nombre,
+      existencia_lote: stockReal,
       cantidad: lote.cantidad.toString().replace('.', ','),
       fecha_vencimiento: (lote.fecha_vencimiento || lote.fecha_caducidad || "").substring(0, 10)
     })
+  }
+
+  const removeLoteLocal = (idTarget) => {
+    const updated = currentBatches.filter(l => getRowId(l) !== idTarget)
+    setItems(prev => prev.map(item => (item.id === product.id) ? { ...item, lotes_compra: updated } : item))
   }
 
   return (
@@ -182,6 +202,11 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
                   isClearable
                   isDisabled={!!editingId}
                 />
+                {formData.id_lote && (
+                  <small style={{ color: '#64748b', marginTop: '4px', display: 'block' }}>
+                    Stock físico en depósito: <strong>{formatNumber(formData.existencia_lote)}</strong>
+                  </small>
+                )}
               </div>
 
               <div className="bm-form-group">
@@ -217,7 +242,7 @@ const BatchModal = ({ product, onClose, items = [], setItems }) => {
             {editingId && (
               <button className="bm-btn-cancel" onClick={() => {
                 setEditingId(null);
-                setFormData({ id_lote: "", id_deposito: "", nro_lote: "", cantidad: "", fecha_vencimiento: "", deposito_nombre: "" });
+                setFormData({ id_lote: "", id_deposito: "", nro_lote: "", cantidad: "", fecha_vencimiento: "", deposito_nombre: "", existencia_lote: 0 });
               }}>
                 Cancelar Edición
               </button>

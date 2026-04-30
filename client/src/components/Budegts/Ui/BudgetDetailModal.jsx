@@ -1,51 +1,83 @@
 import React, { useState } from "react";
-import { X, Trash2, Loader2, FileText, User } from "lucide-react";
+import {
+  X,
+  Trash2,
+  Loader2,
+  FileText,
+  User,
+  Stethoscope,
+  Building2,
+} from "lucide-react";
 import { useSales } from "../../../context/SalesContext";
-import { useSettings } from "../../../context/SettingsContext"; 
-import jsPDF from 'jspdf';
+import { useSettings } from "../../../context/SettingsContext";
+import jsPDF from "jspdf";
 import "../../../styles/ui/SalesDetailModal.css";
+// Modal Tasa de Cambio
+import BudgetExchangeRate from "./BudgetExchangeRate";
 
 const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
   const { deleteBudgetById, getAllBudgets } = useSales();
-  const { parametersList, imagesList } = useSettings(); 
+  const { parametersList, imagesList } = useSettings();
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Estado para controlar el modal de tasa de cambio
+  const [isExchangeModalOpen, setIsExchangeModalOpen] = useState(false);
 
   if (!isOpen || !budget) return null;
 
   const isActive = budget.estatus_uso !== 0;
-  const esParticular = budget.es_particular || budget.particular || !budget.id_seguro;
+  const esParticular =
+    budget.es_particular || budget.particular || !budget.id_seguro;
 
   // --- DATOS DINÁMICOS DESDE SETTINGS ---
-  const rifConfig = parametersList?.find(p => p.descripcion === "Rif")?.valor || "J-40030914-3";
-  const direccionConfig = parametersList?.find(p => p.descripcion === "Direccion")?.valor || "Barrio Obrero, San Cristóbal";
-  const tlfConfig = parametersList?.find(p => p.descripcion === "NroTlf")?.valor || "0414-0781328";
-  const emailConfig = parametersList?.find(p => p.descripcion === "Email")?.valor || "mundoimplantesca22@gmail.com";
-  const notaConfigurada = parametersList?.find(p => p.descripcion === "NotaPresupuesto")?.valor;
+  const rifConfig =
+    parametersList?.find((p) => p.descripcion === "Rif")?.valor ||
+    "J-40030914-3";
+  const direccionConfig =
+    parametersList?.find((p) => p.descripcion === "Direccion")?.valor ||
+    "Barrio Obrero, San Cristóbal";
+  const tlfConfig =
+    parametersList?.find((p) => p.descripcion === "NroTlf")?.valor ||
+    "0414-0781328";
+  const emailConfig =
+    parametersList?.find((p) => p.descripcion === "Email")?.valor ||
+    "mundoimplantesca22@gmail.com";
+  const notaConfigurada = parametersList?.find(
+    (p) => p.descripcion === "NotaPresupuesto",
+  )?.valor;
 
-  // --- BUSCADOR DE IMÁGENES (EVITA DEFORMACIÓN) ---
+  // --- BUSCADOR DE IMÁGENES ---
   const getImg = (name) => {
-    const img = imagesList?.find(i => i.nombre.toLowerCase().includes(name.toLowerCase()));
-    return img && img.data ? {
-      src: `data:${img.mime_type};base64,${img.data}`,
-      type: img.mime_type.split('/')[1].toUpperCase()
-    } : null;
+    const img = imagesList?.find((i) =>
+      i.nombre.toLowerCase().includes(name.toLowerCase()),
+    );
+    return img && img.data
+      ? {
+          src: `data:${img.mime_type};base64,${img.data}`,
+          type: img.mime_type.split("/")[1].toUpperCase(),
+        }
+      : null;
   };
 
   const formatNum = (val) => {
-    return Number(val || 0).toLocaleString('es-ES', {
+    return Number(val || 0).toLocaleString("es-ES", {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+      maximumFractionDigits: 2,
     });
   };
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "-";
     return new Date(dateStr).toLocaleDateString("es-ES", {
-      day: "2-digit", month: "2-digit", year: "numeric"
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
     });
   };
 
-  const generatePDF = () => {
+  // Esta función ahora recibe la configuración desde el modal de Tasa
+  const handleGeneratePDF = (config) => {
+    const { moneda, tasa } = config;
     const doc = new jsPDF();
     const margin = 15;
     const pageWidth = doc.internal.pageSize.width;
@@ -55,9 +87,10 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
     const logo = getImg("Logo");
     if (logo) {
       try {
-        // Redimensionado proporcional para evitar que se vea "feo"
-        doc.addImage(logo.src, logo.type, margin, y, 40, 15, undefined, 'FAST');
-      } catch (e) { console.warn("Error logo", e); }
+        doc.addImage(logo.src, logo.type, margin, y, 40, 15, undefined, "FAST");
+      } catch (e) {
+        console.warn("Error logo", e);
+      }
     }
 
     // DATOS EMPRESA
@@ -65,40 +98,52 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
     doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
     doc.text("MUNDO IMPLANTES C.A.", infoX, y + 4);
-    
+
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.text(`RIF: ${rifConfig}`, infoX, y + 8);
-    
+
     const splitAddr = doc.splitTextToSize(direccionConfig, 80);
     doc.text(splitAddr, infoX, y + 12);
-    
-    const contactY = y + 12 + (splitAddr.length * 3.5);
+
+    const contactY = y + 12 + splitAddr.length * 3.5;
     doc.text(`Telf: ${tlfConfig} | Email: ${emailConfig}`, infoX, contactY);
 
     // TÍTULO COTIZACIÓN
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(232, 64, 83); // Rojo Mundo Implantes
+    doc.setTextColor(232, 64, 83);
     doc.text("COTIZACIÓN", pageWidth - margin - 45, y + 5);
     doc.setFontSize(10);
-    doc.text(`No. ${budget.nro_presupuesto || budget.id}`, pageWidth - margin - 45, y + 11);
+    doc.text(
+      `No. ${budget.nro_presupuesto || budget.id}`,
+      pageWidth - margin - 45,
+      y + 11,
+    );
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
-    doc.text(`Emisión: ${formatDate(budget.fecha_creacion)}`, pageWidth - margin - 45, y + 16);
+    doc.text(
+      `Emisión: ${formatDate(budget.fecha_creacion)}`,
+      pageWidth - margin - 45,
+      y + 16,
+    );
 
-    // 2. PACIENTE
+    // 2. PACIENTE Y MÉDICO
     y = 52;
     doc.setDrawColor(235);
     doc.line(margin, y - 5, pageWidth - margin, y - 5);
-    
+
     doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
     doc.text("PACIENTE:", margin, y);
     doc.setFont("helvetica", "normal");
-    doc.text((budget.paciente_nombre || "PÚBLICO GENERAL").toUpperCase(), margin + 20, y);
-    
+    doc.text(
+      (budget.paciente_nombre || "PÚBLICO GENERAL").toUpperCase(),
+      margin + 20,
+      y,
+    );
+
     doc.setFont("helvetica", "bold");
     doc.text("CÉDULA:", pageWidth - 75, y);
     doc.setFont("helvetica", "normal");
@@ -106,55 +151,95 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
 
     y += 6;
     doc.setFont("helvetica", "bold");
+    doc.text("MÉDICO:", margin, y);
+    doc.setFont("helvetica", "normal");
+    const medicoInfo = budget.medico_nombre
+      ? `${budget.medico_nombre} ${budget.medico_tipo ? `(${budget.medico_tipo})` : ""}`
+      : "NO ESPECIFICADO";
+    doc.text(medicoInfo.toUpperCase(), margin + 20, y);
+
+    y += 6;
+    doc.setFont("helvetica", "bold");
     doc.text("CONDICIÓN:", margin, y);
     doc.setFont("helvetica", "normal");
-    const cond = esParticular ? "PARTICULAR" : `SEGURO: ${budget.seguro_nombre}`;
+    const cond = esParticular
+      ? "PARTICULAR"
+      : `SEGURO: ${budget.seguro_nombre}`;
     doc.text(cond.toUpperCase(), margin + 22, y);
 
     // 3. TABLA DE PRODUCTOS
     y += 10;
     doc.setFillColor(248, 249, 250);
-    doc.rect(margin, y - 4, pageWidth - (margin * 2), 6, 'F');
+    doc.rect(margin, y - 4, pageWidth - margin * 2, 6, "F");
     doc.setFontSize(8);
     doc.setFont("helvetica", "bold");
     doc.text("DESCRIPCIÓN", margin + 2, y);
-    doc.text("CANT.", 135, y, { align: 'center' });
-    doc.text("P/UNT.", 165, y, { align: 'right' });
-    doc.text("TOTAL", 195, y, { align: 'right' });
+    doc.text("CANT.", 135, y, { align: "center" });
+    doc.text("P/UNT.", 165, y, { align: "right" });
+    doc.text("TOTAL", 195, y, { align: "right" });
 
     y += 7;
     doc.setFont("helvetica", "normal");
     const items = budget.items || budget.detalle || [];
     items.forEach((item) => {
-      if (y > 240) { doc.addPage(); y = 20; }
+      if (y > 240) {
+        doc.addPage();
+        y = 20;
+      }
       const desc = (item.descripcion || item.producto || "").toUpperCase();
       const splitDesc = doc.splitTextToSize(desc, 110);
       doc.text(splitDesc, margin + 2, y);
-      doc.text(parseFloat(item.cantidad).toString(), 135, y, { align: 'center' });
-      doc.text(formatNum(item.precio_venta), 165, y, { align: 'right' });
-      doc.text(formatNum(item.cantidad * item.precio_venta), 195, y, { align: 'right' });
-      y += (splitDesc.length * 4.5) + 1.5;
+      doc.text(parseFloat(item.cantidad).toString(), 135, y, {
+        align: "center",
+      });
+      doc.text(formatNum(item.precio_venta), 165, y, { align: "right" });
+      doc.text(formatNum(item.cantidad * item.precio_venta), 195, y, {
+        align: "right",
+      });
+      y += splitDesc.length * 4.5 + 1.5;
     });
 
-    // TOTAL
+    // TOTALES
     y += 5;
     doc.setDrawColor(0);
     doc.line(145, y, 195, y);
     y += 6;
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.text("TOTAL USD:", 145, y);
-    doc.text(`$ ${formatNum(budget.total)}`, 195, y, { align: 'right' });
+
+    // Lógica de totales según moneda seleccionada
+    if (moneda === "USD" || moneda === "AMBOS") {
+      doc.text("TOTAL USD:", 145, y);
+      doc.text(`$ ${formatNum(budget.total)}`, 195, y, { align: "right" });
+      y += 6;
+    }
+
+    if (moneda === "BS" || moneda === "AMBOS") {
+      doc.setTextColor(232, 64, 83);
+      doc.text("TOTAL BS:", 145, y);
+      doc.text(`${formatNum(budget.total * tasa)}`, 195, y, { align: "right" });
+      doc.setTextColor(0, 0, 0);
+      y += 5;
+      doc.setFontSize(7);
+      doc.text(`Tasa: ${formatNum(tasa)}`, 195, y, { align: "right" });
+      y += 5;
+    }
 
     // 4. OBSERVACIONES
-    y += 15;
-    if (y > 230) { doc.addPage(); y = 20; }
+    y += 5;
+    if (y > 230) {
+      doc.addPage();
+      y = 20;
+    }
     doc.setFontSize(7.5);
+    doc.setFont("helvetica", "bold");
     doc.text("OBSERVACIONES / TÉRMINOS:", margin, y);
     doc.setFont("helvetica", "normal");
     y += 4;
-    const terminos = (notaConfigurada || "DOCUMENTO VÁLIDO POR 2 DÍAS HÁBILES.").toUpperCase();
-    const splitTerm = doc.splitTextToSize(terminos, pageWidth - (margin * 2));
+    const terminos = (
+      notaConfigurada || "DOCUMENTO VÁLIDO POR 2 DÍAS HÁBILES."
+    ).toUpperCase();
+    const splitTerm = doc.splitTextToSize(terminos, pageWidth - margin * 2);
     doc.text(splitTerm, margin, y);
 
     // 5. FIRMA Y SELLO
@@ -164,12 +249,12 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
 
     if (firma) {
       try {
-        doc.addImage(firma.src, firma.type, margin + 5, y - 16, 30, 12, undefined, 'MEDIUM');
+        doc.addImage(firma.src, firma.type, margin + 5, y - 16, 30, 12, undefined, "MEDIUM");
       } catch (e) {}
     }
     if (sello) {
       try {
-        doc.addImage(sello.src, sello.type, margin + 40, y - 22, 22, 22, undefined, 'MEDIUM');
+        doc.addImage(sello.src, sello.type, margin + 40, y - 22, 22, 22, undefined, "MEDIUM");
       } catch (e) {}
     }
 
@@ -180,6 +265,7 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
     doc.text("FIRMA AUTORIZADA Y SELLO", margin + 10, y + 4);
 
     doc.save(`COTIZACION_${budget.nro_presupuesto || budget.id}.pdf`);
+    setIsExchangeModalOpen(false); // Cerrar sub-modal al terminar
   };
 
   const handleDelete = async () => {
@@ -191,8 +277,11 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
         onClose();
         if (getAllBudgets) await getAllBudgets();
       }
-    } catch (e) { console.error(e); }
-    finally { setIsProcessing(false); }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -205,22 +294,70 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
               <p className="sdm-brand-sub">Ref: {budget.nro_presupuesto}</p>
             </div>
             <div className="sdm-meta-top">
-              <p><strong>Fecha:</strong> {formatDate(budget.fecha_creacion)}</p>
-              <p><strong>ID:</strong> #{budget.id}</p>
+              <p>
+                <strong>Fecha:</strong> {formatDate(budget.fecha_creacion)}
+              </p>
+              <p>
+                <strong>ID:</strong> #{budget.id}
+              </p>
             </div>
           </div>
 
           <div className="sdm-invoice-client-row">
-            <div className="client-info">
-              <label>Paciente:</label>
-              <h4 className="bold">{budget.paciente_nombre || "General"}</h4>
-              <p>Cédula: {budget.paciente_documento || "N/A"}</p>
-              <p>Condición: <span className="bold">{esParticular ? "PARTICULAR" : budget.seguro_nombre}</span></p>
+            <div
+              className="client-info"
+              style={{
+                width: "70%",
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "20px",
+              }}
+            >
+              <div style={{ marginBottom: "10px" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                  <User size={14} /> Paciente:
+                </label>
+                <h4 className="bold">{budget.paciente_nombre || "General"}</h4>
+                <p>Cédula: {budget.paciente_documento || "N/A"}</p>
+              </div>
+              <div>
+                <label>
+                  <Building2 size={14} /> Clínica:
+                </label>
+                <h4 className="bold">
+                  {budget.clinica_nombre || "No especificada"}
+                </h4>
+              </div>
+
+              <div>
+                <label className="sdm-section-label">Condición:</label>
+                <div className="personal-list">
+                  <div className="staff-badge">
+                    <span className="staff-name">
+                      {esParticular ? "PARTICULAR" : `Seguro: ${budget.seguro_nombre}`}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
+
             <div className="status-info">
-               <div className={`sdm-badge ${isActive ? 'confirmed' : 'pending'}`}>
-                 {isActive ? 'SIN USAR' : 'USADA'}
-               </div>
+              <div className={`sdm-badge ${isActive ? "confirmed" : "pending"}`}>
+                {isActive ? "SIN USAR" : "USADA"}
+              </div>
+            </div>
+          </div>
+
+          <div className="sdm-personal-tags">
+            <label className="sdm-section-label">
+              <Stethoscope size={14} /> Médico Tratante:
+            </label>
+
+            <div className="personal-list">
+              <div className="staff-badge">
+                <span className="staff-name">{budget.medico_nombre || "No especificado"}</span>
+                <span className="staff-role">{budget.medico_tipo}</span>
+              </div>
             </div>
           </div>
 
@@ -238,11 +375,17 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
                 {(budget.items || budget.detalle || []).map((item, i) => (
                   <tr key={i}>
                     <td>
-                      <div className="item-name">{item.descripcion || item.producto}</div>
+                      <div className="item-name">
+                        {item.descripcion || item.producto}
+                      </div>
                     </td>
                     <td className="text-right">{item.cantidad}</td>
-                    <td className="text-right font-mono">${formatNum(item.precio_venta)}</td>
-                    <td className="text-right font-mono bold">${formatNum(item.cantidad * item.precio_venta)}</td>
+                    <td className="text-right font-mono">
+                      ${formatNum(item.precio_venta)}
+                    </td>
+                    <td className="text-right font-mono bold">
+                      ${formatNum(item.cantidad * item.precio_venta)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -251,21 +394,38 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
 
           <div className="sdm-invoice-footer-grid">
             <div className="sdm-footer-left">
-               {budget.notas && budget.notas.trim() !== "" && (
-                 <div className="sdm-notes-box">
-                    <label className="sdm-section-label" style={{ display: 'flex', alignItems: 'center', gap: '5px', border: 'none', marginBottom: '5px' }}>
-                      <FileText size={14} /> NOTAS / OBSERVACIONES
-                    </label>
-                    <p className="notes-text" style={{ whiteSpace: 'pre-wrap', textTransform: 'uppercase' }}>
-                      {budget.notas}
-                    </p>
-                 </div>
-               )}
+              {budget.notas && budget.notas.trim() !== "" && (
+                <div className="sdm-notes-box">
+                  <label
+                    className="sdm-section-label"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "5px",
+                      border: "none",
+                      marginBottom: "5px",
+                    }}
+                  >
+                    <FileText size={14} /> NOTAS / OBSERVACIONES
+                  </label>
+                  <p
+                    className="notes-text"
+                    style={{
+                      whiteSpace: "pre-wrap",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {budget.notas}
+                  </p>
+                </div>
+              )}
             </div>
             <div className="sdm-totals-box">
               <div className="sdm-total-row sdm-grand-total">
                 <span className="bold">Total</span>
-                <span className="bold amount font-mono text-red">${formatNum(budget.total)}</span>
+                <span className="bold amount font-mono text-red">
+                  ${formatNum(budget.total)}
+                </span>
               </div>
             </div>
           </div>
@@ -273,19 +433,42 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
 
         <footer className="sdm-modal-actions">
           <div className="action-group">
-            <button className="btn-action btn-confirm" onClick={generatePDF}>
+            {/* Abrimos el modal de tasa antes de generar */}
+            <button className="btn-action btn-confirm" onClick={() => setIsExchangeModalOpen(true)}>
               <FileText size={16} /> Exportar PDF
             </button>
             {isActive && (
-              <button className="btn-action btn-delete" onClick={handleDelete} disabled={isProcessing}>
-                {isProcessing ? <Loader2 className="v-spin" size={16}/> : <Trash2 size={16} />} 
+              <button
+                className="btn-action btn-delete"
+                onClick={handleDelete}
+                disabled={isProcessing}
+              >
+                {isProcessing ? (
+                  <Loader2 className="v-spin" size={16} />
+                ) : (
+                  <Trash2 size={16} />
+                )}
                 Eliminar
               </button>
             )}
           </div>
-          <button className="btn-action btn-close" onClick={onClose}>Cerrar</button>
+          <button className="btn-action btn-close" onClick={onClose}>
+            Cerrar
+          </button>
         </footer>
       </div>
+
+      {/* SUB-MODAL PARA TASA DE CAMBIO */}
+      {isExchangeModalOpen && (
+        <BudgetExchangeRate 
+          isOpen={isExchangeModalOpen}
+          onClose={() => setIsExchangeModalOpen(false)}
+          onConfirm={handleGeneratePDF}
+          budgetId={budget.id}
+          // IMPORTANTE: Usamos tasa_bs del JSON que nos mostraste
+          currentTasa={budget.tasa_bs} 
+        />
+      )}
     </div>
   );
 };

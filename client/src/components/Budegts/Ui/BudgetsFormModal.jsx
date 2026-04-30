@@ -15,15 +15,19 @@ const BudgetsFormModal = ({ isOpen, onClose, editData = null }) => {
   
   const [isStep1Valid, setIsStep1Valid] = useState(false);
   
-  // Estado inicial extendido con 'particular' y 'notas'
+  // 1. Estado inicial extendido con datos de médico
   const initialFormState = {
     id_paciente: "",
     nombre_paciente: "",
-    particular: false, // <-- Nuevo campo
+    particular: false,
     id_seguro: null,
     nombre_seguro: "",
     id_clinica: null,
     nombre_clinica: "",
+    // Campos de médico agregados
+    id_medico: null,
+    nombre_medico: "",
+    tipo_medico: "", 
     notas: "" 
   };
 
@@ -45,18 +49,22 @@ const BudgetsFormModal = ({ isOpen, onClose, editData = null }) => {
 
   const isStep2Valid = items.length > 0 && items.every(item => item.isValid);
 
+  // 2. Carga de datos en modo Edición (Mapeo de médico)
   useEffect(() => {
     if (isOpen && editData) {
-      // Mapeo de datos al editar
       setFormData({
         id: editData.id,
         id_paciente: editData.id_paciente || "",
         nombre_paciente: editData.nombre_paciente || editData.paciente_nombre || "",
-        particular: !!editData.particular, // Convertir a booleano
+        particular: !!editData.particular,
         id_seguro: editData.id_seguro || null,
         nombre_seguro: editData.nombre_seguro || editData.seguro_nombre || "",
         id_clinica: editData.id_clinica || null,
         nombre_clinica: editData.nombre_clinica || editData.clinica_nombre || "",
+        // Traer datos del médico desde editData
+        id_medico: editData.id_medico || null,
+        nombre_medico: editData.nombre_medico || editData.medico_nombre || "",
+        tipo_medico: editData.tipo_medico || "",
         notas: editData.notas || "" 
       });
 
@@ -83,7 +91,6 @@ const BudgetsFormModal = ({ isOpen, onClose, editData = null }) => {
 
   const safeParse = (val) => (val !== "" && val !== null && val !== undefined ? parseFloat(val) || 0 : 0);
 
-  // Cálculo automático de totales
   useEffect(() => {
     const subtotalProductos = items.reduce((acc, item) => acc + safeParse(item.cantidad) * safeParse(item.precio_venta), 0);
     const descuentoManual = safeParse(totals.monto_descuento_fijo);
@@ -93,12 +100,13 @@ const BudgetsFormModal = ({ isOpen, onClose, editData = null }) => {
     setTotals((prev) => ({ ...prev, subtotal: subtotalProductos, total: totalPresupuesto }));
   }, [items, totals.monto_descuento_fijo, totals.impuestos_monto]);
 
+  // 3. Envío del payload con información del médico
   const handleFinalSubmit = async () => {
     setIsSubmitting(true);
     try {
       const payload = {
         ...formData,
-        // Aseguramos que si es particular, enviamos los campos de seguro vacíos al backend
+        // Limpieza de seguros si es particular
         ...(formData.particular ? { id_seguro: null, nombre_seguro: "" } : {}),
         subtotal: parseFloat(totals.subtotal.toFixed(2)),
         descuento: parseFloat(safeParse(totals.monto_descuento_fijo).toFixed(2)),

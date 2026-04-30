@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Select from "react-select";
 import PhoneInput from "react-phone-input-2";
-import { Save, X, Loader2, Plus } from "lucide-react";
+import { Save, X, Loader2, Plus, User, Mail, Lock, Building2, Warehouse, ShieldCheck } from "lucide-react";
 import "react-phone-input-2/lib/style.css";
 
 // Contexto
@@ -30,7 +30,7 @@ const TEXTOS = {
     nuevaPass: "Nueva Contraseña (opcional)",
     pass: "Contraseña",
     rolUsuario: "Roles de Usuario",
-    agregarRol: "Agregar Rol",
+    agregarRol: "Nuevo Rol",
     oficina: "Oficina Asignada",
     deposito: "Depósito Asignado"
   },
@@ -39,17 +39,13 @@ const TEXTOS = {
     email: "correo@ejemplo.com",
     telefono: "Ingresar teléfono",
     pass: "********",
-    nuevoRol: "NOMBRE DEL NUEVO ROL",
-    seleccionarRol: "SELECCIONAR ROLES",
-    seleccionarOficina: "SELECCIONAR OFICINA",
-    seleccionarDeposito: "SELECCIONAR DEPÓSITO"
-  },
-  mensajes: {
-    sinRoles: "No hay roles disponibles"
+    nuevoRol: "NOMBRE DEL ROL",
+    seleccionarRol: "SELECCIONAR ROLES...",
+    seleccionarOficina: "SELECCIONAR OFICINA...",
+    seleccionarDeposito: "SELECCIONAR DEPÓSITO..."
   },
   botones: {
     cancelar: "Cancelar",
-    guardando: "Guardando...",
     actualizar: "Actualizar Usuario",
     guardar: "Guardar Usuario"
   }
@@ -64,13 +60,12 @@ const UserFormModal = ({
   oficinas = [],
   depositos = []
 }) => {
-
   const { rolesList, fetchAllRoles, createNewRole } = useAuth();
 
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [contrasena, setContrasena] = useState("");
-  const [roles, setRoles] = useState([]); // 🔥 ARRAY
+  const [roles, setRoles] = useState([]);
   const [idOficina, setIdOficina] = useState("");
   const [idDeposito, setIdDeposito] = useState("");
   const [telefono, setTelefono] = useState("");
@@ -80,9 +75,7 @@ const UserFormModal = ({
   const [isSavingRole, setIsSavingRole] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
-      fetchAllRoles();
-    }
+    if (isOpen) fetchAllRoles();
   }, [isOpen]);
 
   useEffect(() => {
@@ -90,7 +83,7 @@ const UserFormModal = ({
       setNombre(user.nombre || "");
       setEmail(user.email || "");
       setContrasena("");
-      setRoles(user.roles_ids || []); // 🔥 IMPORTANTE
+      setRoles(user.roles_ids || []);
       setIdOficina(user.id_oficina || "");
       setIdDeposito(user.id_deposito || "");
       setTelefono(user.telefono || "");
@@ -100,33 +93,19 @@ const UserFormModal = ({
   }, [user, isOpen]);
 
   const resetLocalForm = () => {
-    setNombre("");
-    setEmail("");
-    setContrasena("");
-    setRoles([]);
-    setIdOficina("");
-    setIdDeposito("");
-    setTelefono("");
-    setIsCreatingRole(false);
-    setNewRoleName("");
+    setNombre(""); setEmail(""); setContrasena(""); setRoles([]);
+    setIdOficina(""); setIdDeposito(""); setTelefono("");
+    setIsCreatingRole(false); setNewRoleName("");
   };
 
-  const handleNameInput = (value) => {
-    setNombre(value.replace(/[^a-zA-ZÁÉÍÓÚÜÑáéíóúüñ\s]/g, "").toUpperCase());
-  };
+  const handleNameInput = (val) => setNombre(val.replace(/[^a-zA-ZÁÉÍÓÚÜÑáéíóúüñ\s]/g, "").toUpperCase());
 
   const handleCreateNewRole = async () => {
     if (!newRoleName.trim()) return alert(TEXTOS.alertas.nombreRolRequerido);
-    
     setIsSavingRole(true);
     try {
-      const payload = { nombre: newRoleName.trim().toUpperCase() };
-      const res = await createNewRole(payload);
-
-      if (res?.data?.id) {
-        setRoles(prev => [...prev, res.data.id]); // 🔥 agregar al array
-      }
-
+      const res = await createNewRole({ nombre: newRoleName.trim().toUpperCase() });
+      if (res?.data?.id) setRoles(prev => [...prev, res.data.id]);
       setIsCreatingRole(false);
       setNewRoleName("");
     } catch (error) {
@@ -146,81 +125,78 @@ const UserFormModal = ({
       nombre: nombre.trim().toUpperCase(),
       email: email.trim().toLowerCase(),
       telefono: telefono || null,
-      roles, // 🔥 ARRAY
+      roles,
       id_oficina: idOficina ? parseInt(idOficina) : null,
       id_deposito: idDeposito ? parseInt(idDeposito) : null,
       estatus: user ? user.estatus : true
     };
-
     if (contrasena) payload.contrasena = contrasena;
-
     onSave(payload);
   };
 
   const oficinaOptions = oficinas.map(of => ({ value: of.id, label: of.nombre }));
   const depositoOptions = depositos.map(dep => ({ value: dep.id, label: dep.nombre }));
-
-  const rolOptions = rolesList.map(rol => ({
-    value: rol.id,
-    label: rol.nombre.toUpperCase()
-  }));
+  const rolOptions = rolesList.map(rol => ({ value: rol.id, label: rol.nombre.toUpperCase() }));
 
   if (!isOpen) return null;
 
   return (
     <div className="sellerMf-overlay">
       <div className="sellerMf-content">
-
+        
+        {/* HEADER */}
         <div className="sellerMf-header">
-          <h3>{user ? TEXTOS.titulos.editarUsuario : TEXTOS.titulos.nuevoUsuario}</h3>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <User size={20} className="sellerMf-icon-primary" />
+            <h3>{user ? TEXTOS.titulos.editarUsuario : TEXTOS.titulos.nuevoUsuario}</h3>
+          </div>
           <button className="sellerMf-close-icon" onClick={onClose}>
             <X size={20} />
           </button>
         </div>
 
         <div className="sellerMf-body">
+          
+          {/* GRID DE DATOS PERSONALES */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
+            <div className="sellerMf-field sellerMf-col-span-2">
+              <label className="sellerMf-label">{TEXTOS.etiquetas.nombreCompleto}</label>
+              <input
+                className="sellerMf-input"
+                value={nombre}
+                onChange={(e) => handleNameInput(e.target.value)}
+                placeholder={TEXTOS.placeholders.nombreCompleto}
+              />
+            </div>
 
-          {/* Nombre */}
-          <div className="sellerMf-field">
-            <label className="sellerMf-label">{TEXTOS.etiquetas.nombreCompleto}</label>
-            <input
-              className="sellerMf-input"
-              value={nombre}
-              onChange={(e) => handleNameInput(e.target.value)}
-              placeholder={TEXTOS.placeholders.nombreCompleto}
-            />
+            <div className="sellerMf-field">
+              <label className="sellerMf-label">{TEXTOS.etiquetas.email}</label>
+              <input
+                className="sellerMf-input"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value.replace(/\s/g, ""))}
+                placeholder={TEXTOS.placeholders.email}
+              />
+            </div>
+
+            <div className="sellerMf-field">
+              <label className="sellerMf-label">{TEXTOS.etiquetas.telefono}</label>
+              <div className="sellerMf-phone-wrapper">
+                <PhoneInput
+                  country={"ve"}
+                  value={telefono}
+                  onChange={setTelefono}
+                  containerClass="sellerMf-phone-container"
+                  inputClass="sellerMf-phone-input"
+                  placeholder={TEXTOS.placeholders.telefono}
+                />
+              </div>
+            </div>
           </div>
 
-          {/* Email */}
           <div className="sellerMf-field">
-            <label className="sellerMf-label">{TEXTOS.etiquetas.email}</label>
-            <input
-              className="sellerMf-input"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value.replace(/\s/g, ""))}
-              placeholder={TEXTOS.placeholders.email}
-            />
-          </div>
-
-          {/* Teléfono */}
-          <div className="sellerMf-field">
-            <label className="sellerMf-label">{TEXTOS.etiquetas.telefono}</label>
-            <PhoneInput
-              country={"ve"}
-              value={telefono}
-              onChange={setTelefono}
-              containerClass="sellerMf-phone-container"
-              inputClass="sellerMf-phone-input"
-              placeholder={TEXTOS.placeholders.telefono}
-            />
-          </div>
-
-          {/* Contraseña */}
-          <div className="sellerMf-field">
-            <label className="sellerMf-label">
-              {user ? TEXTOS.etiquetas.nuevaPass : TEXTOS.etiquetas.pass}
-            </label>
+            <label className="sellerMf-label">{user ? TEXTOS.etiquetas.nuevaPass : TEXTOS.etiquetas.pass}</label>
             <input
               className="sellerMf-input"
               type="password"
@@ -230,73 +206,97 @@ const UserFormModal = ({
             />
           </div>
 
-          {/* ROLES MULTI */}
+          {/* ROLES CON MINI-FORMULARIO DE CREACIÓN */}
           <div className="sellerMf-field">
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <label className="sellerMf-label">{TEXTOS.etiquetas.rolUsuario}</label>
-
-              {!isCreatingRole && (
-                <button type="button" onClick={() => setIsCreatingRole(true)}>
-                  <Plus size={14} /> {TEXTOS.etiquetas.agregarRol}
-                </button>
-              )}
-            </div>
-
-            {isCreatingRole ? (
-              <div style={{ display: "flex", gap: "8px" }}>
-                <input
-                  className="sellerMf-input"
-                  value={newRoleName}
-                  onChange={(e) => setNewRoleName(e.target.value.toUpperCase())}
+            <label className="sellerMf-label">{TEXTOS.etiquetas.rolUsuario}</label>
+            <div className="sellerMf-input-group">
+              <div className="sellerMf-select-container">
+                <Select
+                  isMulti
+                  options={rolOptions}
+                  value={rolOptions.filter(opt => roles.includes(opt.value))}
+                  onChange={(selected) => setRoles(selected ? selected.map(r => r.value) : [])}
+                  placeholder={TEXTOS.placeholders.seleccionarRol}
+                  classNamePrefix="sdm-select"
                 />
-
-                <button onClick={handleCreateNewRole}>
-                  {isSavingRole ? <Loader2 size={16} /> : <Save size={16} />}
-                </button>
-
-                <button onClick={() => setIsCreatingRole(false)}>
-                  <X size={16} />
-                </button>
               </div>
-            ) : (
-              <Select
-                isMulti
-                options={rolOptions}
-                value={rolOptions.filter(opt => roles.includes(opt.value))}
-                onChange={(selected) =>
-                  setRoles(selected ? selected.map(r => r.value) : [])
-                }
-                placeholder={TEXTOS.placeholders.seleccionarRol}
-              />
-            )}
+              <button className="sellerMf-btn-add-circle" onClick={() => setIsCreatingRole(true)}>
+                <Plus size={18} />
+              </button>
+            </div>
           </div>
 
-          {/* Oficina */}
-          <Select
-            options={oficinaOptions}
-            value={oficinaOptions.find(o => o.value === idOficina)}
-            onChange={(opt) => setIdOficina(opt?.value || "")}
-            isClearable
-          />
-
-          {/* Deposito */}
-          <Select
-            options={depositoOptions}
-            value={depositoOptions.find(d => d.value === idDeposito)}
-            onChange={(opt) => setIdDeposito(opt?.value || "")}
-            isClearable
-          />
-
+          {/* ASIGNACIONES */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
+            <div className="sellerMf-field">
+              <label className="sellerMf-label">{TEXTOS.etiquetas.oficina}</label>
+              <Select
+                options={oficinaOptions}
+                value={oficinaOptions.find(o => o.value === idOficina)}
+                onChange={(opt) => setIdOficina(opt?.value || "")}
+                placeholder={TEXTOS.placeholders.seleccionarOficina}
+                isClearable
+                classNamePrefix="sdm-select"
+              />
+            </div>
+            <div className="sellerMf-field">
+              <label className="sellerMf-label">{TEXTOS.etiquetas.deposito}</label>
+              <Select
+                options={depositoOptions}
+                value={depositoOptions.find(d => d.value === idDeposito)}
+                onChange={(opt) => setIdDeposito(opt?.value || "")}
+                placeholder={TEXTOS.placeholders.seleccionarDeposito}
+                isClearable
+                classNamePrefix="sdm-select"
+              />
+            </div>
+          </div>
         </div>
 
+        {/* FOOTER */}
         <div className="sellerMf-footer">
-          <button className="pl-btn-secondary" onClick={onClose}>{TEXTOS.botones.cancelar}</button>
-
-          <button className="pl-btn-action" onClick={handleSubmit} disabled={isSaving}>
-            {isSaving ? <Loader2 size={18} /> : <Save size={18} />}
+          <button className="sellerMf-btn-cancel" onClick={onClose}>
+            {TEXTOS.botones.cancelar}
+          </button>
+          <button className="sellerMf-btn-save" onClick={handleSubmit} disabled={isSaving}>
+            {isSaving ? <Loader2 size={18} className="sellerMf-spin" /> : <Save size={18} />}
             {user ? TEXTOS.botones.actualizar : TEXTOS.botones.guardar}
           </button>
         </div>
+
+        {/* MINI MODAL PARA CREAR ROL */}
+        {isCreatingRole && (
+          <div className="sellerMf-mini-overlay">
+            <div className="sellerMf-mini-card">
+              <div className="sellerMf-mini-header">
+                <ShieldCheck size={18} className="sellerMf-icon-primary" />
+                <h4>Crear Nuevo Rol</h4>
+              </div>
+              <div className="sellerMf-mini-body">
+                <input 
+                  className="sellerMf-input" 
+                  placeholder={TEXTOS.placeholders.nuevoRol}
+                  value={newRoleName}
+                  onChange={(e) => setNewRoleName(e.target.value.toUpperCase())}
+                  autoFocus
+                />
+              </div>
+              <div className="sellerMf-mini-footer">
+                <button className="sellerMf-btn-mini-close" onClick={() => setIsCreatingRole(false)}>
+                  <X size={18} />
+                </button>
+                <button 
+                  className="sellerMf-btn-mini-save" 
+                  onClick={handleCreateNewRole}
+                  disabled={isSavingRole}
+                >
+                  {isSavingRole ? <Loader2 size={16} className="sellerMf-spin" /> : <Save size={16} />}
+                  Guardar Rol
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

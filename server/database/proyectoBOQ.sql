@@ -298,12 +298,14 @@ CREATE TABLE vendedores (
 CREATE TABLE presupuestos (
   id SERIAL PRIMARY KEY,
   id_paciente INT NOT NULL REFERENCES pacientes(id) ON DELETE CASCADE,
+  id_medico INT REFERENCES medicos(id) ON DELETE CASCADE, -- Agregar a tabla de produccion
   id_clinica INT REFERENCES clinicas(id) ON DELETE CASCADE,
   id_seguro INT REFERENCES seguros(id) ON DELETE CASCADE,
   particular BOOLEAN,
   nro_presupuesto VARCHAR(100) NOT NULL,
   total DECIMAL(10,2) NOT NULL,
   notas TEXT,
+  tasa_bs DECIMAL(10,2), -- Agregar a tabla de produccion
   estatus_uso INT NOT NULL DEFAULT 1,
   estatus BOOLEAN NOT NULL DEFAULT TRUE,
   fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
