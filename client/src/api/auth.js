@@ -11,6 +11,18 @@ export const createUser = (data) => instanceApp.post("/auth/register", data);
 export const updateUser = (id, data) => instanceApp.put(`/auth/usuarios/${id}`, data);
 export const deleteUser = (id) => instanceApp.delete(`/auth/usuarios/${id}`);
 
+export const saveFileSignature = (id, file) => {
+  const formData = new FormData();
+
+  formData.append("file", file);
+
+  return instanceApp.post(`/auth/save/signature/${id}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
+
 // -------------------- Roles --------------------
 export const getAllRoles = () => instanceApp.get("/auth/roles");
 export const getRoleById = (id) => instanceApp.get(`/auth/roles/${id}`);

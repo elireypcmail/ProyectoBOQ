@@ -13,6 +13,16 @@ CREATE TABLE usuarios (
   fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE usuarios_firmas (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  nombre_file TEXT,
+  data BYTEA NOT NULL,
+  mime_type VARCHAR(50) NOT NULL,
+  is_main BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+
 CREATE TABLE roles (
   id SERIAL PRIMARY KEY,
   nombre VARCHAR(50) UNIQUE NOT NULL,

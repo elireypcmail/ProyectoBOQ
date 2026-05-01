@@ -1,5 +1,6 @@
 import { Users } from "../models/user.model.js";
 import { Roles } from "../models/roles.model.js"; // Importamos el modelo de roles que separamos
+import sharp from 'sharp'
 
 export const controller = {};
 
@@ -90,6 +91,54 @@ controller.getAllUsers = async (req, res) => {
     return res.status(response.code).json(response);
   } catch (error) {
     return res.status(500).json({ status: false, msg: "Error al obtener usuarios", error: error.message });
+  }
+};
+
+/* ================= User signature ================= */
+controller.save_signature = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ code: 400, message: "No se recibió el archivo de la firma." });
+    }
+
+    let optimizedBuffer = file.buffer;
+    let mimetype = file.mimetype;
+    let fileName = file.originalname;
+
+    if (file.mimetype.startsWith('image/')) {
+      optimizedBuffer = await sharp(file.buffer)
+        .resize(800, null, { withoutEnlargement: true })
+        .webp({ quality: 80 })
+        .toBuffer();
+      
+      mimetype = 'image/webp';
+      fileName = `sig_${id}_${Date.now()}.webp`;
+    }
+
+    const signatureData = {
+      buffer: optimizedBuffer,
+      originalname: fileName,
+      mimetype: mimetype
+    };
+
+    const result = await Users.saveImgSignature(id, signatureData);
+
+    if (!result.status) {
+      return res.status(500).json(result);
+    }
+
+    return res.status(201).json({
+      code: 201,
+      message: "Firma guardada correctamente.",
+      data: result.data
+    });
+
+  } catch (error) {
+    console.error("❌ Error en save_signature:", error);
+    return res.status(500).json({ code: 500, error: error.message });
   }
 };
 

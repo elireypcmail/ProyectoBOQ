@@ -9,6 +9,7 @@ import {
   getAllUsers,
   getUserById,
   createUser,
+  saveFileSignature,
   updateUser,
   deleteUser,
   getAllRoles,      
@@ -88,6 +89,24 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       setErrors([error.response?.data?.msg || "Failed to create user"]);
       throw error;
+    }
+  };
+
+  const saveUserSignature = async (id_user, file) => {
+    try {
+      // 🔹 Llamada a la API (asegúrate de que ProductsAPI tenga saveFileSignature)
+      await saveFileSignature(id_user, file);
+      
+      // 🔹 Si necesitas refrescar algo después de guardar la firma:
+      const res = await getAllUsers(); 
+      setUsersList(res.data.data || []);
+      
+      return { status: true };
+    } catch (error) {
+      console.error("Error saving signature:", error);
+      const errorMsg = error.response?.data?.message || "Error al guardar la firma";
+      setErrors([errorMsg]);
+      return { status: false, error: errorMsg };
     }
   };
 
@@ -212,6 +231,7 @@ export const AuthProvider = ({ children }) => {
       fetchAllUsers,
       fetchUserById,
       createNewUser,
+      saveUserSignature,
       editUser,
       removeUser,
 

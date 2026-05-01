@@ -13,6 +13,9 @@ import { controllerEnt } from "../controllers/entitiesUser.controller.js"
 import { validateSchema } from "../middlewares/validator.middlewares.js"
 import { loginSchema } from "../schemas/auth.schema.js"
 
+// Middleware
+import { upload } from "../middlewares/upload.js"
+
 /* ================= AUTH ================= */
 // router.post(_var.LOGIN, validateSchema(loginSchema), controller.login)
 router.post("/login", controller.login)
@@ -22,6 +25,10 @@ router.get("/verify", controller.verifyToken)
 /* ================= USUARIOS ================= */
 router.post("/register", controller.register)
 router.get("/usuarios", controller.getAllUsers)
+
+/* ================= USUARIOS FIRMA ================= */
+router.post("/save/signature/:id", upload.single("file"), controller.save_signature);
+
 router.get("/usuarios/:id", controller.getUserById)
 router.put("/usuarios/:id", controller.updateUser)
 router.delete("/usuarios/:id", controller.setStatus)

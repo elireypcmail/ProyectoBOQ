@@ -1,5 +1,14 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Search, Plus, Loader2, ChevronLeft, ChevronRight, X} from "lucide-react";
+import { 
+  Search, 
+  Plus, 
+  Loader2, 
+  ChevronLeft, 
+  ChevronRight, 
+  X, 
+  Trash2, 
+  AlertTriangle 
+} from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
 
 // Contexts
@@ -14,8 +23,22 @@ import UserDetailModal from "./Ui/UserDetailModal";
 import "../../styles/components/ListZone.css";
 
 const ListUsers = ({ onClose }) => {
-  const { usersList, fetchAllUsers, fetchUserById, createNewUser, editUser, deleteUser } = useAuth();
+  const { 
+    usersList, 
+    fetchAllUsers, 
+    fetchUserById, 
+    createNewUser, 
+    editUser, 
+    deleteUser,
+    saveUserSignature // 🔥 NUEVO: Función de tu contexto para subir la firma
+  } = useAuth();
+  
   const { entities, getAllEntities } = useEntity();
+
+  // Recuperar rol del usuario logueado para permisos
+  const storedUser = localStorage.getItem("UserId");
+  const userData = storedUser ? JSON.parse(storedUser) : null;
+  const userRole = userData?.rol;
 
   // --- Estados locales ---
   const [loading, setLoading] = useState(false);
@@ -26,6 +49,7 @@ const ListUsers = ({ onClose }) => {
   // Estados de Modales
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [fetchingId, setFetchingId] = useState(null);
 
   // --- Paginación ---
@@ -58,7 +82,6 @@ const ListUsers = ({ onClose }) => {
 
   // --- Handlers de Usuario ---
 
-  // Abrir Detalle (obtiene data completa por ID)
   const handleOpenDetail = async (id) => {
     try {
       setFetchingId(id);
@@ -74,17 +97,27 @@ const ListUsers = ({ onClose }) => {
     }
   };
 
-  // Guardar (Crear o Editar)
-  const handleSaveUser = async (payload) => {
+  // 🔥 NUEVO: Ajustado para recibir (payload, file)
+  const handleSaveUser = async (payload, file) => {
     try {
       setIsSaving(true);
-      if (selectedUser?.id) {
-        await editUser(selectedUser.id, payload);
+      let userId = selectedUser?.id;
+
+      // 1. Crear o Editar Usuario
+      if (userId) {
+        await editUser(userId, payload);
       } else {
-        console.log("payload")
-        console.log(payload)
-        await createNewUser(payload);
+        const res = await createNewUser(payload);
+        // Captura el ID según cómo lo devuelve tu backend (ajusta si es necesario)
+        userId = res?.data?.data?.id || res?.data?.id || res?.id; 
       }
+
+      // 2. Subir Firma si existe un archivo y tenemos el ID del usuario
+      if (file && userId) {
+        await saveUserSignature(userId, file);
+      }
+
+      // 3. Limpiar y Refrescar
       setIsFormOpen(false);
       setSelectedUser(null);
       await fetchAllUsers(); 
@@ -95,33 +128,38 @@ const ListUsers = ({ onClose }) => {
     }
   };
 
-  // Eliminar
-  const handleDeleteUser = async (id) => {
-    if (window.confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
-      try {
-        await deleteUser(id);
+  const handleDeleteConfirm = async () => {
+    try {
+      if (selectedUser?.id) {
+        await deleteUser(selectedUser.id);
+        setIsDeleteModalOpen(false);
+        setSelectedUser(null);
         await fetchAllUsers();
-      } catch (error) {
-        console.error("Error al eliminar:", error);
       }
+    } catch (error) {
+      console.error("Error al eliminar:", error);
     }
   };
 
   // --- Lógica de Filtrado y Paginación ---
   const filteredUsers = useMemo(() => {
     if (!usersList) return [];
-    const filtered = usersList.filter((u) =>
-      u.nombre?.toUpperCase().includes(searchTerm.toUpperCase()) ||
-      u.email?.toUpperCase().includes(searchTerm.toUpperCase())
-    );
-    return [...filtered].sort((a, b) => (b.id || 0) - (a.id || 0));
+    const upperTerm = searchTerm.toUpperCase();
+    
+    return usersList
+      .filter((u) =>
+        u.nombre?.toUpperCase().includes(upperTerm) ||
+        u.email?.toUpperCase().includes(upperTerm)
+      )
+      .sort((a, b) => (b.id || 0) - (a.id || 0));
   }, [usersList, searchTerm]);
 
   const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
-  const currentItems = filteredUsers.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredUsers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredUsers, currentPage]);
 
   return (
     <div className="pl-main-container">
@@ -131,9 +169,7 @@ const ListUsers = ({ onClose }) => {
           <h2>Gestión de Usuarios</h2>
           <p>
             {loading ? (
-              <span>
-                <Loader2 size={14} className="v-spin" /> Cargando...
-              </span>
+              <span><Loader2 size={14} className="v-spin" /> Cargando...</span>
             ) : (
               `${filteredUsers.length} registros encontrados`
             )}
@@ -141,12 +177,15 @@ const ListUsers = ({ onClose }) => {
         </div>
 
         <div className="pl-actions-group">
-          <button 
-            className="pl-btn-action" 
-            onClick={() => { setSelectedUser(null); setIsFormOpen(true); }}
-          >
-            <Plus size={16} /> Nuevo Usuario
-          </button>
+          {/* Ejemplo de restricción por rol igual que en productos */}
+          {userRole !== "OPRI" && (
+            <button 
+              className="pl-btn-action" 
+              onClick={() => { setSelectedUser(null); setIsFormOpen(true); }}
+            >
+              <Plus size={16} /> Nuevo Usuario
+            </button>
+          )}
 
           {onClose && (
             <button 
@@ -163,9 +202,9 @@ const ListUsers = ({ onClose }) => {
       {/* TOOLBAR */}
       <div className="pl-toolbar">
         <div className="pl-search-wrapper">
-          <Search size={16} color="var(--pl-muted)" />
+          <Search size={16} />
           <input
-            placeholder="BUSCAR POR NOMBRE O EMAIL..."
+            placeholder="Buscar por nombre o email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value.toUpperCase())}
           />
@@ -180,19 +219,19 @@ const ListUsers = ({ onClose }) => {
               <th>Nombre de Usuario</th>
               <th>Email</th>
               <th>Rol</th>
-              <th>Acciones</th>
+              <th style={{ textAlign: "center" }}>Acciones</th>
             </tr>
           </thead>
           <tbody>
-            {currentItems.length > 0 ? (
-              currentItems.map((u) => (
+            {paginatedUsers.length > 0 ? (
+              paginatedUsers.map((u) => (
                 <tr key={u.id}>
                   <td data-label="Nombre de Usuario" className="pl-sku-cell">{u.nombre}</td>
                   <td data-label="Email">{u.email}</td>
                   <td data-label="Rol">
                     <span className="v-role-badge">{u.rol}</span>
                   </td>
-                  <td data-label="Acciones">
+                  <td data-label="Acciones" className="pl-actions-cell" style={{ textAlign: "center" }}>
                     <button
                       className="pl-icon-only-btn"
                       disabled={fetchingId === u.id}
@@ -209,7 +248,7 @@ const ListUsers = ({ onClose }) => {
               ))
             ) : (
               <tr>
-                <td colSpan="4" style={{ padding: '3rem', color: 'var(--pl-muted)' }}>
+                <td colSpan="4" style={{ padding: '3rem', color: 'var(--pl-muted)', textAlign: 'center' }}>
                   {loading ? "Cargando datos..." : "No se encontraron registros."}
                 </td>
               </tr>
@@ -222,27 +261,28 @@ const ListUsers = ({ onClose }) => {
       {totalPages > 1 && (
         <div className="pl-pagination-area">
           <button 
-            className="pl-btn-secondary-outline"
+            className="pl-page-node"
             disabled={currentPage === 1}
-            onClick={() => setCurrentPage(prev => prev - 1)}
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
           >
-            <ChevronLeft size={16} /> Anterior
+            <ChevronLeft size={18} />
           </button>
           
-          <div className="pl-page-node">{currentPage}</div>
-          <span style={{ color: 'var(--pl-muted)', fontSize: '0.85rem' }}>de {totalPages}</span>
+          <span className="pl-muted">
+            Página {currentPage} de {totalPages}
+          </span>
 
           <button 
-            className="pl-btn-secondary-outline"
+            className="pl-page-node"
             disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage(prev => prev + 1)}
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
           >
-            Siguiente <ChevronRight size={16} />
+            <ChevronRight size={18} />
           </button>
         </div>
       )}
 
-      {/* MODAL: DETALLE (Vista) */}
+      {/* MODAL: DETALLE */}
       <UserDetailModal 
         isOpen={isDetailOpen}
         onClose={() => { setIsDetailOpen(false); setSelectedUser(null); }}
@@ -252,19 +292,52 @@ const ListUsers = ({ onClose }) => {
           setIsDetailOpen(false);
           setIsFormOpen(true);
         }}
-        onDelete={handleDeleteUser}
+        onDelete={() => {
+            setIsDetailOpen(false);
+            setIsDeleteModalOpen(true);
+        }}
       />
 
-      {/* MODAL: FORMULARIO (Creación/Edición) */}
+      {/* MODAL: FORMULARIO */}
       <UserFormModal 
         isOpen={isFormOpen} 
         onClose={() => { setIsFormOpen(false); setSelectedUser(null); }} 
-        onSave={handleSaveUser}
+        onSave={handleSaveUser} // 🔥 Pasa la función actualizada a tu formulario
         user={selectedUser} 
         isSaving={isSaving}
         oficinas={entities?.oficinas || []}
         depositos={entities?.depositos || []}
       />
+
+      {/* MODAL: ELIMINACIÓN */}
+      {isDeleteModalOpen && selectedUser && (
+        <div className="modalProd-overlay">
+          <div className="modalProd-content">
+            <div className="modalProd-header-danger">
+              <AlertTriangle size={28} />
+              <h3>¿Eliminar usuario?</h3>
+            </div>
+            <p>
+              Confirma que deseas eliminar al usuario: <br />
+              <strong>{selectedUser.nombre}</strong> ({selectedUser.email})
+            </p>
+            <div className="modalProd-footer">
+              <button
+                className="btn-secondary"
+                onClick={() => setIsDeleteModalOpen(false)}
+              >
+                Cancelar
+              </button>
+              <button
+                className="btn-danger"
+                onClick={handleDeleteConfirm}
+              >
+                <Trash2 size={16} /> Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -50,8 +50,60 @@ export class Users {
     let connection;
     try {
       connection = await pool.connect();
+
       const result = await connection.query(
-        "SELECT id, nombre, email, rol, estatus, telefono, id_oficina, id_deposito, fecha_creacion FROM usuarios WHERE id = $1",
+        `
+        SELECT 
+          u.id,
+          u.nombre,
+          u.email,
+          u.telefono,
+          u.estatus,
+          u.id_oficina,
+          u.id_deposito,
+          u.fecha_creacion,
+
+          -- Roles (array de strings)
+          COALESCE(
+            json_agg(DISTINCT r.nombre) 
+            FILTER (WHERE r.id IS NOT NULL),
+            '[]'
+          ) AS roles,
+
+          -- Permisos (array de strings)
+          COALESCE(
+            json_agg(DISTINCT p.nombre) 
+            FILTER (WHERE p.id IS NOT NULL),
+            '[]'
+          ) AS permisos,
+
+          -- Imagen de Firma (siguiendo el patrón de productos)
+          COALESCE(
+            (
+              SELECT json_agg(
+                json_build_object(
+                  'id', ui.id,
+                  'data', encode(ui.data, 'base64'),
+                  'mime_type', ui.mime_type,
+                  'nombre_file', ui.nombre_file,
+                  'is_main', ui.is_main
+                )
+              )
+              FROM usuarios_firmas ui
+              WHERE ui.user_id = u.id
+            ), 
+            '[]'
+          ) AS images
+
+        FROM usuarios u
+        LEFT JOIN usuario_roles ur ON ur.usuario_id = u.id
+        LEFT JOIN roles r ON r.id = ur.rol_id
+        LEFT JOIN usuario_permisos up ON up.usuario_id = u.id
+        LEFT JOIN permisos p ON p.id = up.permiso_id
+
+        WHERE u.id = $1
+        GROUP BY u.id
+        `,
         [id]
       );
 
@@ -60,9 +112,15 @@ export class Users {
       }
 
       return { status: true, data: result.rows[0], code: 200 };
+
     } catch (error) {
       console.error("GET BY ID ERROR:", error);
-      return { status: false, msg: "Error de servidor", code: 500, error: error.message };
+      return {
+        status: false,
+        msg: "Error de servidor",
+        code: 500,
+        error: error.message
+      };
     } finally {
       if (connection) connection.release();
     }
@@ -300,6 +358,53 @@ export class Users {
         status: false,
         msg: "Error al crear usuario",
         code: 500,
+        error: error.message
+      };
+    } finally {
+      if (connection) connection.release();
+    }
+  }
+
+  // --- GUARDAR FIRMA ---
+  static async saveImgSignature(id_user, file) {
+    let connection;
+    try {
+      connection = await pool.connect();
+      await connection.query("BEGIN");
+
+      // 1. Eliminamos la firma anterior para que el usuario solo tenga una activa
+      await connection.query("DELETE FROM usuarios_firmas WHERE user_id = $1", [id_user]);
+
+      // 2. Insertamos la nueva firma
+      const sqlInsert = `
+        INSERT INTO usuarios_firmas (user_id, nombre_file, data, mime_type, is_main)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id, nombre_file;
+      `;
+
+      const values = [
+        id_user,
+        file.originalname,
+        file.buffer,
+        file.mimetype,
+        true // Al ser única, siempre es la principal
+      ];
+
+      const result = await connection.query(sqlInsert, values);
+      await connection.query("COMMIT");
+
+      return {
+        status: true,
+        msg: "Firma actualizada",
+        data: result.rows[0]
+      };
+
+    } catch (error) {
+      if (connection) await connection.query("ROLLBACK");
+      console.error("❌ Error en saveImgSignature:", error);
+      return {
+        status: false,
+        msg: "Error al guardar la firma en DB",
         error: error.message
       };
     } finally {
