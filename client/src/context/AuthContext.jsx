@@ -94,10 +94,8 @@ export const AuthProvider = ({ children }) => {
 
   const saveUserSignature = async (id_user, file) => {
     try {
-      // 🔹 Llamada a la API (asegúrate de que ProductsAPI tenga saveFileSignature)
       await saveFileSignature(id_user, file);
       
-      // 🔹 Si necesitas refrescar algo después de guardar la firma:
       const res = await getAllUsers(); 
       setUsersList(res.data.data || []);
       

@@ -8,19 +8,23 @@ import {
   Stethoscope,
   Building2,
 } from "lucide-react";
+// Contexts
 import { useSales } from "../../../context/SalesContext";
 import { useSettings } from "../../../context/SettingsContext";
+import { useAuth } from "../../../context/AuthContext";
+// PDF
 import jsPDF from "jspdf";
-import "../../../styles/ui/SalesDetailModal.css";
 // Modal Tasa de Cambio
 import BudgetExchangeRate from "./BudgetExchangeRate";
+// Estilos
+import "../../../styles/ui/SalesDetailModal.css";
 
 const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
   const { deleteBudgetById, getAllBudgets } = useSales();
   const { parametersList, imagesList } = useSettings();
+  const { fetchUserById } = useAuth();
+
   const [isProcessing, setIsProcessing] = useState(false);
-  
-  // Estado para controlar el modal de tasa de cambio
   const [isExchangeModalOpen, setIsExchangeModalOpen] = useState(false);
 
   if (!isOpen || !budget) return null;
@@ -29,7 +33,6 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
   const esParticular =
     budget.es_particular || budget.particular || !budget.id_seguro;
 
-  // --- DATOS DINÁMICOS DESDE SETTINGS ---
   const rifConfig =
     parametersList?.find((p) => p.descripcion === "Rif")?.valor ||
     "J-40030914-3";
@@ -43,13 +46,12 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
     parametersList?.find((p) => p.descripcion === "Email")?.valor ||
     "mundoimplantesca22@gmail.com";
   const notaConfigurada = parametersList?.find(
-    (p) => p.descripcion === "NotaPresupuesto",
+    (p) => p.descripcion === "NotaPresupuesto"
   )?.valor;
 
-  // --- BUSCADOR DE IMÁGENES ---
   const getImg = (name) => {
     const img = imagesList?.find((i) =>
-      i.nombre.toLowerCase().includes(name.toLowerCase()),
+      i.nombre.toLowerCase().includes(name.toLowerCase())
     );
     return img && img.data
       ? {
@@ -75,13 +77,34 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
     });
   };
 
-  // Esta función ahora recibe la configuración desde el modal de Tasa
-  const handleGeneratePDF = (config) => {
+  const handleGeneratePDF = async (config) => {
     const { moneda, tasa } = config;
     const doc = new jsPDF();
     const margin = 15;
     const pageWidth = doc.internal.pageSize.width;
     let y = 15;
+
+    let userDetail = null;
+    try {
+      const storedUser = localStorage.getItem("UserId");
+      if (!storedUser) return;
+
+      let userId;
+      try {
+        const parsed = JSON.parse(storedUser);
+        userId = parsed?.id ?? parsed;
+      } catch {
+        userId = storedUser;
+      }
+
+      if (!userId) return;
+      const dataUser = await fetchUserById(userId);
+      if (dataUser) {
+        userDetail = dataUser.data || dataUser;
+      }
+    } catch (error) {
+      console.warn("Error al obtener datos del emisor", error);
+    }
 
     // 1. HEADER - LOGO
     const logo = getImg("Logo");
@@ -118,7 +141,7 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
     doc.text(
       `No. ${budget.nro_presupuesto || budget.id}`,
       pageWidth - margin - 45,
-      y + 11,
+      y + 11
     );
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(8);
@@ -126,7 +149,7 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
     doc.text(
       `Emisión: ${formatDate(budget.fecha_creacion)}`,
       pageWidth - margin - 45,
-      y + 16,
+      y + 16
     );
 
     // 2. PACIENTE Y MÉDICO
@@ -141,7 +164,7 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
     doc.text(
       (budget.paciente_nombre || "PÚBLICO GENERAL").toUpperCase(),
       margin + 20,
-      y,
+      y
     );
 
     doc.setFont("helvetica", "bold");
@@ -207,7 +230,6 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
 
-    // Lógica de totales según moneda seleccionada
     if (moneda === "USD" || moneda === "AMBOS") {
       doc.text("TOTAL USD:", 145, y);
       doc.text(`$ ${formatNum(budget.total)}`, 195, y, { align: "right" });
@@ -244,28 +266,57 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
 
     // 5. FIRMA Y SELLO
     y = 265;
-    const firma = getImg("Firma");
+    
+    // 1. Firma Personal del Usuario (Dinámica)
+    const userSignature = userDetail?.firma || userDetail?.images?.[0];
+    const firmaVisual = (userSignature && userSignature.data)
+      ? { 
+          src: `data:${userSignature.mime_type};base64,${userSignature.data}`, 
+          type: userSignature.mime_type.split("/")[1].toUpperCase() 
+        }
+      : null;
+    
+    // 2. Firma de la Empresa (Genérica)
+    const firmaEmpresa = getImg("Firma");    
+    // 3. Sello
     const sello = getImg("Sello");
 
-    if (firma) {
+    if (firmaVisual) {
       try {
-        doc.addImage(firma.src, firma.type, margin + 5, y - 16, 30, 12, undefined, "MEDIUM");
-      } catch (e) {}
+        doc.addImage(firmaVisual.src, firmaVisual.type, margin, y - 20, 30, 15, undefined, "MEDIUM");
+      } catch (e) {
+        console.warn("Error firma usuario", e);
+      }
+    }
+    if (firmaEmpresa) {
+      try {
+        doc.addImage(firmaEmpresa.src, firmaEmpresa.type, margin + 35, y - 18, 28, 12, undefined, "MEDIUM");
+      } catch (e) {
+        console.warn("Error firma empresa", e);
+      }
     }
     if (sello) {
       try {
-        doc.addImage(sello.src, sello.type, margin + 40, y - 22, 22, 22, undefined, "MEDIUM");
-      } catch (e) {}
+        doc.addImage(sello.src, sello.type, margin + 68, y - 22, 22, 22, undefined, "MEDIUM");
+      } catch (e) {
+        console.warn("Error sello", e);
+      }
     }
 
     doc.setLineWidth(0.4);
-    doc.line(margin, y, margin + 65, y);
+    doc.line(margin, y, margin + 95, y); 
+    
     doc.setFontSize(8);
     doc.setFont("helvetica", "bold");
-    doc.text("FIRMA AUTORIZADA Y SELLO", margin + 10, y + 4);
+    const emisorNombre = "FIRMA Y SELLO AUTORIZADA";
+
+    const centerX = margin + (95 / 2);
+
+    doc.text(emisorNombre.toUpperCase(), centerX, y + 4, { align: "center" });
+    
 
     doc.save(`COTIZACION_${budget.nro_presupuesto || budget.id}.pdf`);
-    setIsExchangeModalOpen(false); // Cerrar sub-modal al terminar
+    setIsExchangeModalOpen(false);
   };
 
   const handleDelete = async () => {

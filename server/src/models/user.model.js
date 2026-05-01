@@ -63,21 +63,17 @@ export class Users {
           u.id_deposito,
           u.fecha_creacion,
 
-          -- Roles (array de strings)
-          COALESCE(
-            json_agg(DISTINCT r.nombre) 
-            FILTER (WHERE r.id IS NOT NULL),
-            '[]'
-          ) AS roles,
+          -- ✅ SOLO UN ROL
+          MAX(r.nombre) AS rol,
 
-          -- Permisos (array de strings)
+          -- ✅ PERMISOS (array)
           COALESCE(
             json_agg(DISTINCT p.nombre) 
             FILTER (WHERE p.id IS NOT NULL),
             '[]'
           ) AS permisos,
 
-          -- Imagen de Firma (siguiendo el patrón de productos)
+          -- ✅ FIRMA / IMÁGENES
           COALESCE(
             (
               SELECT json_agg(
@@ -106,7 +102,7 @@ export class Users {
         `,
         [id]
       );
-
+      
       if (result.rows.length === 0) {
         return { status: false, msg: "No se encontró el usuario", code: 404 };
       }

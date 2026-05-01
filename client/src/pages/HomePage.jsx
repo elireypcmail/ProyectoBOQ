@@ -32,7 +32,6 @@ import logo from "../assets/images/logoBlanco.png";
 export default function HomePage() {
   const storedUser = localStorage.getItem("UserId");
   const userData = storedUser ? JSON.parse(storedUser) : null;
-  console.log(userData)
   const userRole = userData?.rol;
 
   const [activeComponent, setActiveComponent] = useState(null);

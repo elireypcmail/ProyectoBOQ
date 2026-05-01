@@ -10,7 +10,7 @@
   --border-sidebar: rgba(255, 255, 255, 0.1);
 
   /* Dimensiones */
-  --sidebar-full: 280px;
+  --sidebar-full: 310px;
   --sidebar-mini: 85px;
   --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --shadow-sidebar: 10px 0 30px rgba(0, 0, 0, 0.15);

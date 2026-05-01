@@ -142,7 +142,6 @@ controller.save_signature = async (req, res) => {
   }
 };
 
-// Corregido: El nombre ahora coincide con la ruta (getUserById)
 controller.getUserById = async (req, res) => {
   try {
     const { id } = req.params;

@@ -42,8 +42,6 @@ export const EntityProvider = ({ children }) => {
         [table]: Array.isArray(data) ? data : []
       }));
 
-      console.log(data)
-
       return { status: true, data: data };
     } catch (error) {
       console.error(`Error fetching ${table}:`, error);
