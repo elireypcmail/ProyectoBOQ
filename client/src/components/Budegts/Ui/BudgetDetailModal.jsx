@@ -242,9 +242,6 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
       doc.text(`${formatNum(budget.total * tasa)}`, 195, y, { align: "right" });
       doc.setTextColor(0, 0, 0);
       y += 5;
-      doc.setFontSize(7);
-      doc.text(`Tasa: ${formatNum(tasa)}`, 195, y, { align: "right" });
-      y += 5;
     }
 
     // 4. OBSERVACIONES
