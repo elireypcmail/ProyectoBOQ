@@ -19,7 +19,32 @@ controller.getAllDoctors = async (req, res) => {
 controller.getByIdDoctors = async (req, res) => {
   try {
     const { id } = req.params
+
+    if (!id) {
+      return res.status(400).json({
+        error: "El Id del doctor es requerido"
+      })
+    }
+
     const result = await DoctorsModel.getDoctorById(id)
+    return res.status(result.code).json(result)
+  } catch (error) {
+    return res.status(500).json({ error: error.message })
+  }
+}
+
+controller.getOperationsDoctor = async (req, res) => {
+  try {
+    let { id, fecha_inicio, fecha_fin } = req.query
+
+    id = id && id !== "null" && id !== "undefined" ? id : null
+
+    if (!fecha_inicio || !fecha_fin) {
+      return res.status(400).json({ error: "Las fechas de inicio y fin son requeridas" })
+    }
+
+    const result = await DoctorsModel.getOperationsDoctor(id, fecha_inicio, fecha_fin)
+    console.log(result)
     return res.status(result.code).json(result)
   } catch (error) {
     return res.status(500).json({ error: error.message })

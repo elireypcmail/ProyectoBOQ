@@ -8,12 +8,13 @@ import {
   AlertTriangle,
   Trash2,
   X,
+  BarChart2,
 } from "lucide-react";
 import { SlOptionsVertical } from "react-icons/sl";
 
-// Modals Refactorizados
 import DoctorFormModal from "./ui/DoctorFormModal";
 import ModalDetailedDoctor from "./ui/ModalDetailedDoctor";
+import ListStatistics from "./ListStatistics";
 
 import "../../styles/components/ListZone.css";
 
@@ -35,10 +36,11 @@ const ListDoctors = ({ onClose }) => {
   const itemsPerPage = 6;
 
   // Estados de Modales
-  const [selectedMedico, setSelectedMedico] = useState(null);
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedMedico, setSelectedMedico]       = useState(null);
+  const [isFormModalOpen, setIsFormModalOpen]       = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen]   = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isStatisticsOpen, setIsStatisticsOpen]     = useState(false);
 
   useEffect(() => {
     getAllMedicos();
@@ -48,13 +50,9 @@ const ListDoctors = ({ onClose }) => {
   // -------------------- Filtrado y Ordenación Alfabética --------------------
   const filteredMedicos = useMemo(() => {
     const list = medicos || [];
-
-    // 1. Filtrar por término de búsqueda
     const filtered = list.filter((m) =>
       m.nombre.toUpperCase().includes(searchTerm.toUpperCase()),
     );
-
-    // 2. Ordenar alfabéticamente por nombre
     return [...filtered].sort((a, b) => {
       const nameA = (a.nombre || "").toUpperCase();
       const nameB = (b.nombre || "").toUpperCase();
@@ -64,7 +62,7 @@ const ListDoctors = ({ onClose }) => {
     });
   }, [medicos, searchTerm]);
 
-  const totalPages = Math.ceil(filteredMedicos.length / itemsPerPage);
+  const totalPages     = Math.ceil(filteredMedicos.length / itemsPerPage);
   const currentMedicos = filteredMedicos.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage,
@@ -74,20 +72,18 @@ const ListDoctors = ({ onClose }) => {
   const handleSaveDoctor = async (formData) => {
     try {
       const payload = {
-        nombre: formData.nombre.toUpperCase(),
-        telefono: formData.telefono,
-        id_tipoMedico: Number(formData.id_tipomedico),
-        email: formData.email.trim(), // Added email
-        notificaciones: formData.notificaciones, // Added boolean
-        estatus: true,
+        nombre:         formData.nombre.toUpperCase(),
+        telefono:       formData.telefono,
+        id_tipoMedico:  Number(formData.id_tipomedico),
+        email:          formData.email.trim(),
+        notificaciones: formData.notificaciones,
+        estatus:        true,
       };
-
       if (selectedMedico) {
         await editedMedico(selectedMedico.id, payload);
       } else {
         await createNewMedico(payload);
       }
-
       setIsFormModalOpen(false);
       setSelectedMedico(null);
       getAllMedicos();
@@ -108,6 +104,11 @@ const ListDoctors = ({ onClose }) => {
     }
   };
 
+  // -------------------- Vista Estadísticas --------------------
+  if (isStatisticsOpen) {
+    return <ListStatistics onClose={() => setIsStatisticsOpen(false)} />;
+  }
+
   return (
     <div className="pl-main-container">
       {/* HEADER */}
@@ -118,6 +119,14 @@ const ListDoctors = ({ onClose }) => {
         </div>
 
         <div className="pl-actions-group">
+          <button
+            className="pl-btn-secondary"
+            onClick={() => setIsStatisticsOpen(true)}
+            title="Ver estadísticas"
+          >
+            <BarChart2 size={18} /> Estadísticas
+          </button>
+
           <button
             className="pl-btn-action"
             onClick={() => {

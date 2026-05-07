@@ -344,9 +344,23 @@ const ProductFormModal = ({
                 <input className="pfm-input" type="number" name="stock_minimo_general" min="1" value={form.stock_minimo_general} onChange={handleChange} />
               </div>
 
-              <div className="pfm-field">
+              {/* <div className="pfm-field">
                 <label className="pfm-label">EXISTENCIA *</label>
                 <input className="pfm-input" type="number" name="existencia_general" min="0" value={form.existencia_general} onChange={handleChange} />
+              </div> */}
+
+              <div className="pfm-field">
+                <label className="pfm-label">EXISTENCIA *</label>
+                <input
+                  className={`pfm-input ${initialData ? "pfm-input--readonly" : ""}`}
+                  type="number"
+                  name="existencia_general"
+                  min="0"
+                  value={form.existencia_general}
+                  onChange={initialData ? undefined : handleChange}
+                  readOnly={!!initialData}
+                  title={initialData ? "La existencia se gestiona desde el inventario" : ""}
+                />
               </div>
 
             </div>

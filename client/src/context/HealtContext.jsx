@@ -16,6 +16,7 @@ export const useHealth = () => {
 export const HealthProvider = ({ children }) => {
   const [pacientes, setPacientes] = useState([]);
   const [medicos, setMedicos] = useState([]);
+  const [medicosStats, setMedicosStats] = useState([]);
   const [tipoMedicos, setTipoMedicos] = useState([]);
   const [personal, setPersonal] = useState([]);
   const [seguros, setSeguros] = useState([]);
@@ -135,6 +136,19 @@ export const HealthProvider = ({ children }) => {
       return { status: false, error: error.response?.data || error.message };
     }
   };
+
+  const getMedicosStats = async (id, fecha_inicio, fecha_fin) => {
+    try {
+      const res = await HealthAPI.getMedicosStats(id, fecha_inicio, fecha_fin);
+      console.log(res.data)
+      console.log(res.data.data)
+      setMedicosStats(res.data.data || []);
+    } catch (error) {
+      setErrors(prev => [...prev, error.response?.data || ["Error fetching medicos stats"]]);
+    }
+  };
+
+  const clearMedicosStats = () => setMedicosStats([]);
 
   const editedMedico = async (id, medico) => {
     try {
@@ -448,6 +462,7 @@ export const HealthProvider = ({ children }) => {
       value={{
         pacientes,
         medicos,
+        medicosStats,
         tipoMedicos,
         seguros,
         personal,
@@ -464,6 +479,8 @@ export const HealthProvider = ({ children }) => {
 
         // Medicos
         getAllMedicos,
+        getMedicosStats,
+        clearMedicosStats,
         createNewMedico,
         editedMedico,
         deleteMedicoById,

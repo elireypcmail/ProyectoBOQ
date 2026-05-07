@@ -105,6 +105,166 @@ export class DoctorsModel {
     }
   }
 
+
+  static async getOperationsDoctor(id, fecha_inicio, fecha_fin) {
+    if (!fecha_inicio || !fecha_fin) {
+      return {
+        status: false,
+        code: 400,
+        msg: "Las fechas de inicio y fin son obligatorias"
+      }
+    }
+
+    let connection
+    try {
+      connection = await pool.connect()
+
+      // ── Sin ID: todas las operaciones del rango agrupadas por médico ──
+      if (!id) {
+        const result = await connection.query(`
+          SELECT
+            m.id          AS medico_id,
+            m.nombre      AS medico_nombre,
+            tm.nombre     AS medico_tipo,
+
+            v.id,
+            v.nro_factura,
+            v.estado_venta,
+            v.estado_pago,
+            v.total,
+            v.abonado,
+            v.fecha_creacion,
+
+            pa.nombre AS paciente_nombre,
+            cl.nombre AS clinica_nombre,
+            ve.nombre AS vendedor_nombre
+
+          FROM ventas v
+          INNER JOIN venta_personal vp ON vp.id_venta  = v.id
+          INNER JOIN personal       p  ON p.id         = vp.id_personal
+          INNER JOIN medicos        m  ON m.id         = p.id_medico
+          LEFT JOIN  tipomedicos    tm ON tm.id         = m.id_tipoMedico
+          LEFT JOIN  pacientes      pa ON pa.id         = v.id_paciente
+          LEFT JOIN  clinicas       cl ON cl.id         = v.id_clinica
+          LEFT JOIN  vendedores     ve ON ve.id         = v.id_vendedor
+
+          WHERE v.estatus = TRUE
+            AND v.fecha_creacion >= $1::timestamptz
+            AND v.fecha_creacion <= $2::timestamptz + INTERVAL '1 day' - INTERVAL '1 second'
+          ORDER BY m.nombre ASC, v.fecha_creacion DESC
+        `, [fecha_inicio, fecha_fin])
+
+        // Agrupar por médico
+        const grouped = result.rows.reduce((acc, row) => {
+          const key = row.medico_id
+
+          if (!acc[key]) {
+            acc[key] = {
+              medico: {
+                id:     row.medico_id,
+                nombre: row.medico_nombre,
+                tipo:   row.medico_tipo
+              },
+              operaciones: []
+            }
+          }
+
+          acc[key].operaciones.push({
+            id:               row.id,
+            nro_factura:      row.nro_factura,
+            estado_venta:     row.estado_venta,
+            estado_pago:      row.estado_pago,
+            total:            row.total,
+            abonado:          row.abonado,
+            fecha_creacion:   row.fecha_creacion,
+            paciente_nombre:  row.paciente_nombre,
+            clinica_nombre:   row.clinica_nombre,
+            vendedor_nombre:  row.vendedor_nombre
+          })
+
+          return acc
+        }, {})
+
+        return {
+          status: true,
+          code: 200,
+          data: Object.values(grouped)
+        }
+      }
+
+      // ── Con ID: operaciones de un médico específico ──
+      const doctorResult = await connection.query(`
+        SELECT
+          m.id,
+          m.nombre,
+          m.telefono,
+          m.email,
+          m.notificaciones,
+          m.estatus,
+          m.id_tipoMedico,
+          tm.nombre AS tipo
+        FROM medicos m
+        LEFT JOIN tipomedicos tm ON tm.id = m.id_tipoMedico
+        WHERE m.id = $1
+      `, [id])
+
+      if (!doctorResult.rows.length) {
+        return {
+          status: false,
+          code: 404,
+          msg: "Médico no encontrado"
+        }
+      }
+
+      const ventasResult = await connection.query(`
+        SELECT
+          v.id,
+          v.nro_factura,
+          v.estado_venta,
+          v.estado_pago,
+          v.total,
+          v.abonado,
+          v.fecha_creacion,
+
+          pa.nombre AS paciente_nombre,
+          cl.nombre AS clinica_nombre,
+          ve.nombre AS vendedor_nombre
+
+        FROM ventas v
+        INNER JOIN venta_personal vp ON vp.id_venta = v.id
+        INNER JOIN personal       p  ON p.id        = vp.id_personal
+        LEFT JOIN  pacientes      pa ON pa.id        = v.id_paciente
+        LEFT JOIN  clinicas       cl ON cl.id        = v.id_clinica
+        LEFT JOIN  vendedores     ve ON ve.id        = v.id_vendedor
+
+        WHERE p.id_medico = $1
+          AND v.estatus = TRUE
+          AND v.fecha_creacion >= $2::timestamptz
+          AND v.fecha_creacion <= $3::timestamptz + INTERVAL '1 day' - INTERVAL '1 second'
+        ORDER BY v.fecha_creacion DESC
+      `, [id, fecha_inicio, fecha_fin])
+
+      return {
+        status: true,
+        code: 200,
+        data: {
+          medico:      doctorResult.rows[0],
+          operaciones: ventasResult.rows
+        }
+      }
+
+    } catch (error) {
+      return {
+        status: false,
+        code: 500,
+        msg: "Error al obtener las operaciones del médico",
+        error: error.message
+      }
+    } finally {
+      if (connection) connection.release()
+    }
+  }
+
   static async createDoctor(data) {
     let connection
     try {

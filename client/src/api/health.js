@@ -25,6 +25,7 @@ export const savePacienteFiles = (id, files, filesJson) => {
 // -------------------- MEDICOS --------------------
 export const getMedicos = () => instanceApp.get("/medicos");
 export const getMedicoById = (id) => instanceApp.get(`/medicos/${id}`);
+export const getMedicosStats = (id, fecha_inicio, fecha_fin) => instanceApp.get(`/medicos/operaciones?id=${id}&fecha_inicio=${fecha_inicio}&fecha_fin=${fecha_fin}`);
 export const createMedico = (data) => instanceApp.post("/medicos", data);
 export const editMedico = (id, data) => instanceApp.put(`/medicos/${id}`, data);
 export const deleteMedico = (id) => instanceApp.delete(`/medicos/${id}`);
