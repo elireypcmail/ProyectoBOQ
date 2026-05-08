@@ -7,7 +7,7 @@ import {
   Loader2,
   FileText,
   ClipboardList,
-  AlertTriangle // Added for the warning modal
+  AlertTriangle
 } from "lucide-react";
 
 import { useProducts } from "../../../context/ProductsContext";
@@ -71,7 +71,6 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   
-  // New states for the stock warning modal
   const [showStockWarningModal, setShowStockWarningModal] = useState(false);
   const [outOfStockItems, setOutOfStockItems] = useState([]);
 
@@ -131,7 +130,7 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
         descripcion: item.producto || item.descripcion,
         sku: item.sku || "",
         cantidad: item.cantidad,
-        existencia: item.existencia || item.stock || 0, // Capture stock from editData
+        existencia: item.existencia ?? item.stock ?? item.cantidad_disponible ?? 0,
         precio_venta: item.precio_venta,
         lotes_compra: item.lotes || [],
         maneja_lotes: item.maneja_lotes || item.usa_lotes || false,
@@ -173,6 +172,13 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
     }
 
     return parseFloat(standardNumber) || 0;
+  };
+
+  // Helper: resuelve el stock disponible de un item sin importar qué campo venga
+  const resolveStock = (item) => {
+    return safeParse(
+      item.existencia ?? item.stock ?? item.cantidad_disponible ?? item.qty_available ?? 0
+    );
   };
 
   const isDuplicateInvoice = () => {
@@ -227,38 +233,51 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
     }));
   }, [items, totals.monto_descuento_fijo, totals.impuestos_monto, totals.monto_abonado]);
 
-  // Validation function before processing the sale
   const handleCheckStockAndSubmit = () => {
-    if (isDuplicateInvoice()) {
-      alert("Esta factura ya existe.");
-      setStep(1);
-      return;
-    }
+    if (isDuplicateInvoice()) {
+      alert("Esta factura ya existe.");
+      setStep(1);
+      return;
+    }
 
-    // Filter items where the requested quantity exceeds the available stock
-    const missingStockItems = items.filter((item) => {
+    const missingStockItems = items.filter((item) => {
       const cantidadSolicitada = safeParse(item.cantidad);
-      
-      // Si el producto maneja lotes, validamos contra la suma de lo seleccionado en los lotes
-      if (item.maneja_lotes || (item.lotes_compra && item.lotes_compra.length > 0)) {
-        const totalEnLotes = item.lotes_compra.reduce((sum, lote) => sum + safeParse(lote.cantidad), 0);
-        // Si lo seleccionado en lotes es menor a lo que se quiere vender, hay error
+      const manejaLotes = item.maneja_lotes || item.usa_lotes || false;
+      const tieneLotsSeleccionados = item.lotes_compra && item.lotes_compra.length > 0;
+
+      // Productos con lotes: validar contra la suma de cantidades en los lotes seleccionados
+      if (manejaLotes || tieneLotsSeleccionados) {
+        const totalEnLotes = item.lotes_compra.reduce(
+          (sum, lote) => sum + safeParse(lote.cantidad),
+          0
+        );
         return cantidadSolicitada > totalEnLotes;
       }
 
-      // Si no maneja lotes, validamos contra existencia normal
-      return cantidadSolicitada > safeParse(item.existencia);
+      // Productos sin lotes: validar contra existencia disponible
+      // Si el stock no está definido o es null/undefined, NO bloquear (dato no disponible)
+      const stockDisponible = resolveStock(item);
+      const stockEsConocido =
+        item.existencia !== null &&
+        item.existencia !== undefined &&
+        item.stock !== null &&
+        item.stock !== undefined ||
+        item.cantidad_disponible !== null &&
+        item.cantidad_disponible !== undefined;
+
+      // Solo bloquear si el stock es conocido Y es insuficiente
+      if (!stockEsConocido) return false;
+      return cantidadSolicitada > stockDisponible;
     });
 
-    if (missingStockItems.length > 0) {
-      setOutOfStockItems(missingStockItems);
-      setShowStockWarningModal(true);
-    } else {
-      processSale();
-    }
-  };
+    if (missingStockItems.length > 0) {
+      setOutOfStockItems(missingStockItems);
+      setShowStockWarningModal(true);
+    } else {
+      processSale();
+    }
+  };
 
-  // Renamed from handleFinalSubmit to processSale
   const processSale = async () => {
     setIsSubmitting(true);
 
@@ -337,7 +356,7 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
       {
         ...product,
         cantidad: 1,
-        existencia: product.existencia || product.stock || 0, // Capture stock from selected product
+        existencia: product.existencia ?? product.stock ?? product.cantidad_disponible ?? 0,
         precio_venta: product.precio_venta || 0,
         lotes_compra: [],
         isValid: false
@@ -412,7 +431,7 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
           descripcion: det.descripcion || det.producto,
           sku: det.sku || "",
           cantidad: det.cantidad || 1,
-          existencia: det.existencia || det.stock || 0, // Capture stock from report details
+          existencia: det.existencia ?? det.stock ?? det.cantidad_disponible ?? 0,
           precio_venta: det.precio_venta || 0,
           lotes_compra: [],
           maneja_lotes: det.usa_lotes || det.maneja_lotes || false,
@@ -474,7 +493,7 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
           descripcion: det.descripcion || det.producto,
           sku: det.sku || "",
           cantidad: det.cantidad || 1,
-          existencia: det.existencia || det.stock || 0, // Capture stock from budget details
+          existencia: det.existencia ?? det.stock ?? det.cantidad_disponible ?? 0,
           precio_venta: det.precio_venta || 0,
           lotes_compra: [],
           maneja_lotes: det.usa_lotes || det.maneja_lotes || false,
@@ -634,7 +653,7 @@ const SalesFormModal = ({ isOpen, onClose, editData = null }) => {
                   <div style={{ fontWeight: "500", color: "#111827", marginBottom: "4px" }}>{item.descripcion}</div>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.875rem", color: "#4b5563" }}>
                     <span>Requerido: <strong>{item.cantidad}</strong></span>
-                    <span>Disponible: <strong>{item.existencia}</strong></span>
+                    <span>Disponible: <strong>{resolveStock(item)}</strong></span>
                   </div>
                 </li>
               ))}

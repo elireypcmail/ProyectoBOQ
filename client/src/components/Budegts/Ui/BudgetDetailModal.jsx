@@ -77,244 +77,775 @@ const BudgetDetailModal = ({ isOpen, budget, onClose }) => {
     });
   };
 
-  const handleGeneratePDF = async (config) => {
-    const { moneda, tasa } = config;
-    const doc = new jsPDF();
-    const margin = 15;
-    const pageWidth = doc.internal.pageSize.width;
-    let y = 15;
+  // const handleGeneratePDF = async (config) => {
+  //   const { moneda, tasa } = config;
+  //   const doc = new jsPDF();
+  //   const margin = 15;
+  //   const pageWidth = doc.internal.pageSize.width;
+  //   let y = 15;
 
-    let userDetail = null;
+  //   let userDetail = null;
+  //   try {
+  //     const storedUser = localStorage.getItem("UserId");
+  //     if (!storedUser) return;
+
+  //     let userId;
+  //     try {
+  //       const parsed = JSON.parse(storedUser);
+  //       userId = parsed?.id ?? parsed;
+  //     } catch {
+  //       userId = storedUser;
+  //     }
+
+  //     if (!userId) return;
+  //     const dataUser = await fetchUserById(userId);
+  //     if (dataUser) {
+  //       userDetail = dataUser.data || dataUser;
+  //     }
+  //   } catch (error) {
+  //     console.warn("Error al obtener datos del emisor", error);
+  //   }
+
+  //   // 1. HEADER - LOGO
+  //   const logo = getImg("Logo");
+  //   if (logo) {
+  //     try {
+  //       doc.addImage(logo.src, logo.type, margin, y, 40, 15, undefined, "FAST");
+  //     } catch (e) {
+  //       console.warn("Error logo", e);
+  //     }
+  //   }
+
+  //   // DATOS EMPRESA
+  //   const infoX = margin + 45;
+  //   doc.setFontSize(11);
+  //   doc.setFont("helvetica", "bold");
+  //   doc.text("MUNDO IMPLANTES C.A.", infoX, y + 4);
+
+  //   doc.setFontSize(8);
+  //   doc.setFont("helvetica", "normal");
+  //   doc.text(`RIF: ${rifConfig}`, infoX, y + 8);
+
+  //   const splitAddr = doc.splitTextToSize(direccionConfig, 80);
+  //   doc.text(splitAddr, infoX, y + 12);
+
+  //   const contactY = y + 12 + splitAddr.length * 3.5;
+  //   doc.text(`Telf: ${tlfConfig} | Email: ${emailConfig}`, infoX, contactY);
+
+  //   // TÍTULO COTIZACIÓN
+  //   doc.setFontSize(14);
+  //   doc.setFont("helvetica", "bold");
+  //   doc.setTextColor(232, 64, 83);
+  //   doc.text("COTIZACIÓN", pageWidth - margin - 45, y + 5);
+  //   doc.setFontSize(10);
+  //   doc.text(
+  //     `No. ${budget.nro_presupuesto || budget.id}`,
+  //     pageWidth - margin - 45,
+  //     y + 11
+  //   );
+  //   doc.setTextColor(0, 0, 0);
+  //   doc.setFontSize(8);
+  //   doc.setFont("helvetica", "normal");
+  //   doc.text(
+  //     `Emisión: ${formatDate(budget.fecha_creacion)}`,
+  //     pageWidth - margin - 45,
+  //     y + 16
+  //   );
+
+  //   // 2. PACIENTE Y MÉDICO
+  //   y = 52;
+  //   doc.setDrawColor(235);
+  //   doc.line(margin, y - 5, pageWidth - margin, y - 5);
+
+  //   doc.setFontSize(9);
+  //   doc.setFont("helvetica", "bold");
+  //   doc.text("PACIENTE:", margin, y);
+  //   doc.setFont("helvetica", "normal");
+  //   doc.text(
+  //     (budget.paciente_nombre || "PÚBLICO GENERAL").toUpperCase(),
+  //     margin + 20,
+  //     y
+  //   );
+
+  //   doc.setFont("helvetica", "bold");
+  //   doc.text("CÉDULA:", pageWidth - 75, y);
+  //   doc.setFont("helvetica", "normal");
+  //   doc.text(budget.paciente_documento || "N/A", pageWidth - 58, y);
+
+  //   y += 6;
+  //   doc.setFont("helvetica", "bold");
+  //   doc.text("MÉDICO:", margin, y);
+  //   doc.setFont("helvetica", "normal");
+  //   const medicoInfo = budget.medico_nombre
+  //     ? `${budget.medico_nombre} ${budget.medico_tipo ? `(${budget.medico_tipo})` : ""}`
+  //     : "NO ESPECIFICADO";
+  //   doc.text(medicoInfo.toUpperCase(), margin + 20, y);
+
+  //   y += 6;
+  //   doc.setFont("helvetica", "bold");
+  //   doc.text("CONDICIÓN:", margin, y);
+  //   doc.setFont("helvetica", "normal");
+  //   const cond = esParticular
+  //     ? "PARTICULAR"
+  //     : `SEGURO: ${budget.seguro_nombre}`;
+  //   doc.text(cond.toUpperCase(), margin + 22, y);
+
+  //   // 3. TABLA DE PRODUCTOS
+  //   y += 10;
+  //   doc.setFillColor(248, 249, 250);
+  //   doc.rect(margin, y - 4, pageWidth - margin * 2, 6, "F");
+  //   doc.setFontSize(8);
+  //   doc.setFont("helvetica", "bold");
+  //   doc.text("DESCRIPCIÓN", margin + 2, y);
+  //   doc.text("CANT.", 135, y, { align: "center" });
+  //   doc.text("P/UNT.", 165, y, { align: "right" });
+  //   doc.text("TOTAL", 195, y, { align: "right" });
+
+  //   y += 7;
+  //   doc.setFont("helvetica", "normal");
+  //   const items = budget.items || budget.detalle || [];
+  //   items.forEach((item) => {
+  //     if (y > 240) {
+  //       doc.addPage();
+  //       y = 20;
+  //     }
+  //     const desc = (item.descripcion || item.producto || "").toUpperCase();
+  //     const splitDesc = doc.splitTextToSize(desc, 110);
+  //     doc.text(splitDesc, margin + 2, y);
+  //     doc.text(parseFloat(item.cantidad).toString(), 135, y, {
+  //       align: "center",
+  //     });
+  //     doc.text(formatNum(item.precio_venta), 165, y, { align: "right" });
+  //     doc.text(formatNum(item.cantidad * item.precio_venta), 195, y, {
+  //       align: "right",
+  //     });
+  //     y += splitDesc.length * 4.5 + 1.5;
+  //   });
+
+  //   // TOTALES
+  //   y += 5;
+  //   doc.setDrawColor(0);
+  //   doc.line(145, y, 195, y);
+  //   y += 6;
+  //   doc.setFontSize(10);
+  //   doc.setFont("helvetica", "bold");
+
+  //   if (moneda === "USD" || moneda === "AMBOS") {
+  //     doc.text("TOTAL USD:", 145, y);
+  //     doc.text(`$ ${formatNum(budget.total)}`, 195, y, { align: "right" });
+  //     y += 6;
+  //   }
+
+  //   if (moneda === "BS" || moneda === "AMBOS") {
+  //     doc.setTextColor(232, 64, 83);
+  //     doc.text("TOTAL BS:", 145, y);
+  //     doc.text(`${formatNum(budget.total * tasa)}`, 195, y, { align: "right" });
+  //     doc.setTextColor(0, 0, 0);
+  //     y += 5;
+  //   }
+
+  //   // 4. OBSERVACIONES
+  //   y += 5;
+  //   if (y > 230) {
+  //     doc.addPage();
+  //     y = 20;
+  //   }
+  //   doc.setFontSize(7.5);
+  //   doc.setFont("helvetica", "bold");
+  //   doc.text("OBSERVACIONES / TÉRMINOS:", margin, y);
+  //   doc.setFont("helvetica", "normal");
+  //   y += 4;
+  //   const terminos = (
+  //     notaConfigurada || "DOCUMENTO VÁLIDO POR 2 DÍAS HÁBILES."
+  //   ).toUpperCase();
+  //   const splitTerm = doc.splitTextToSize(terminos, pageWidth - margin * 2);
+  //   doc.text(splitTerm, margin, y);
+
+  //   // 5. FIRMA Y SELLO
+  //   y = 265;
+    
+  //   // 1. Firma Personal del Usuario (Dinámica)
+  //   const userSignature = userDetail?.firma || userDetail?.images?.[0];
+  //   const firmaVisual = (userSignature && userSignature.data)
+  //     ? { 
+  //         src: `data:${userSignature.mime_type};base64,${userSignature.data}`, 
+  //         type: userSignature.mime_type.split("/")[1].toUpperCase() 
+  //       }
+  //     : null;
+    
+  //   // 2. Firma de la Empresa (Genérica)
+  //   const firmaEmpresa = getImg("Firma");    
+  //   // 3. Sello
+  //   const sello = getImg("Sello");
+
+  //   if (firmaVisual) {
+  //     try {
+  //       doc.addImage(firmaVisual.src, firmaVisual.type, margin, y - 20, 30, 15, undefined, "MEDIUM");
+  //     } catch (e) {
+  //       console.warn("Error firma usuario", e);
+  //     }
+  //   }
+  //   if (firmaEmpresa) {
+  //     try {
+  //       doc.addImage(firmaEmpresa.src, firmaEmpresa.type, margin + 35, y - 18, 28, 12, undefined, "MEDIUM");
+  //     } catch (e) {
+  //       console.warn("Error firma empresa", e);
+  //     }
+  //   }
+  //   if (sello) {
+  //     try {
+  //       doc.addImage(sello.src, sello.type, margin + 68, y - 22, 22, 22, undefined, "MEDIUM");
+  //     } catch (e) {
+  //       console.warn("Error sello", e);
+  //     }
+  //   }
+
+  //   doc.setLineWidth(0.4);
+  //   doc.line(margin, y, margin + 95, y); 
+    
+  //   doc.setFontSize(8);
+  //   doc.setFont("helvetica", "bold");
+  //   const emisorNombre = "FIRMA Y SELLO AUTORIZADA";
+
+  //   const centerX = margin + (95 / 2);
+
+  //   doc.text(emisorNombre.toUpperCase(), centerX, y + 4, { align: "center" });
+    
+
+  //   doc.save(`COTIZACION_${budget.nro_presupuesto || budget.id}.pdf`);
+  //   setIsExchangeModalOpen(false);
+  // };
+
+const handleGeneratePDF = async (config) => {
+  const {
+    moneda,
+    tasa,
+    includeUserFirma,
+    includeCompanyFirma,
+    includeSello,
+  } = config;
+
+  const doc = new jsPDF();
+
+  const margin = 15;
+
+  const pageWidth = doc.internal.pageSize.width;
+
+  let y = 15;
+
+  let userDetail = null;
+
+  try {
+    const storedUser = localStorage.getItem("UserId");
+
+    if (!storedUser) return;
+
+    let userId;
+
     try {
-      const storedUser = localStorage.getItem("UserId");
-      if (!storedUser) return;
+      const parsed = JSON.parse(storedUser);
 
-      let userId;
-      try {
-        const parsed = JSON.parse(storedUser);
-        userId = parsed?.id ?? parsed;
-      } catch {
-        userId = storedUser;
-      }
-
-      if (!userId) return;
-      const dataUser = await fetchUserById(userId);
-      if (dataUser) {
-        userDetail = dataUser.data || dataUser;
-      }
-    } catch (error) {
-      console.warn("Error al obtener datos del emisor", error);
+      userId = parsed?.id ?? parsed;
+    } catch {
+      userId = storedUser;
     }
 
-    // 1. HEADER - LOGO
-    const logo = getImg("Logo");
-    if (logo) {
-      try {
-        doc.addImage(logo.src, logo.type, margin, y, 40, 15, undefined, "FAST");
-      } catch (e) {
-        console.warn("Error logo", e);
-      }
+    if (!userId) return;
+
+    const dataUser = await fetchUserById(userId);
+
+    if (dataUser) {
+      userDetail = dataUser.data || dataUser;
     }
+  } catch (error) {
+    console.warn("Error al obtener datos del emisor", error);
+  }
 
-    // DATOS EMPRESA
-    const infoX = margin + 45;
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.text("MUNDO IMPLANTES C.A.", infoX, y + 4);
+  // =========================================
+  // HEADER - LOGO
+  // =========================================
 
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "normal");
-    doc.text(`RIF: ${rifConfig}`, infoX, y + 8);
+  const logo = getImg("Logo");
 
-    const splitAddr = doc.splitTextToSize(direccionConfig, 80);
-    doc.text(splitAddr, infoX, y + 12);
-
-    const contactY = y + 12 + splitAddr.length * 3.5;
-    doc.text(`Telf: ${tlfConfig} | Email: ${emailConfig}`, infoX, contactY);
-
-    // TÍTULO COTIZACIÓN
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(232, 64, 83);
-    doc.text("COTIZACIÓN", pageWidth - margin - 45, y + 5);
-    doc.setFontSize(10);
-    doc.text(
-      `No. ${budget.nro_presupuesto || budget.id}`,
-      pageWidth - margin - 45,
-      y + 11
-    );
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "normal");
-    doc.text(
-      `Emisión: ${formatDate(budget.fecha_creacion)}`,
-      pageWidth - margin - 45,
-      y + 16
-    );
-
-    // 2. PACIENTE Y MÉDICO
-    y = 52;
-    doc.setDrawColor(235);
-    doc.line(margin, y - 5, pageWidth - margin, y - 5);
-
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "bold");
-    doc.text("PACIENTE:", margin, y);
-    doc.setFont("helvetica", "normal");
-    doc.text(
-      (budget.paciente_nombre || "PÚBLICO GENERAL").toUpperCase(),
-      margin + 20,
-      y
-    );
-
-    doc.setFont("helvetica", "bold");
-    doc.text("CÉDULA:", pageWidth - 75, y);
-    doc.setFont("helvetica", "normal");
-    doc.text(budget.paciente_documento || "N/A", pageWidth - 58, y);
-
-    y += 6;
-    doc.setFont("helvetica", "bold");
-    doc.text("MÉDICO:", margin, y);
-    doc.setFont("helvetica", "normal");
-    const medicoInfo = budget.medico_nombre
-      ? `${budget.medico_nombre} ${budget.medico_tipo ? `(${budget.medico_tipo})` : ""}`
-      : "NO ESPECIFICADO";
-    doc.text(medicoInfo.toUpperCase(), margin + 20, y);
-
-    y += 6;
-    doc.setFont("helvetica", "bold");
-    doc.text("CONDICIÓN:", margin, y);
-    doc.setFont("helvetica", "normal");
-    const cond = esParticular
-      ? "PARTICULAR"
-      : `SEGURO: ${budget.seguro_nombre}`;
-    doc.text(cond.toUpperCase(), margin + 22, y);
-
-    // 3. TABLA DE PRODUCTOS
-    y += 10;
-    doc.setFillColor(248, 249, 250);
-    doc.rect(margin, y - 4, pageWidth - margin * 2, 6, "F");
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "bold");
-    doc.text("DESCRIPCIÓN", margin + 2, y);
-    doc.text("CANT.", 135, y, { align: "center" });
-    doc.text("P/UNT.", 165, y, { align: "right" });
-    doc.text("TOTAL", 195, y, { align: "right" });
-
-    y += 7;
-    doc.setFont("helvetica", "normal");
-    const items = budget.items || budget.detalle || [];
-    items.forEach((item) => {
-      if (y > 240) {
-        doc.addPage();
-        y = 20;
-      }
-      const desc = (item.descripcion || item.producto || "").toUpperCase();
-      const splitDesc = doc.splitTextToSize(desc, 110);
-      doc.text(splitDesc, margin + 2, y);
-      doc.text(parseFloat(item.cantidad).toString(), 135, y, {
-        align: "center",
-      });
-      doc.text(formatNum(item.precio_venta), 165, y, { align: "right" });
-      doc.text(formatNum(item.cantidad * item.precio_venta), 195, y, {
-        align: "right",
-      });
-      y += splitDesc.length * 4.5 + 1.5;
-    });
-
-    // TOTALES
-    y += 5;
-    doc.setDrawColor(0);
-    doc.line(145, y, 195, y);
-    y += 6;
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-
-    if (moneda === "USD" || moneda === "AMBOS") {
-      doc.text("TOTAL USD:", 145, y);
-      doc.text(`$ ${formatNum(budget.total)}`, 195, y, { align: "right" });
-      y += 6;
+  if (logo) {
+    try {
+      doc.addImage(
+        logo.src,
+        logo.type,
+        margin,
+        y,
+        40,
+        15,
+        undefined,
+        "FAST"
+      );
+    } catch (e) {
+      console.warn("Error logo", e);
     }
+  }
 
-    if (moneda === "BS" || moneda === "AMBOS") {
-      doc.setTextColor(232, 64, 83);
-      doc.text("TOTAL BS:", 145, y);
-      doc.text(`${formatNum(budget.total * tasa)}`, 195, y, { align: "right" });
-      doc.setTextColor(0, 0, 0);
-      y += 5;
-    }
+  // =========================================
+  // DATOS EMPRESA
+  // =========================================
 
-    // 4. OBSERVACIONES
-    y += 5;
-    if (y > 230) {
+  const infoX = margin + 45;
+
+  doc.setFontSize(11);
+
+  doc.setFont("helvetica", "bold");
+
+  doc.text("MUNDO IMPLANTES C.A.", infoX, y + 4);
+
+  doc.setFontSize(8);
+
+  doc.setFont("helvetica", "normal");
+
+  doc.text(`RIF: ${rifConfig}`, infoX, y + 8);
+
+  const splitAddr = doc.splitTextToSize(direccionConfig, 80);
+
+  doc.text(splitAddr, infoX, y + 12);
+
+  const contactY = y + 12 + splitAddr.length * 3.5;
+
+  doc.text(
+    `Telf: ${tlfConfig} | Email: ${emailConfig}`,
+    infoX,
+    contactY
+  );
+
+  // =========================================
+  // TITULO
+  // =========================================
+
+  doc.setFontSize(14);
+
+  doc.setFont("helvetica", "bold");
+
+  doc.setTextColor(232, 64, 83);
+
+  doc.text("COTIZACIÓN", pageWidth - margin - 45, y + 5);
+
+  doc.setFontSize(10);
+
+  doc.text(
+    `No. ${budget.nro_presupuesto || budget.id}`,
+    pageWidth - margin - 45,
+    y + 11
+  );
+
+  doc.setTextColor(0, 0, 0);
+
+  doc.setFontSize(8);
+
+  doc.setFont("helvetica", "normal");
+
+  doc.text(
+    `Emisión: ${formatDate(budget.fecha_creacion)}`,
+    pageWidth - margin - 45,
+    y + 16
+  );
+
+  // =========================================
+  // PACIENTE Y MÉDICO
+  // =========================================
+
+  y = 52;
+
+  doc.setDrawColor(235);
+
+  doc.line(margin, y - 5, pageWidth - margin, y - 5);
+
+  doc.setFontSize(9);
+
+  doc.setFont("helvetica", "bold");
+
+  doc.text("PACIENTE:", margin, y);
+
+  doc.setFont("helvetica", "normal");
+
+  doc.text(
+    (budget.paciente_nombre || "PÚBLICO GENERAL").toUpperCase(),
+    margin + 20,
+    y
+  );
+
+  doc.setFont("helvetica", "bold");
+
+  doc.text("CÉDULA:", pageWidth - 75, y);
+
+  doc.setFont("helvetica", "normal");
+
+  doc.text(
+    budget.paciente_documento || "N/A",
+    pageWidth - 58,
+    y
+  );
+
+  y += 6;
+
+  doc.setFont("helvetica", "bold");
+
+  doc.text("MÉDICO:", margin, y);
+
+  doc.setFont("helvetica", "normal");
+
+  const medicoInfo = budget.medico_nombre
+    ? `${budget.medico_nombre} ${
+        budget.medico_tipo
+          ? `(${budget.medico_tipo})`
+          : ""
+      }`
+    : "NO ESPECIFICADO";
+
+  doc.text(
+    medicoInfo.toUpperCase(),
+    margin + 20,
+    y
+  );
+
+  y += 6;
+
+  doc.setFont("helvetica", "bold");
+
+  doc.text("CONDICIÓN:", margin, y);
+
+  doc.setFont("helvetica", "normal");
+
+  const cond = esParticular
+    ? "PARTICULAR"
+    : `SEGURO: ${budget.seguro_nombre}`;
+
+  doc.text(cond.toUpperCase(), margin + 22, y);
+
+  // =========================================
+  // TABLA PRODUCTOS
+  // =========================================
+
+  y += 10;
+
+  doc.setFillColor(248, 249, 250);
+
+  doc.rect(
+    margin,
+    y - 4,
+    pageWidth - margin * 2,
+    6,
+    "F"
+  );
+
+  doc.setFontSize(8);
+
+  doc.setFont("helvetica", "bold");
+
+  doc.text("DESCRIPCIÓN", margin + 2, y);
+
+  doc.text("CANT.", 135, y, {
+    align: "center",
+  });
+
+  doc.text("P/UNT.", 165, y, {
+    align: "right",
+  });
+
+  doc.text("TOTAL", 195, y, {
+    align: "right",
+  });
+
+  y += 7;
+
+  doc.setFont("helvetica", "normal");
+
+  const items = budget.items || budget.detalle || [];
+
+  items.forEach((item) => {
+    if (y > 240) {
       doc.addPage();
+
       y = 20;
     }
-    doc.setFontSize(7.5);
-    doc.setFont("helvetica", "bold");
-    doc.text("OBSERVACIONES / TÉRMINOS:", margin, y);
-    doc.setFont("helvetica", "normal");
-    y += 4;
-    const terminos = (
-      notaConfigurada || "DOCUMENTO VÁLIDO POR 2 DÍAS HÁBILES."
-    ).toUpperCase();
-    const splitTerm = doc.splitTextToSize(terminos, pageWidth - margin * 2);
-    doc.text(splitTerm, margin, y);
 
-    // 5. FIRMA Y SELLO
-    y = 265;
-    
-    // 1. Firma Personal del Usuario (Dinámica)
-    const userSignature = userDetail?.firma || userDetail?.images?.[0];
-    const firmaVisual = (userSignature && userSignature.data)
-      ? { 
-          src: `data:${userSignature.mime_type};base64,${userSignature.data}`, 
-          type: userSignature.mime_type.split("/")[1].toUpperCase() 
+    const desc = (
+      item.descripcion ||
+      item.producto ||
+      ""
+    ).toUpperCase();
+
+    const splitDesc = doc.splitTextToSize(desc, 110);
+
+    doc.text(splitDesc, margin + 2, y);
+
+    doc.text(
+      parseFloat(item.cantidad).toString(),
+      135,
+      y,
+      {
+        align: "center",
+      }
+    );
+
+    doc.text(
+      formatNum(item.precio_venta),
+      165,
+      y,
+      {
+        align: "right",
+      }
+    );
+
+    doc.text(
+      formatNum(item.cantidad * item.precio_venta),
+      195,
+      y,
+      {
+        align: "right",
+      }
+    );
+
+    y += splitDesc.length * 4.5 + 1.5;
+  });
+
+  // =========================================
+  // TOTALES
+  // =========================================
+
+  y += 5;
+
+  doc.setDrawColor(0);
+
+  doc.line(145, y, 195, y);
+
+  y += 6;
+
+  doc.setFontSize(10);
+
+  doc.setFont("helvetica", "bold");
+
+  if (moneda === "USD" || moneda === "AMBOS") {
+    doc.text("TOTAL USD:", 145, y);
+
+    doc.text(
+      `$ ${formatNum(budget.total)}`,
+      195,
+      y,
+      {
+        align: "right",
+      }
+    );
+
+    y += 6;
+  }
+
+  if (moneda === "BS" || moneda === "AMBOS") {
+    doc.setTextColor(232, 64, 83);
+
+    doc.text("TOTAL BS:", 145, y);
+
+    doc.text(
+      `${formatNum(budget.total * tasa)}`,
+      195,
+      y,
+      {
+        align: "right",
+      }
+    );
+
+    doc.setTextColor(0, 0, 0);
+
+    y += 5;
+  }
+
+  // =========================================
+  // OBSERVACIONES
+  // =========================================
+
+  y += 5;
+
+  if (y > 230) {
+    doc.addPage();
+
+    y = 20;
+  }
+
+  doc.setFontSize(7.5);
+
+  doc.setFont("helvetica", "bold");
+
+  doc.text(
+    "OBSERVACIONES / TÉRMINOS:",
+    margin,
+    y
+  );
+
+  doc.setFont("helvetica", "normal");
+
+  y += 4;
+
+  const terminos = (
+    notaConfigurada ||
+    "DOCUMENTO VÁLIDO POR 2 DÍAS HÁBILES."
+  ).toUpperCase();
+
+  const splitTerm = doc.splitTextToSize(
+    terminos,
+    pageWidth - margin * 2
+  );
+
+  doc.text(splitTerm, margin, y);
+
+  // =========================================
+  // FIRMAS Y SELLO
+  // =========================================
+
+  y = 265;
+
+  // Firma usuario
+  const userSignature =
+    userDetail?.firma ||
+    userDetail?.images?.[0];
+
+  const firmaVisual =
+    userSignature &&
+    userSignature.data
+      ? {
+          src: `data:${userSignature.mime_type};base64,${userSignature.data}`,
+          type: userSignature.mime_type
+            .split("/")[1]
+            .toUpperCase(),
         }
       : null;
-    
-    // 2. Firma de la Empresa (Genérica)
-    const firmaEmpresa = getImg("Firma");    
-    // 3. Sello
-    const sello = getImg("Sello");
 
-    if (firmaVisual) {
-      try {
-        doc.addImage(firmaVisual.src, firmaVisual.type, margin, y - 20, 30, 15, undefined, "MEDIUM");
-      } catch (e) {
-        console.warn("Error firma usuario", e);
-      }
+  // Firma empresa
+  const firmaEmpresa = getImg("Firma");
+
+  // Sello
+  const sello = getImg("Sello");
+
+  // =========================================
+  // ELEMENTOS ACTIVOS
+  // =========================================
+
+  const elements = [];
+
+  if (includeUserFirma && firmaVisual) {
+    elements.push({
+      type: "user",
+      width: 30,
+      height: 15,
+      offsetY: 20,
+      image: firmaVisual,
+    });
+  }
+
+  if (includeCompanyFirma && firmaEmpresa) {
+    elements.push({
+      type: "company",
+      width: 28,
+      height: 12,
+      offsetY: 18,
+      image: firmaEmpresa,
+    });
+  }
+
+  if (includeSello && sello) {
+    elements.push({
+      type: "sello",
+      width: 22,
+      height: 22,
+      offsetY: 22,
+      image: sello,
+    });
+  }
+
+  // =========================================
+  // CENTRADO DINÁMICO
+  // =========================================
+
+  const spacing = 8;
+
+  const totalWidth =
+    elements.reduce(
+      (acc, el) => acc + el.width,
+      0
+    ) +
+    spacing * (elements.length - 1);
+
+  const lineWidth = 95;
+
+  const startX =
+    margin +
+    (lineWidth - totalWidth) / 2;
+
+  let currentX = startX;
+
+  // =========================================
+  // RENDER ELEMENTOS
+  // =========================================
+
+  elements.forEach((el) => {
+    try {
+      doc.addImage(
+        el.image.src,
+        el.image.type,
+        currentX,
+        y - el.offsetY,
+        el.width,
+        el.height,
+        undefined,
+        "MEDIUM"
+      );
+
+      currentX += el.width + spacing;
+    } catch (e) {
+      console.warn(`Error ${el.type}`, e);
     }
-    if (firmaEmpresa) {
-      try {
-        doc.addImage(firmaEmpresa.src, firmaEmpresa.type, margin + 35, y - 18, 28, 12, undefined, "MEDIUM");
-      } catch (e) {
-        console.warn("Error firma empresa", e);
-      }
+  });
+
+  // =========================================
+  // LINEA Y TEXTO
+  // =========================================
+
+  doc.setLineWidth(0.4);
+
+  doc.line(
+    margin,
+    y,
+    margin + lineWidth,
+    y
+  );
+
+  doc.setFontSize(8);
+
+  doc.setFont("helvetica", "bold");
+
+  const emisorNombre =
+    "FIRMA Y SELLO AUTORIZADA";
+
+  const centerX =
+    margin + lineWidth / 2;
+
+  doc.text(
+    emisorNombre.toUpperCase(),
+    centerX,
+    y + 4,
+    {
+      align: "center",
     }
-    if (sello) {
-      try {
-        doc.addImage(sello.src, sello.type, margin + 68, y - 22, 22, 22, undefined, "MEDIUM");
-      } catch (e) {
-        console.warn("Error sello", e);
-      }
-    }
+  );
 
-    doc.setLineWidth(0.4);
-    doc.line(margin, y, margin + 95, y); 
-    
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "bold");
-    const emisorNombre = "FIRMA Y SELLO AUTORIZADA";
+  // =========================================
+  // GUARDAR PDF
+  // =========================================
 
-    const centerX = margin + (95 / 2);
+  doc.save(
+    `COTIZACION_${
+      budget.nro_presupuesto || budget.id
+    }.pdf`
+  );
 
-    doc.text(emisorNombre.toUpperCase(), centerX, y + 4, { align: "center" });
-    
+  setIsExchangeModalOpen(false);
+};
 
-    doc.save(`COTIZACION_${budget.nro_presupuesto || budget.id}.pdf`);
-    setIsExchangeModalOpen(false);
-  };
 
   const handleDelete = async () => {
     if (!window.confirm("¿Desea eliminar esta cotización?")) return;

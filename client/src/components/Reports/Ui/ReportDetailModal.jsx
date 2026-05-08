@@ -2,23 +2,24 @@ import React, { useState } from "react";
 import { X, Trash2, Loader2, FileText, User, Building2, UserCheck, Edit3 } from "lucide-react";
 import { useSales } from "../../../context/SalesContext";
 import { useSettings } from "../../../context/SettingsContext"; 
-import { useAuth } from "../../../context/AuthContext"; // Importado useAuth
+import { useAuth } from "../../../context/AuthContext";
 import jsPDF from 'jspdf';
+import ModalConfig from "./ModalConfig";
 import "../../../styles/ui/SalesDetailModal.css";
 
 const ReportDetailModal = ({ isOpen, report, onClose, onEdit }) => {
   const { deleteBudgetById, getAllBudgets } = useSales();
   const { parametersList, imagesList } = useSettings(); 
-  const { fetchUserById } = useAuth(); // Extraído fetchUserById
+  const { fetchUserById } = useAuth();
+  
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
 
   if (!isOpen || !report) return null;
 
-  // Lógica de estatus
   const usageStatus = report.estatus_uso === 1 ? 'SIN USAR' : report.estatus_uso === 2 ? 'USADO' : 'ANULADO';
   const statusClass = report.estatus_uso === 1 ? 'text-green' : report.estatus_uso === 2 ? 'text-blue' : 'text-red';
 
-  // --- CONFIGURACIÓN DINÁMICA ---
   const rifConfig = parametersList?.find(p => p.descripcion === "Rif")?.valor || "J-40030914-3";
   const direccionConfig = parametersList?.find(p => p.descripcion === "Direccion")?.valor || "Barrio Obrero, San Cristóbal";
   
@@ -38,13 +39,14 @@ const ReportDetailModal = ({ isOpen, report, onClose, onEdit }) => {
     });
   };
 
-  const generatePDF = async () => {
+  const generatePDF = async (config) => {
+    const { includeUserFirma, includeCompanyFirma, includeSello } = config;
+    
     const doc = new jsPDF();
     const margin = 15;
     const pageWidth = doc.internal.pageSize.width;
     let y = 15;
 
-    // --- OBTENER INFO DEL USUARIO EMISOR ---
     let userDetail = null;
     try {
       const storedUser = localStorage.getItem("UserId");
@@ -143,38 +145,64 @@ const ReportDetailModal = ({ isOpen, report, onClose, onEdit }) => {
       y += (splitDesc.length * 5) + 5;
     });
 
-    // 4. SECCIÓN DE FIRMAS (AL FINAL)
+    // 4. SECCIÓN DE FIRMAS — centradas dinámicamente
     y = 265;
-    
-    // Firma Usuario
-    const userSignature = userDetail?.firma || userDetail?.images?.[0];
-    if (userSignature?.data) {
+
+    // Recolectar solo los elementos activos con imagen disponible
+    const firmaItems = [];
+
+    if (includeUserFirma) {
+      const userSignature = userDetail?.firma || userDetail?.images?.[0];
+      if (userSignature?.data) {
+        firmaItems.push({
+          src: `data:${userSignature.mime_type};base64,${userSignature.data}`,
+          type: userSignature.mime_type.split("/")[1].toUpperCase(),
+          w: 30, h: 15, offsetY: 20,
+        });
+      }
+    }
+
+    if (includeCompanyFirma) {
+      const firmaEmpresa = getImg("Firma");
+      if (firmaEmpresa) {
+        firmaItems.push({ src: firmaEmpresa.src, type: firmaEmpresa.type, w: 28, h: 12, offsetY: 18 });
+      }
+    }
+
+    if (includeSello) {
+      const sello = getImg("Sello");
+      if (sello) {
+        firmaItems.push({ src: sello.src, type: sello.type, w: 22, h: 22, offsetY: 22 });
+      }
+    }
+
+    // Centrar el bloque completo de firmas dentro de la zona de 95mm
+    const gapBetween = 8;
+    const firmasAreaWidth = 95;
+    const totalFirmasWidth =
+      firmaItems.reduce((acc, f) => acc + f.w, 0) +
+      gapBetween * Math.max(firmaItems.length - 1, 0);
+    const firmasStartX = margin + (firmasAreaWidth - totalFirmasWidth) / 2;
+
+    let fx = firmasStartX;
+    firmaItems.forEach((f) => {
       try {
-        const uType = userSignature.mime_type.split("/")[1].toUpperCase();
-        doc.addImage(`data:${userSignature.mime_type};base64,${userSignature.data}`, uType, margin, y - 20, 30, 15, undefined, "MEDIUM");
+        doc.addImage(f.src, f.type, fx, y - f.offsetY, f.w, f.h, undefined, "MEDIUM");
       } catch (e) {}
-    }
+      fx += f.w + gapBetween;
+    });
 
-    // Firma Empresa y Sello
-    const firmaEmpresa = getImg("Firma");
-    const sello = getImg("Sello");
-
-    if (firmaEmpresa) {
-      try { doc.addImage(firmaEmpresa.src, firmaEmpresa.type, margin + 35, y - 18, 28, 12, undefined, "MEDIUM"); } catch (e) {}
-    }
-    if (sello) {
-      try { doc.addImage(sello.src, sello.type, margin + 68, y - 22, 22, 22, undefined, "MEDIUM"); } catch (e) {}
-    }
-
-    // Línea y Texto Centrado
+    // Línea y nombre centrados
     doc.setLineWidth(0.4);
     doc.setDrawColor(...colorPrimary);
-    doc.line(margin, y, margin + 95, y); 
+    doc.line(margin, y, margin + firmasAreaWidth, y);
     doc.setFontSize(8); doc.setFont("helvetica", "bold");
-    const centerX = margin + (95 / 2);
-    doc.text("FIRMA Y SELLO AUTORIZADA", centerX, y + 4, { align: "center" });
+    const centerX = margin + firmasAreaWidth / 2;
+    const emisorNombre = userDetail?.nombre || "FIRMA AUTORIZADA Y SELLO";
+    doc.text(emisorNombre.toUpperCase(), centerX, y + 4, { align: "center" });
 
     doc.save(`Reporte_${report.nro_reporte || report.id}.pdf`);
+    setIsConfigModalOpen(false);
   };
   
   const handleDelete = async () => {
@@ -188,94 +216,101 @@ const ReportDetailModal = ({ isOpen, report, onClose, onEdit }) => {
   };
 
   return (
-    <div className="sdm-overlay">
-      <div className="sdm-modal-container">
-        <div className="sdm-invoice-paper">
-          <div className="sdm-invoice-top-header">
-            <div className="invoice-brand">
-              <h2 className="sdm-main-title">REPORTE INSTRUM.</h2>
-              <p className="sdm-brand-sub">{report.nro_reporte}</p>
-            </div>
-            <div className="sdm-meta-top">
-              <p><strong>Registro:</strong> {formatDate(report.fecha_creacion)}</p>
-              <p><strong>Estatus:</strong> <span className={statusClass}>{usageStatus}</span></p>
-            </div>
-          </div>
-
-          <div className="sdm-invoice-client-row">
-            <div className="client-info" style={{ width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              <div>
-                <label><User size={14} /> Paciente:</label>
-                <h4 className="bold">{report.paciente_nombre}</h4>
-                <p>Doc: {report.paciente_documento || "N/A"}</p>
+    <>
+      <div className="sdm-overlay">
+        <div className="sdm-modal-container">
+          <div className="sdm-invoice-paper">
+            <div className="sdm-invoice-top-header">
+              <div className="invoice-brand">
+                <h2 className="sdm-main-title">REPORTE INSTRUM.</h2>
+                <p className="sdm-brand-sub">{report.nro_reporte}</p>
               </div>
-              <div>
-                <label><Building2 size={14} /> Clínica:</label>
-                <h4 className="bold">{report.clinica_nombre || "No especificada"}</h4>
-                <p style={{ fontSize: '0.85rem', color: '#666' }}>
-                  <UserCheck size={12} /> Realizado por: {report.realizado_por || "N/A"}
-                </p>
+              <div className="sdm-meta-top">
+                <p><strong>Registro:</strong> {formatDate(report.fecha_creacion)}</p>
+                <p><strong>Estatus:</strong> <span className={statusClass}>{usageStatus}</span></p>
               </div>
             </div>
-          </div>
 
-          <div className="sdm-personal-tags">
-            <div className="sdm-section-label">Personal Médico Asignado</div>
-            
-            <div className="personal-list">
-              {report.personal_asignado?.map((p, idx) => (
-                <div key={idx} className="staff-badge">
-                  <span className="staff-name">{p.nombre}</span>
-                  <span className="staff-role">{p.tipo}</span>
+            <div className="sdm-invoice-client-row">
+              <div className="client-info" style={{ width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                <div>
+                  <label><User size={14} /> Paciente:</label>
+                  <h4 className="bold">{report.paciente_nombre}</h4>
+                  <p>Doc: {report.paciente_documento || "N/A"}</p>
                 </div>
-              ))}
+                <div>
+                  <label><Building2 size={14} /> Clínica:</label>
+                  <h4 className="bold">{report.clinica_nombre || "No especificada"}</h4>
+                  <p style={{ fontSize: '0.85rem', color: '#666' }}>
+                    <UserCheck size={12} /> Realizado por: {report.realizado_por || "N/A"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="sdm-personal-tags">
+              <div className="sdm-section-label">Personal Médico Asignado</div>
+              <div className="personal-list">
+                {report.personal_asignado?.map((p, idx) => (
+                  <div key={idx} className="staff-badge">
+                    <span className="staff-name">{p.nombre}</span>
+                    <span className="staff-role">{p.tipo}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="sdm-table-wrapper">
+              <table className="sdm-invoice-table">
+                <thead>
+                  <tr>
+                    <th>Descripción del Insumo</th>
+                    <th className="text-center">Cantidad</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(report.detalle || []).map((item, i) => (
+                    <tr key={i}>
+                      <td>
+                        <div className="item-name">{item.descripcion}</div>
+                        <div className="item-sku">SKU: {item.sku}</div>
+                      </td>
+                      <td className="text-center bold" style={{ fontSize: '1.1rem' }}>{item.cantidad}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
 
-          <div className="sdm-table-wrapper">
-            <table className="sdm-invoice-table">
-              <thead>
-                <tr>
-                  <th>Descripción del Insumo</th>
-                  <th className="text-center">Cantidad</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(report.detalle || []).map((item, i) => (
-                  <tr key={i}>
-                    <td>
-                      <div className="item-name">{item.descripcion}</div>
-                      <div className="item-sku">SKU: {item.sku}</div>
-                    </td>
-                    <td className="text-center bold" style={{ fontSize: '1.1rem' }}>{item.cantidad}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <footer className="sdm-modal-actions">
+            <div className="action-group">
+              <button className="btn-action btn-confirm" onClick={() => setIsConfigModalOpen(true)}>
+                <FileText size={16} /> Exportar Reporte
+              </button>
+              {report.estatus_uso === 1 && (
+                <>
+                  <button className="btn-action btn-edit" onClick={() => onEdit(report)}>
+                    <Edit3 size={16} /> Editar
+                  </button>
+                  <button className="btn-action btn-delete" onClick={handleDelete} disabled={isProcessing}>
+                    {isProcessing ? <Loader2 className="v-spin" size={16}/> : <Trash2 size={16} />} 
+                    Anular
+                  </button>
+                </>
+              )}
+            </div>
+            <button className="btn-action btn-close" onClick={onClose}>Cerrar</button>
+          </footer>
         </div>
-
-        <footer className="sdm-modal-actions">
-          <div className="action-group">
-            <button className="btn-action btn-confirm" onClick={generatePDF}>
-              <FileText size={16} /> Exportar Reporte
-            </button>
-            {report.estatus_uso === 1 && (
-              <>
-                <button className="btn-action btn-edit" onClick={() => onEdit(report)}>
-                  <Edit3 size={16} /> Editar
-                </button>
-                <button className="btn-action btn-delete" onClick={handleDelete} disabled={isProcessing}>
-                  {isProcessing ? <Loader2 className="v-spin" size={16}/> : <Trash2 size={16} />} 
-                  Anular
-                </button>
-              </>
-            )}
-          </div>
-          <button className="btn-action btn-close" onClick={onClose}>Cerrar</button>
-        </footer>
       </div>
-    </div>
+
+      <ModalConfig 
+        isOpen={isConfigModalOpen} 
+        onClose={() => setIsConfigModalOpen(false)} 
+        onConfirm={generatePDF} 
+      />
+    </>
   );
 };
 

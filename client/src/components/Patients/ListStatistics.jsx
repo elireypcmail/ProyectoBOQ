@@ -1,4 +1,4 @@
-// ListStatistics.jsx — con apertura del modal de detalle al hacer clic en una operación
+// ListStatistics.jsx — con ordenamiento de fechas descendente
 import React, { useState } from "react";
 import { Plus, X, User, Calendar, ChevronDown, ChevronUp } from "lucide-react";
 import { useHealth } from "../../context/HealtContext";
@@ -8,12 +8,12 @@ import "../../styles/components/ListZone.css";
 
 const ListStatistics = ({ onClose }) => {
   const { getMedicosStats, medicosStats, clearMedicosStats } = useHealth();
-  const [isModalOpen, setIsModalOpen]           = useState(false);
-  const [isLoading, setIsLoading]               = useState(false);
-  const [filtrosActivos, setFiltrosActivos]     = useState(null);
-  const [medicoExpandido, setMedicoExpandido]   = useState(null);
-  const [selectedOperacion, setSelectedOperacion] = useState(null); // 👈
-  const [isDetailOpen, setIsDetailOpen]           = useState(false); // 👈
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [filtrosActivos, setFiltrosActivos] = useState(null);
+  const [medicoExpandido, setMedicoExpandido] = useState(null);
+  const [selectedOperacion, setSelectedOperacion] = useState(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   const handleSearch = async ({ fecha_inicio, fecha_fin }) => {
     setIsLoading(true);
@@ -30,10 +30,10 @@ const ListStatistics = ({ onClose }) => {
   };
 
   const toggleDetalle = (medicoId) => {
-    setMedicoExpandido((prev) => prev === medicoId ? null : medicoId);
+    setMedicoExpandido((prev) => (prev === medicoId ? null : medicoId));
   };
 
-  const handleOpenDetail = (id) => { // 👈
+  const handleOpenDetail = (id) => {
     setSelectedOperacion(id);
     setIsDetailOpen(true);
   };
@@ -104,6 +104,11 @@ const ListStatistics = ({ onClose }) => {
             </thead>
             <tbody>
               {grupos.map(({ medico, operaciones }) => {
+                // 1. ORDENAR OPERACIONES POR FECHA DESCENDENTE
+                const operacionesOrdenadas = [...operaciones].sort((a, b) => 
+                  new Date(b.fecha_creacion) - new Date(a.fecha_creacion)
+                );
+
                 const totalAcumulado = operaciones.reduce(
                   (acc, op) => acc + Number(op.total), 0
                 );
@@ -111,7 +116,6 @@ const ListStatistics = ({ onClose }) => {
 
                 return (
                   <React.Fragment key={medico.id}>
-                    {/* FILA RESUMEN MÉDICO */}
                     <tr
                       onClick={() => toggleDetalle(medico.id)}
                       style={{ cursor: "pointer" }}
@@ -140,7 +144,6 @@ const ListStatistics = ({ onClose }) => {
                       </td>
                     </tr>
 
-                    {/* DETALLE EXPANDIDO */}
                     {isExpanded && (
                       <tr>
                         <td colSpan="5" style={{ padding: "0", background: "var(--pl-surface-alt, #f8fafc)" }}>
@@ -148,30 +151,31 @@ const ListStatistics = ({ onClose }) => {
                             <table className="pl-data-table" style={{ fontSize: "12px" }}>
                               <thead>
                                 <tr>
+                                  <th>Fecha</th>
                                   <th>Nº Factura</th>
                                   <th>Paciente</th>
                                   <th>Clínica</th>
                                   <th>Vendedor</th>
-                                  <th>Total</th>
+                                  <th>Total Factura</th>
                                   <th>Estado</th>
-                                  <th>Fecha</th>
                                 </tr>
                               </thead>
                               <tbody>
-                                {operaciones.map((op) => (
+                                {/* 2. USAR EL ARRAY ORDENADO PARA EL RENDER */}
+                                {operacionesOrdenadas.map((op) => (
                                   <tr
                                     key={op.id}
-                                    onClick={() => handleOpenDetail(op.id)} // 👈
+                                    onClick={() => handleOpenDetail(op.id)}
                                     style={{ cursor: "pointer" }}
                                     title="Ver detalle"
                                   >
-                                    <td className="bold">{op.nro_factura}</td>
+                                    <td className="bold">{new Date(op.fecha_creacion).toLocaleDateString("es-ES")}</td>
+                                    <td>{op.nro_factura}</td>
                                     <td>{op.paciente_nombre || "-"}</td>
                                     <td>{op.clinica_nombre || "-"}</td>
                                     <td>{op.vendedor_nombre || "-"}</td>
                                     <td>{Number(op.total).toFixed(2)}</td>
                                     <td><span className="badge-type">{op.estado_venta}</span></td>
-                                    <td>{new Date(op.fecha_creacion).toLocaleDateString("es-ES")}</td>
                                   </tr>
                                 ))}
                               </tbody>
@@ -206,7 +210,6 @@ const ListStatistics = ({ onClose }) => {
         onSearch={handleSearch}
       />
 
-      {/* MODAL DETALLE OPERACIÓN 👇 */}
       <StatisticDetailModal
         isOpen={isDetailOpen}
         operacionId={selectedOperacion}
