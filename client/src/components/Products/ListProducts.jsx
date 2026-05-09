@@ -9,15 +9,13 @@ import {
   Loader2,
   FileText,
   ChevronLeft,
-  ChevronRight,
-  ArrowLeftRight // 👈 Ícono agregado para el nuevo botón
+  ChevronRight
 } from "lucide-react"
 import { SlOptionsVertical } from "react-icons/sl"
 import ProductFormModal from "../Ui/ProductFormModal"
 import ModalDetailed from "../Ui/ModalDetailed"
 import ModalCreateCatalog from "../Ui/ModalCreateCatalog"
 import ProductModalDetail from "./Ui/ProductModalDetail"
-import ModalTransfers from "./Ui/ModalTransfers"
 
 import "../../styles/components/ListProd.css"
 
@@ -25,12 +23,8 @@ const ListProducts = ({ onClose }) => {
   const {
     products,
     categories,
-    deposits,
     brands,
-    getDeposits,
     getAllProducts,
-    getAllLotesByProd,
-    getAllLotes,
     getAllCategories,
     getAllBrands,
     getProductsById,
@@ -54,9 +48,6 @@ const ListProducts = ({ onClose }) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isLoadingProduct, setIsLoadingProduct] = useState(false)
   const [isCatalogModalOpen, setIsCatalogModalOpen] = useState(false)
-  
-  // 👈 Nuevo estado para el modal del nuevo botón
-  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false)
   
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
@@ -163,14 +154,6 @@ const ListProducts = ({ onClose }) => {
         <div className="pl-actions-group"> 
           {userRole !== "OPRI" && (
             <>
-              {/* 👈 NUEVO BOTÓN AGREGADO AQUÍ */}
-              <button
-                className="pl-btn-secondary"
-                onClick={() => setIsTransferModalOpen(true)}
-              >
-                <ArrowLeftRight size={16} /> Traslados
-              </button>
-
               <button
                 className="pl-btn-secondary"
                 onClick={() => setIsCatalogModalOpen(true)}
@@ -284,15 +267,7 @@ const ListProducts = ({ onClose }) => {
       )}
 
       {/* MODALES */}
-      <ModalTransfers
-        isOpen={isTransferModalOpen}
-        productos={products}
-        depositos={deposits}
-        getDepositos={getDeposits}
-        getLotes={getAllLotesByProd}
-        onClose={() => setIsTransferModalOpen(false)}
-      />
-
+      
       <ProductFormModal
         isOpen={isFormOpen}
         onClose={() => {

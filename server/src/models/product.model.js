@@ -5,7 +5,6 @@ export class ProductsModel {
   /* ================= PRODUCTOS ================= */
   static async getAllProducts() {
     let connection;
-
     try {
       connection = await pool.connect();
 
@@ -31,9 +30,8 @@ export class ProductsModel {
           i.stock_minimo_general,
           i.estatus_lotes,
 
-          -- 🔹 Solo una imagen por producto
-          CASE 
-            WHEN pi.id IS NOT NULL THEN
+          COALESCE(
+            json_agg(
               json_build_object(
                 'id', pi.id,
                 'data', encode(pi.data, 'base64'),
@@ -41,64 +39,74 @@ export class ProductsModel {
                 'nombre_file', pi.nombre_file,
                 'is_main', pi.is_main
               )
-            ELSE NULL
-          END AS image
+            ) FILTER (WHERE pi.id IS NOT NULL), '[]'
+          ) AS images
 
         FROM productos p
+        LEFT JOIN categorias c ON p.id_categoria = c.id
+        LEFT JOIN marcas m ON p.id_marca = m.id
 
-        LEFT JOIN categorias c 
-          ON p.id_categoria = c.id
-
-        LEFT JOIN marcas m 
-          ON p.id_marca = m.id
-
-        -- 🔹 Último inventario activo
         LEFT JOIN LATERAL (
           SELECT *
           FROM inventario i2
           WHERE i2.id_producto = p.id
-            AND i2.estatus = TRUE
+          AND i2.estatus = TRUE
           ORDER BY i2.fecha_creacion DESC
           LIMIT 1
         ) i ON true
 
-        -- 🔹 Solo una imagen principal o la más reciente
-        LEFT JOIN LATERAL (
-          SELECT *
-          FROM productos_images pi2
-          WHERE pi2.product_id = p.id
-          ORDER BY pi2.is_main DESC, pi2.id DESC
-          LIMIT 1
-        ) pi ON true
+        LEFT JOIN productos_images pi ON pi.product_id = p.id
 
         WHERE p.estatus = TRUE
+
+        GROUP BY 
+          p.id,
+          p.descripcion,
+          p.id_categoria,
+          p.id_marca,
+          p.files::jsonb,
+          p.estatus,
+          p.fecha_creacion,
+          c.nombre,
+          m.nombre,
+          i.id,
+          i.sku,
+          i.existencia_general,
+          i.costo_unitario,
+          i.precio_venta,
+          i.margen_ganancia,
+          i.stock_minimo_general,
+          i.estatus_lotes
+
 
         ORDER BY p.id DESC
       `;
 
       const result = await connection.query(sql);
-
       let products = result.rows;
 
-      // 🔹 Compatibilidad con frontend
-      products = products.map((p) => ({
-        ...p,
-        images: p.image ? [p.image] : [],
-      }));
+      // 🔹 Reordenar imágenes según JSON files
+      products = products.map(p => {
+        const filesJson = p.files || [];
+        let orderedImages = [];
+
+        if (filesJson.length > 0) {
+          orderedImages = filesJson.map(fj => {
+            const match = p.images.find(img => img.id === fj.id);
+            return { ...fj, ...(match || {}) };
+          });
+        } else {
+          orderedImages = p.images;
+        }
+
+        return { ...p, images: orderedImages };
+      });
 
       if (products.length === 0) {
-        return {
-          status: false,
-          code: 404,
-          msg: "No se encontraron productos",
-        };
+        return { status: false, code: 404, msg: "No se encontraron productos" };
       }
 
-      return {
-        status: true,
-        code: 200,
-        data: products,
-      };
+      return { status: true, code: 200, data: products };
 
     } catch (error) {
       return {
@@ -222,70 +230,50 @@ export class ProductsModel {
 
   static async getProductAudById(id) {
     let connection;
-
     try {
       connection = await pool.connect();
 
       const result = await connection.query(
         `
-        SELECT
-          p.id          AS producto_id,
-          p.descripcion,
+      SELECT
+        p.id          AS producto_id,
+        p.descripcion,
 
-          a.id          AS auditoria_id,
-          a.entidad,
-          a.id_entidad,
-          a.accion,
-          a.fecha,
+        a.id          AS auditoria_id,
+        a.entidad,
+        a.id_entidad,
+        a.accion,
+        a.fecha,
 
-          u.id          AS usuario_id,
-          u.nombre      AS usuario_nombre,
-          u.email       AS usuario_email,
+        u.id          AS usuario_id,
+        u.nombre      AS usuario_nombre,
+        u.email       AS usuario_email,
+        u.rol         AS usuario_rol,
 
-          r.id          AS rol_id,
-          r.nombre      AS usuario_rol,
+        (a.datos_previos ->> 'costo_unitario')::DECIMAL  AS costo_unitario_anterior,
+        (a.datos_nuevos  ->> 'costo_unitario')::DECIMAL  AS costo_unitario_nuevo,
 
-          (a.datos_previos ->> 'costo_unitario')::DECIMAL   AS costo_unitario_anterior,
-          (a.datos_nuevos  ->> 'costo_unitario')::DECIMAL   AS costo_unitario_nuevo,
+        (a.datos_previos ->> 'precio_venta')::DECIMAL   AS precio_venta_anterior,
+        (a.datos_nuevos  ->> 'precio_venta')::DECIMAL   AS precio_venta_nuevo,
 
-          (a.datos_previos ->> 'precio_venta')::DECIMAL     AS precio_venta_anterior,
-          (a.datos_nuevos  ->> 'precio_venta')::DECIMAL     AS precio_venta_nuevo,
+        (a.datos_previos ->> 'margen_ganancia')::DECIMAL AS margen_ganancia_anterior,
+        (a.datos_nuevos  ->> 'margen_ganancia')::DECIMAL AS margen_ganancia_nuevo
 
-          (a.datos_previos ->> 'margen_ganancia')::DECIMAL AS margen_ganancia_anterior,
-          (a.datos_nuevos  ->> 'margen_ganancia')::DECIMAL AS margen_ganancia_nuevo
+      FROM productos p
+      INNER JOIN auditoria a
+        ON a.entidad = 'inventario'
+        AND a.id_entidad = p.id
+      LEFT JOIN usuarios u ON u.id = a.usuario_id
 
-        FROM productos p
+      WHERE p.id = $1
+        AND (
+          (a.datos_previos::jsonb) ?| ARRAY['precio_venta','costo_unitario','margen_ganancia']
+          OR
+          (a.datos_nuevos::jsonb)  ?| ARRAY['precio_venta','costo_unitario','margen_ganancia']
+        )
 
-        INNER JOIN auditoria a
-          ON a.entidad = 'inventario'
-          AND a.id_entidad = p.id
-
-        LEFT JOIN usuarios u
-          ON u.id = a.usuario_id
-
-        LEFT JOIN usuario_roles ur
-          ON ur.usuario_id = u.id
-
-        LEFT JOIN roles r
-          ON r.id = ur.rol_id
-
-        WHERE p.id = $1
-          AND (
-            (a.datos_previos::jsonb) ?| ARRAY[
-              'precio_venta',
-              'costo_unitario',
-              'margen_ganancia'
-            ]
-            OR
-            (a.datos_nuevos::jsonb) ?| ARRAY[
-              'precio_venta',
-              'costo_unitario',
-              'margen_ganancia'
-            ]
-          )
-
-        ORDER BY a.fecha DESC
-        `,
+      ORDER BY a.fecha DESC
+      `,
         [id],
       );
 
@@ -1661,7 +1649,6 @@ export class ProductsModel {
       SELECT 
         l.id,
         l.id_producto,
-        l.id_deposito,
         p.descripcion AS producto,
         l.nro_lote,
         l.cantidad,

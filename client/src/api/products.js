@@ -26,9 +26,6 @@ export const saveFileProducts = (id, files, filesJson) => {
   })
 }
 
-// -------------------- TRASLADO DE INVENTARIO --------------------
-export const createTransferInv = (data) => instanceApp.post("/productos/traslado/inventario", data);
-
 // -------------------- PRODUCTOS AUDITORIA --------------------
 export const getProductAudById = (id) => instanceApp.get(`/productos/auditoria/precio/${id}`);
 

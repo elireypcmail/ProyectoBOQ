@@ -164,7 +164,7 @@ export const ProductsProvider = ({ children }) => {
 
   // -------------------- AUDITORIA PRODUCTOS --------------------
   
-  const getAuditProd = async (id_producto) => {
+    const getAuditProd = async (id_producto) => {
     try {
       setAudits([])
       const res = await ProductsAPI.getProductAudById(id_producto);
@@ -177,22 +177,6 @@ export const ProductsProvider = ({ children }) => {
       ]);
     }
   };
-  
-  // -------------------- TRASLADO INVENTARIO --------------------
-  const createTransfer = async (data) => {
-    try {
-      console.log(data)
-      await ProductsAPI.createTransferInv(data);
-      
-    } catch (error) {
-      setErrors((prev) => [
-        ...prev,
-        error.response?.data || ["Error creating product"],
-      ]);
-      return { status: false, error: error.response?.data || error.message };
-    }
-  };
-
 
   // -------------------- CATEGORIAS --------------------
   const getAllCategories = async () => {
@@ -324,7 +308,6 @@ export const ProductsProvider = ({ children }) => {
     try {
       const res = await ProductsAPI.getAllLotesProd(id_producto);
       setLotes(res.data?.data || []);
-      return res.data?.data || [];
     } catch (error) {
       setErrors((prev) => [
         ...prev,
@@ -380,15 +363,15 @@ export const ProductsProvider = ({ children }) => {
   const getEDepositsByProduct = async (id_producto) => {
     try {
       const res = await ProductsAPI.getProductEdeposit(id_producto);
-      const deps = res.data?.data || [];
-      setProductDeposits(deps);
-      return deps; // ✅ Retorna el array directamente
+      // backend devuelve { data: { ..., depositos: [] } }
+      setProductDeposits(res.data?.data || []);
+      return { status: true };
     } catch (error) {
       setErrors((prev) => [
         ...prev,
         error.response?.data || ["Error fetching deposits by product"],
       ]);
-      return []; // ✅ Retorna vacío en caso de error
+      return { status: false };
     }
   };
 
@@ -608,7 +591,6 @@ export const ProductsProvider = ({ children }) => {
         saveFilesProduct,
         getFilteredProducts,
         getAuditProd,
-        createTransfer,
         
         getAllCategories,
         createNewCategory,
