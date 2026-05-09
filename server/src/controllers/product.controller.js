@@ -18,7 +18,7 @@ controller.getProductById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    console.log(id)
+    // console.log(id)
 
     if (!id) return res.status(400).json({ error: "Product id required" });
 
@@ -33,11 +33,12 @@ controller.getProductAud = async (req, res) => {
   try {
     const { id } = req.params;
 
-    console.log(id)
+    // console.log(id)
 
     if (!id) return res.status(400).json({ error: "Product id required" });
 
     const result = await ProductsModel.getProductAudById(id);
+    // console.log(result)
     return res.status(result.code).json(result);
   } catch (error) {
     return res.status(500).json({ error: error.message });
@@ -48,12 +49,12 @@ controller.getProductKardex = async (req, res) => {
   try {
     const { id } = req.params;
 
-    console.log(id)
+    // console.log(id)
 
     if (!id) return res.status(400).json({ error: "Product id required" });
 
     const result = await ProductsModel.getProductKardexById(id);
-    console.log(result)
+    // console.log(result)
 
     return res.status(result.code).json(result);
   } catch (error) {
@@ -65,7 +66,7 @@ controller.getProductKardexDep = async (req, res) => {
   try {
     const { id, id_deposito } = req.params;
 
-    console.log(id)
+    // console.log(id)
 
     if (!id) return res.status(400).json({ error: "Product id required" });
 
@@ -97,14 +98,14 @@ controller.updateProduct = async (req, res) => {
     const { id } = req.params;
     const data = req.body;
 
-    console.log(id)
+    // console.log(id)
     console.log(data)
 
     if (!id) return res.status(400).json({ error: "El id del producto es requerido" });
     if (Object.keys(data).length === 0) return res.status(400).json({ error: "No data to update" });
 
     const result = await ProductsModel.updateProduct(id, data);
-    console.log(result)
+    // console.log(result)
 
     return res.status(result.code).json(result);
   } catch (error) {
@@ -131,8 +132,7 @@ controller.save_newFiles = async (req, res) => {
     const files = req.files || [];
     const filesJson = JSON.parse(req.body.files_json || "[]");
 
-    console.log(id)
-    console.log(filesJson)
+    // console.log(id)
 
     let savedFiles = [];
     let savedOrders = null;
@@ -325,7 +325,7 @@ controller.createCategory = async (req, res) => {
     if (!nombre) return res.status(400).json({ error: "nombre es obligatorio" });
 
     const result = await ProductsModel.createCategory({ nombre, estatus });
-    console.log(result)
+    // console.log(result)
 
     return res.status(result.code).json(result);
   } catch (error) {
@@ -462,7 +462,7 @@ controller.createLote = async (req, res) => {
     if ( !nro_lote || !fecha_vencimiento ) return res.status(400).json({ error: "nro_lote y fecha de vencimiento son obligatorios" });
 
     const result = await ProductsModel.createLote({id_producto, nro_lote, id_deposito, cantidad, fecha_vencimiento, estatus });
-    console.log(result)
+    // console.log(result)
     return res.status(result.code).json(result);
   } catch (error) {
     return res.status(500).json({ error: error.message });
@@ -517,7 +517,7 @@ controller.createInventory = async (req, res) => {
       return res.status(400).json({ error: "Campos obligatorios incompletos" });
 
     const result = await ProductsModel.createInventory({ id_lote, id_oficina, sku, existencia_general, costo_unitario, precio_venta, margen_ganancia, stock_minimo_general, estatus });
-    console.log(result)
+    // console.log(result)
     return res.status(result.code).json(result);
   } catch (error) {
     return res.status(500).json({ error: error.message });

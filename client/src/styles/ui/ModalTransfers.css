@@ -1,0 +1,490 @@
+/* ModalTransfers.css */
+
+/* ── Overlays y Contenedores ── */
+.mt-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  background: rgba(10, 14, 20, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.mt-card {
+  background: #fff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 780px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+  text-transform: uppercase;
+}
+
+/* ── Header, Body y Footer ── */
+.mt-header {
+  padding: 18px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+}
+
+.mt-header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.mt-header-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  transition: color 0.2s;
+}
+
+.mt-header-close:hover {
+  color: #1e293b;
+}
+
+.mt-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.mt-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+}
+
+/* ── Indicador de Pasos ── */
+.mt-steps {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 24px;
+}
+
+.mt-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.mt-step-active {
+  font-weight: 700;
+  color: #e84053;
+}
+
+.mt-step-done {
+  font-weight: 700;
+  color: #16a34a;
+}
+
+.mt-step-dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: #e2e8f0;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.mt-step-dot-active {
+  background: #e84053;
+  color: #fff;
+}
+
+.mt-step-dot-done {
+  background: #16a34a;
+  color: #fff;
+}
+
+.mt-step-divider {
+  flex: 1;
+  height: 2px;
+  background: #e2e8f0;
+  margin: 0 6px;
+}
+
+/* ── Formularios y Textos ── */
+.mt-section-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 10px;
+}
+
+.mt-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.mt-input {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 7px;
+  border: 1.5px solid #e2e8f0;
+  font-size: 0.875rem;
+  outline: none;
+  background: #fff;
+  box-sizing: border-box;
+  color: #1e293b;
+  transition: border-color 0.2s;
+  text-transform: uppercase;
+}
+
+.mt-input:focus {
+  border-color: #e84053;
+}
+
+.mt-input:disabled {
+  background: #f8fafc;
+  color: #94a3b8;
+}
+
+/* ── Botones ── */
+.mt-btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  background: #e84053;
+  color: #fff;
+  border: none;
+  font-weight: 700;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+.mt-btn-primary:hover:not(:disabled) {
+  background: #d43748;
+}
+
+.mt-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mt-btn-primary.success {
+  background: #16a34a;
+}
+
+.mt-btn-primary.success:hover:not(:disabled) {
+  background: #15803d;
+}
+
+.mt-btn-secondary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #475569;
+  border: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.mt-btn-secondary:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.mt-btn-ghost {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 7px;
+  background: transparent;
+  color: #64748b;
+  border: 1.5px solid #e2e8f0;
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.mt-btn-ghost:hover:not(:disabled) {
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+.mt-btn-danger {
+  display: flex;
+  align-items: center;
+  padding: 6px;
+  border-radius: 6px;
+  background: #fff0f0;
+  color: #e84053;
+  border: 1px solid #fecdd3;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.mt-btn-danger:hover {
+  background: #ffe4e6;
+}
+
+.mt-btn-add {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border-radius: 7px;
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1.5px dashed #86efac;
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  width: 100%;
+  justify-content: center;
+  margin-top: 10px;
+  transition: background 0.2s;
+}
+
+.mt-btn-add:hover {
+  background: #dcfce7;
+}
+
+/* ── Dropdown Select ── */
+.mt-drop-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 4px;
+}
+
+.mt-drop-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  background: transparent;
+  font-size: 0.85rem;
+  color: #1e293b;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.15s;
+}
+
+.mt-drop-item:hover {
+  background: #f1f5f9;
+}
+
+.mt-drop-item-title {
+  font-weight: 600;
+}
+
+.mt-drop-item-sub {
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+/* ── Layout & Cards ── */
+.mt-item-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
+  background: #fafafa;
+}
+
+.mt-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+.mt-divider-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 16px 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.mt-line-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.mt-line-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.mt-source-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #dc2626;
+}
+
+.mt-dest-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #2563eb;
+}
+
+/* ── Cajas de Alerta y Confirmación ── */
+.mt-alert-box {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #d97706;
+  font-size: 0.78rem;
+}
+
+.mt-motivo-box {
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background: #f0f9ff;
+  border-radius: 8px;
+  border: 1px solid #bae6fd;
+}
+
+.mt-motivo-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #0369a1;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.mt-motivo-text {
+  font-size: 0.9rem;
+  color: #0c4a6e;
+  margin-top: 4px;
+}
+
+.mt-confirm-card {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.mt-confirm-box {
+  flex: 1;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.mt-confirm-source {
+  background: #fff5f6;
+  border: 1px solid #fecdd3;
+}
+
+.mt-confirm-dest {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+
+.mt-confirm-box-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.mt-confirm-source-title { color: #dc2626; }
+.mt-confirm-dest-title { color: #2563eb; }
+.mt-confirm-prod { font-weight: 700; color: #1e293b; font-size: 0.85rem; }
+.mt-confirm-sku { font-size: 0.72rem; color: #64748b; }
+.mt-confirm-detail { font-size: 0.78rem; color: #475569; margin-top: 6px; }
+.mt-confirm-detail-sm { margin-top: 3px; }
+
+.mt-confirm-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.mt-warning-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  background: #fffbeb;
+  border-radius: 8px;
+  border: 1px solid #fde68a;
+}
+
+.mt-warning-text {
+  font-size: 0.82rem;
+  color: #92400e;
+}
+
+.mt-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+/* Animaciones */
+@keyframes mt-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.mt-spin {
+  animation: mt-spin 1s linear infinite;
+}
