@@ -5,6 +5,7 @@ const router = Router()
 import _var from "../global/_var.js"
 // Controllers
 import { controller } from "../controllers/product.controller.js"
+import { controllerTransfers } from "../controllers/transfers.controller.js"
 // Middleware
 import { upload } from "../middlewares/upload.js"
 
@@ -34,5 +35,7 @@ router.post("/deposito/existencias/:id", controller.createProductEdeposit)
 router.put("/deposito/existencias/:id", controller.editProductEdeposit)
 router.delete("/deposito/existencias/:id", controller.deleteProductEdeposit)
 
+// Traslados de Inventario
+router.post("/traslado/inventario", controllerTransfers.createTrasladoInv)
 
 export default router
