@@ -14,12 +14,10 @@ const StepProducts = ({
     return Math.round((num + Number.EPSILON) * 100) / 100;
   };
 
-  // Corregido para manejar strings con puntos (base de datos) y convertirlos a comas visuales
   const formatInitialValue = (value) => {
     if (value === null || value === undefined || value === "") return "";
     
     let strValue = value.toString();
-    // Si viene de la DB con punto (ej: "150.00"), lo pasamos a coma para el input
     if (strValue.includes(".") && !strValue.includes(",")) {
       return strValue.replace(".", ",");
     }
@@ -31,7 +29,6 @@ const StepProducts = ({
     if (typeof value === "number") return value;
 
     let standardNumber = value.toString();
-    // Limpieza estricta: quitar puntos de miles y cambiar coma decimal por punto
     if (standardNumber.includes(",") && standardNumber.includes(".")) {
       standardNumber = standardNumber.replace(/\./g, "").replace(",", ".");
     } else if (standardNumber.includes(",")) {
@@ -87,6 +84,7 @@ const StepProducts = ({
     const updatedItems = items.map((item) => {
       const qty = parseToFloat(item.cantidad);
       const price = parseToFloat(item.precio_venta);
+      // La validación ahora también requiere precio > 0
       const isValid = qty > 0 && price > 0;
 
       if (item.isValid !== isValid) {
@@ -95,7 +93,6 @@ const StepProducts = ({
       return item;
     });
 
-    // Solo actualizar si realmente hubo un cambio en la validez para evitar loops
     const hasChanges = updatedItems.some((item, index) => item.isValid !== items[index].isValid);
     if (hasChanges) {
       setItems(updatedItems);
@@ -107,7 +104,7 @@ const StepProducts = ({
       <div className="step-prod-header">
         <h2>Gestión de Productos</h2>
         <p className="step-prod-subtitle">
-          * Ingrese la cantidad. Use la coma (,) para decimales.
+          * Ingrese la cantidad y el precio. Use la coma (,) para decimales.
         </p>
       </div>
 
@@ -160,14 +157,18 @@ const StepProducts = ({
                       />
                     </td>
 
+                    {/* PRECIO ahora es editable */}
                     <td className="step-prod-text-right">
                       <div className="step-prod-currency-wrapper">
                         <input
                           type="text"
-                          className="step-prod-input step-prod-input-readonly"
+                          className={`step-prod-input ${hasError ? "step-prod-input-error" : ""}`}
                           style={{ width: calculateWidth(item.precio_venta) }}
                           value={formatInitialValue(item.precio_venta)}
-                          readOnly
+                          onChange={(e) => handleInputChange(item.id, "precio_venta", e.target.value)}
+                          onBlur={(e) => handleBlurFormat(item.id, "precio_venta", e.target.value)}
+                          placeholder="0,00"
+                          inputMode="decimal"
                         />
                       </div>
                     </td>

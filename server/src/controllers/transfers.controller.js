@@ -1,15 +1,14 @@
-// Models
-import { TransfersModel } from "../models/transfers.model.js"
+// controllers/transfers.controller.js
+import { TransfersModel } from "../models/transfers.model.js";
 
-export const controllerTransfers = {}
+export const controllerTransfers = {};
 
 controllerTransfers.createTrasladoInv = async (req, res) => {
   try {
     const data = req.body;
 
-    console.log(data)
+    console.log(data);
 
-    // Validaciones básicas de entrada
     if (!data.items || !Array.isArray(data.items) || data.items.length === 0) {
       return res.status(400).json({
         status: false,
@@ -44,7 +43,16 @@ controllerTransfers.createTrasladoInv = async (req, res) => {
     }
 
     const result = await TransfersModel.createTraslado(data);
+    return res.status(result.code).json(result);
 
+  } catch (error) {
+    return res.status(500).json({ status: false, msg: error.message });
+  }
+};
+
+controllerTransfers.getTrasladosInv = async (req, res) => {
+  try {
+    const result = await TransfersModel.getTraslados();
     return res.status(result.code).json(result);
   } catch (error) {
     return res.status(500).json({ status: false, msg: error.message });

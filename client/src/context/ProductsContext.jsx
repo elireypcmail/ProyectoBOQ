@@ -193,6 +193,20 @@ export const ProductsProvider = ({ children }) => {
     }
   };
 
+  const getTransfers = async (data) => {
+    try {
+      let data = await ProductsAPI.getTransfers();
+      return { status: true, data: data.data.data };
+
+    } catch (error) {
+      setErrors((prev) => [
+        ...prev,
+        error.response?.data || ["Error creating product"],
+      ]);
+      return { status: false, error: error.response?.data || error.message };
+    }
+  };
+
 
   // -------------------- CATEGORIAS --------------------
   const getAllCategories = async () => {
@@ -609,6 +623,7 @@ export const ProductsProvider = ({ children }) => {
         getFilteredProducts,
         getAuditProd,
         createTransfer,
+        getTransfers,
         
         getAllCategories,
         createNewCategory,

@@ -36,6 +36,7 @@ router.put("/deposito/existencias/:id", controller.editProductEdeposit)
 router.delete("/deposito/existencias/:id", controller.deleteProductEdeposit)
 
 // Traslados de Inventario
+router.get("/traslado/inventario", controllerTransfers.getTrasladosInv)
 router.post("/traslado/inventario", controllerTransfers.createTrasladoInv)
 
 export default router

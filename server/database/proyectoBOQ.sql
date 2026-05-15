@@ -576,3 +576,25 @@ CREATE TABLE ingresos_egresos (
   estatus BOOLEAN NOT NULL DEFAULT TRUE,
   fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 )
+
+-- Traslados
+
+CREATE TABLE IF NOT EXISTS traslados (
+  id            SERIAL PRIMARY KEY,
+  id_usuario    INT NOT NULL,
+  motivo        TEXT,
+  fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS traslados_detalle (
+  id                   SERIAL PRIMARY KEY,
+  id_traslado          INT NOT NULL REFERENCES traslados(id) ON DELETE CASCADE,
+  id_producto_origen   INT NOT NULL REFERENCES productos(id),
+  id_deposito_origen   INT NOT NULL REFERENCES depositos(id),
+  id_lote_origen       INT REFERENCES lotes(id),          
+  id_producto_destino  INT NOT NULL REFERENCES productos(id),
+  id_deposito_destino  INT NOT NULL REFERENCES depositos(id),
+  nro_lote_destino     VARCHAR(50),                        
+  cantidad             INT NOT NULL,
+  fecha_creacion       TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
