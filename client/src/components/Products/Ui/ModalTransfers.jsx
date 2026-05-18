@@ -189,7 +189,7 @@ const ModalTransfers = ({ isOpen, onClose }) => {
     getEDepositsByProduct,
     getAllLotesByProd,
     createTransfer,
-    getTransfers,  // 👈 función del contexto
+    getTransfers,
   } = useProducts();
 
   // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -317,6 +317,14 @@ const ModalTransfers = ({ isOpen, onClose }) => {
     }
   };
 
+  // ─── Helper: compara depósitos ─────────────────────────────────────────────
+  const mismoDepositoId = (dep1, dep2) => {
+    if (!dep1 || !dep2) return false;
+    return (
+      Number(dep1.id_deposito ?? dep1.id) === Number(dep2.id_deposito ?? dep2.id)
+    );
+  };
+
   // ─── Validación ────────────────────────────────────────────────────────────
   const isItemValid = (it) => {
     if (!it.producto_origen || !it.deposito_origen) return false;
@@ -330,6 +338,10 @@ const ModalTransfers = ({ isOpen, onClose }) => {
     if (it.producto_destino?.estatus_lotes) {
       if (!it.lote_destino) return false;
     }
+    // ── Mismo producto solo es válido si el depósito destino es diferente ──
+    const mismoProducto = it.producto_origen?.id === it.producto_destino?.id;
+    if (mismoProducto && mismoDepositoId(it.deposito_origen, it.deposito_destino)) return false;
+
     return true;
   };
 
@@ -496,120 +508,133 @@ const ModalTransfers = ({ isOpen, onClose }) => {
                     />
                   </div>
 
-                  {items.map((item, idx) => (
-                    <div key={item._key} className="mt-item-card">
-                      <div className="mt-line-header">
-                        <span className="mt-line-title">Línea #{idx + 1}</span>
-                        {items.length > 1 && (
-                          <button className="mt-btn-danger" onClick={() => setItems((p) => p.filter((_, i) => i !== idx))}>
-                            <Trash2 size={14} />
-                          </button>
-                        )}
-                      </div>
+                  {items.map((item, idx) => {
+                    const mismoProducto = item.producto_origen?.id === item.producto_destino?.id;
+                    const mismoDeposito = mismoDepositoId(item.deposito_origen, item.deposito_destino);
 
-                      {/* ── ORIGEN ── */}
-                      <div className="mt-section-title mt-source-title"><Package size={12} /> Origen</div>
-                      <div className="mt-grid-3">
-                        <SearchSelect label="Producto" icon={Package} placeholder="Buscar producto..."
-                          value={item.producto_origen} options={products}
-                          onSelect={(p) => handleSelectProductoOrigen(idx, p)} displayKey="descripcion" subKey="sku" />
-
-                        <div>
-                          <label className="mt-label"><Warehouse size={12} style={{ marginRight: 4 }} /> Depósito</label>
-                          {isLoading(idx, "dep_origen") ? (
-                            <div className="mt-input"><Loader2 size={14} className="mt-spin" /> Cargando...</div>
-                          ) : (
-                            <SearchSelect placeholder={item.producto_origen ? "Seleccionar..." : "Primero elige producto"}
-                              value={item.deposito_origen}
-                              options={item.producto_origen ? item.depositos_origen_disponibles : depositos_flat}
-                              onSelect={(d) => handleSelectDepositoOrigen(idx, d)}
-                              displayKey="deposito_nombre" subKey="existencia_deposito" />
+                    return (
+                      <div key={item._key} className="mt-item-card">
+                        <div className="mt-line-header">
+                          <span className="mt-line-title">Línea #{idx + 1}</span>
+                          {items.length > 1 && (
+                            <button className="mt-btn-danger" onClick={() => setItems((p) => p.filter((_, i) => i !== idx))}>
+                              <Trash2 size={14} />
+                            </button>
                           )}
                         </div>
 
-                        <div>
-                          <label className="mt-label"><Layers size={12} style={{ marginRight: 4 }} /> Lote origen</label>
-                          {isLoading(idx, "lotes") ? (
-                            <div className="mt-input"><Loader2 size={14} className="mt-spin" /> Cargando...</div>
-                          ) : item.lotes_origen_disponibles.length > 0 ? (
-                            <SearchSelect placeholder="Seleccionar lote..." value={item.lote_origen}
-                              options={item.lotes_origen_disponibles}
-                              onSelect={(l) => updateItem(idx, { lote_origen: l })}
-                              displayKey="nro_lote" subKey="cantidad" />
-                          ) : (
-                            <input className="mt-input"
-                              value={item.producto_origen?.estatus_lotes ? "Sin lotes disponibles" : "No maneja lotes"} disabled />
-                          )}
-                        </div>
-                      </div>
+                        {/* ── ORIGEN ── */}
+                        <div className="mt-section-title mt-source-title"><Package size={12} /> Origen</div>
+                        <div className="mt-grid-3">
+                          <SearchSelect label="Producto" icon={Package} placeholder="Buscar producto..."
+                            value={item.producto_origen} options={products}
+                            onSelect={(p) => handleSelectProductoOrigen(idx, p)} displayKey="descripcion" subKey="sku" />
 
-                      {item.lote_origen && (
-                        <div style={{ marginTop: "8px" }}>
-                          <span className="mt-badge"><CheckCircle size={11} /> Disponible en lote: {item.lote_origen.cantidad} u.</span>
-                        </div>
-                      )}
-                      {item.producto_origen && !item.producto_origen.estatus_lotes && (
-                        <div style={{ marginTop: "8px" }}>
-                          <span className="mt-badge"><CheckCircle size={11} /> Existencia general: {item.producto_origen.existencia_general} u.</span>
-                        </div>
-                      )}
+                          <div>
+                            <label className="mt-label"><Warehouse size={12} style={{ marginRight: 4 }} /> Depósito</label>
+                            {isLoading(idx, "dep_origen") ? (
+                              <div className="mt-input"><Loader2 size={14} className="mt-spin" /> Cargando...</div>
+                            ) : (
+                              <SearchSelect placeholder={item.producto_origen ? "Seleccionar..." : "Primero elige producto"}
+                                value={item.deposito_origen}
+                                options={item.producto_origen ? item.depositos_origen_disponibles : depositos_flat}
+                                onSelect={(d) => handleSelectDepositoOrigen(idx, d)}
+                                displayKey="deposito_nombre" subKey="existencia_deposito" />
+                            )}
+                          </div>
 
-                      <div style={{ marginTop: "14px", maxWidth: "180px" }}>
-                        <label className="mt-label">Cantidad a trasladar</label>
-                        <input type="number" min="1" className="mt-input" placeholder="0"
-                          value={item.cantidad} onChange={(e) => updateItem(idx, { cantidad: e.target.value })} />
-                      </div>
-
-                      {item.lote_origen && safeParse(item.cantidad) > Number(item.lote_origen.cantidad || 0) && (
-                        <div className="mt-alert-box"><AlertTriangle size={13} /> La cantidad excede el stock del lote.</div>
-                      )}
-
-                      {/* ── DESTINO ── */}
-                      <div className="mt-divider-arrow"></div>
-                      <div className="mt-section-title mt-dest-title"><Package size={12} /> Destino</div>
-                      <div className="mt-grid-3">
-                        <SearchSelect label="Producto" icon={Package} placeholder="Buscar producto..."
-                          value={item.producto_destino}
-                          options={products.filter((p) => p.id !== item.producto_origen?.id)}
-                          onSelect={(p) => handleSelectProductoDestino(idx, p)} displayKey="descripcion" subKey="sku" />
-
-                        <div>
-                          <label className="mt-label"><Warehouse size={12} style={{ marginRight: 4 }} /> Depósito</label>
-                          {isLoading(idx, "dep_destino") ? (
-                            <div className="mt-input"><Loader2 size={14} className="mt-spin" /> Cargando...</div>
-                          ) : (
-                            <SearchSelect placeholder={item.producto_destino ? "Seleccionar..." : "Primero elige producto"}
-                              value={item.deposito_destino}
-                              options={item.producto_destino ? item.depositos_destino_disponibles : depositos_flat}
-                              onSelect={(d) => handleSelectDepositoDestino(idx, d)}
-                              displayKey="deposito_nombre" subKey="existencia_deposito" />
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="mt-label"><Layers size={12} style={{ marginRight: 4 }} /> Lote destino</label>
-                          {isLoading(idx, "lotes_destino") ? (
-                            <div className="mt-input"><Loader2 size={14} className="mt-spin" /> Cargando...</div>
-                          ) : item.producto_destino?.estatus_lotes ? (
-                            item.lotes_destino_disponibles.length > 0 ? (
-                              <SearchSelect placeholder="Seleccionar lote..." value={item.lote_destino}
-                                options={item.lotes_destino_disponibles}
-                                onSelect={(l) => updateItem(idx, { lote_destino: l })}
+                          <div>
+                            <label className="mt-label"><Layers size={12} style={{ marginRight: 4 }} /> Lote origen</label>
+                            {isLoading(idx, "lotes") ? (
+                              <div className="mt-input"><Loader2 size={14} className="mt-spin" /> Cargando...</div>
+                            ) : item.lotes_origen_disponibles.length > 0 ? (
+                              <SearchSelect placeholder="Seleccionar lote..." value={item.lote_origen}
+                                options={item.lotes_origen_disponibles}
+                                onSelect={(l) => updateItem(idx, { lote_origen: l })}
                                 displayKey="nro_lote" subKey="cantidad" />
                             ) : (
-                              <input className="mt-input" value="Sin lotes disponibles" disabled />
-                            )
-                          ) : (
-                            <input className="mt-input" value="No maneja lotes" disabled />
-                          )}
+                              <input className="mt-input"
+                                value={item.producto_origen?.estatus_lotes ? "Sin lotes disponibles" : "No maneja lotes"} disabled />
+                            )}
+                          </div>
                         </div>
-                      </div>
 
-                      {!isItemValid(item) && item.cantidad && (
-                        <div className="mt-alert-box"><AlertTriangle size={13} /> Completa todos los campos requeridos.</div>
-                      )}
-                    </div>
-                  ))}
+                        {item.lote_origen && (
+                          <div style={{ marginTop: "8px" }}>
+                            <span className="mt-badge"><CheckCircle size={11} /> Disponible en lote: {item.lote_origen.cantidad} u.</span>
+                          </div>
+                        )}
+                        {item.producto_origen && !item.producto_origen.estatus_lotes && (
+                          <div style={{ marginTop: "8px" }}>
+                            <span className="mt-badge"><CheckCircle size={11} /> Existencia general: {item.producto_origen.existencia_general} u.</span>
+                          </div>
+                        )}
+
+                        <div style={{ marginTop: "14px", maxWidth: "180px" }}>
+                          <label className="mt-label">Cantidad a trasladar</label>
+                          <input type="number" min="1" className="mt-input" placeholder="0"
+                            value={item.cantidad} onChange={(e) => updateItem(idx, { cantidad: e.target.value })} />
+                        </div>
+
+                        {item.lote_origen && safeParse(item.cantidad) > Number(item.lote_origen.cantidad || 0) && (
+                          <div className="mt-alert-box"><AlertTriangle size={13} /> La cantidad excede el stock del lote.</div>
+                        )}
+
+                        {/* ── DESTINO ── */}
+                        <div className="mt-divider-arrow"></div>
+                        <div className="mt-section-title mt-dest-title"><Package size={12} /> Destino</div>
+                        <div className="mt-grid-3">
+                          {/* ── CAMBIO 1: se eliminó el filtro p.id !== producto_origen.id ── */}
+                          <SearchSelect label="Producto" icon={Package} placeholder="Buscar producto..."
+                            value={item.producto_destino}
+                            options={products}
+                            onSelect={(p) => handleSelectProductoDestino(idx, p)} displayKey="descripcion" subKey="sku" />
+
+                          <div>
+                            <label className="mt-label"><Warehouse size={12} style={{ marginRight: 4 }} /> Depósito</label>
+                            {isLoading(idx, "dep_destino") ? (
+                              <div className="mt-input"><Loader2 size={14} className="mt-spin" /> Cargando...</div>
+                            ) : (
+                              <SearchSelect placeholder={item.producto_destino ? "Seleccionar..." : "Primero elige producto"}
+                                value={item.deposito_destino}
+                                options={item.producto_destino ? item.depositos_destino_disponibles : depositos_flat}
+                                onSelect={(d) => handleSelectDepositoDestino(idx, d)}
+                                displayKey="deposito_nombre" subKey="existencia_deposito" />
+                            )}
+                          </div>
+
+                          <div>
+                            <label className="mt-label"><Layers size={12} style={{ marginRight: 4 }} /> Lote destino</label>
+                            {isLoading(idx, "lotes_destino") ? (
+                              <div className="mt-input"><Loader2 size={14} className="mt-spin" /> Cargando...</div>
+                            ) : item.producto_destino?.estatus_lotes ? (
+                              item.lotes_destino_disponibles.length > 0 ? (
+                                <SearchSelect placeholder="Seleccionar lote..." value={item.lote_destino}
+                                  options={item.lotes_destino_disponibles}
+                                  onSelect={(l) => updateItem(idx, { lote_destino: l })}
+                                  displayKey="nro_lote" subKey="cantidad" />
+                              ) : (
+                                <input className="mt-input" value="Sin lotes disponibles" disabled />
+                              )
+                            ) : (
+                              <input className="mt-input" value="No maneja lotes" disabled />
+                            )}
+                          </div>
+                        </div>
+
+                        {/* ── CAMBIO 2: alerta mismo producto + mismo depósito ── */}
+                        {mismoProducto && mismoDeposito && (
+                          <div className="mt-alert-box">
+                            <AlertTriangle size={13} /> El origen y destino no pueden ser el mismo producto en el mismo depósito.
+                          </div>
+                        )}
+
+                        {!isItemValid(item) && item.cantidad && !(mismoProducto && mismoDeposito) && (
+                          <div className="mt-alert-box"><AlertTriangle size={13} /> Completa todos los campos requeridos.</div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </>
               )}
 

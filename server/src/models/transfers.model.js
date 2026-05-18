@@ -46,6 +46,16 @@ export class TransfersModel {
           throw new Error("La cantidad del traslado debe ser mayor a 0.");
         }
 
+        // ── Validar que no sea mismo producto en mismo depósito ──────────────
+        if (
+          Number(id_producto_origen) === Number(id_producto_destino) &&
+          Number(id_deposito_origen) === Number(id_deposito_destino)
+        ) {
+          throw new Error(
+            "El origen y destino no pueden ser el mismo producto en el mismo depósito."
+          );
+        }
+
         // ── Obtener nombres de productos
         const prodOrigenRes = await connection.query(
           `SELECT descripcion FROM productos WHERE id = $1`,
@@ -117,6 +127,7 @@ export class TransfersModel {
         );
 
         // ── 2e. Descontar existencia general ORIGEN
+        //   (si mismo producto, se neutraliza con el +1 del paso 2i — neto = 0)
         await connection.query(
           `UPDATE inventario SET existencia_general = existencia_general - $1
            WHERE id_producto = $2`,
